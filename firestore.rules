@@ -1,0 +1,140 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdminFor(countryCode) {
+      // Older admin claims without an explicit scope retain access only to MY.
+      // Region-specific admins need an explicit list such as ["US"].
+      return request.auth != null && (
+        (('admin' in request.auth.token) && request.auth.token.admin == true
+          && (('adminLocations' in request.auth.token)
+            ? request.auth.token.adminLocations.hasAny([countryCode])
+            : countryCode == "MY")
+          && (countryCode != "US" || (('email_verified' in request.auth.token) && request.auth.token.email_verified == true)))
+        || (countryCode == "MY" && ('myAdmin' in request.auth.token) && request.auth.token.myAdmin == true)
+        || (countryCode == "US" && ('usAdmin' in request.auth.token) && request.auth.token.usAdmin == true
+          && ('email_verified' in request.auth.token) && request.auth.token.email_verified == true)
+      );
+    }
+
+    function isAdmin() {
+      return isAdminFor("MY");
+    }
+
+    // Only administrators can read private newsletter and volunteer records.
+    // Public users can submit new records through the existing website forms.
+    match /newsletter_subscribers/{recordId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly([
+        'countryCode', 'email', 'subscribedAt', 'language', 'source'
+      ])
+      && request.resource.data.keys().hasAll(['countryCode', 'email', 'subscribedAt'])
+      && request.resource.data.email is string
+      && request.resource.data.email.size() <= 320
+      && request.resource.data.countryCode is string;
+    }
+
+    match /volunteers/{recordId} {
+      allow read, update, delete: if isAdmin();
+      allow create: if request.resource.data.keys().hasOnly([
+        'countryCode', 'fullName', 'phone', 'address', 'notes', 'activity', 'createdAt'
+      ])
+      && request.resource.data.keys().hasAll([
+        'countryCode', 'fullName', 'phone', 'address', 'notes', 'activity', 'createdAt'
+      ])
+      && request.resource.data.fullName is string
+      && request.resource.data.fullName.size() <= 160
+      && request.resource.data.phone is string
+      && request.resource.data.phone.size() <= 30
+      && request.resource.data.address is string
+      && request.resource.data.address.size() <= 500
+      && request.resource.data.notes is string
+      && request.resource.data.notes.size() <= 2000
+      && request.resource.data.activity is string
+      && request.resource.data.countryCode is string;
+    }
+
+    // Existing front-end functionality: public announcements/events, and report submission.
+    // These rules are intentionally separate from the private admin-managed collections.
+    match /announcements/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /events/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /faqs/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /facilities/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /services/{recordId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+    match /reports/{recordId} {
+      allow create: if request.resource.data.keys().hasOnly([
+        'countryCode', 'firstName', 'lastName', 'contactNumber', 'email', 'address',
+        'message', 'subscribeUpdates', 'source', 'createdAt'
+      ])
+      && request.resource.data.keys().hasAll([
+        'countryCode', 'firstName', 'lastName', 'contactNumber', 'email', 'address',
+        'message', 'subscribeUpdates', 'source', 'createdAt'
+      ]);
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Regional data lives below locations/{countryCode}; US is isolated from MY.
+    match /locations/{countryCode}/{collection}/{recordId} {
+      function regionalAdmin() { return isAdminFor(countryCode); }
+      function regionalContent() {
+        return collection in ["announcements", "events", "facilities", "services", "faqs", "rules"];
+      }
+      function validNewsletter() {
+        return request.resource.data.keys().hasOnly(['countryCode', 'email', 'fullName', 'subscribedAt', 'language', 'source'])
+          && request.resource.data.keys().hasAll(['countryCode', 'email', 'subscribedAt'])
+          && request.resource.data.countryCode == countryCode
+          && request.resource.data.email is string
+          && request.resource.data.email.size() <= 320;
+      }
+      function validVolunteer() {
+        return request.resource.data.keys().hasOnly(['countryCode', 'fullName', 'phone', 'address', 'notes', 'activity', 'createdAt'])
+          && request.resource.data.keys().hasAll(['countryCode', 'fullName', 'phone', 'address', 'notes', 'activity', 'createdAt'])
+          && request.resource.data.countryCode == countryCode
+          && request.resource.data.fullName is string
+          && request.resource.data.fullName.size() <= 160
+          && request.resource.data.phone is string
+          && request.resource.data.phone.size() <= 30
+          && request.resource.data.address is string
+          && request.resource.data.address.size() <= 500
+          && request.resource.data.notes is string
+          && request.resource.data.notes.size() <= 2000
+          && request.resource.data.activity is string;
+      }
+
+      // Public regional content can be read; only admins for that region can edit it.
+      allow read: if regionalContent();
+      allow create, update, delete: if regionalContent() && regionalAdmin();
+
+      // Submissions are public-create, private-read/update/delete.
+      allow read, update, delete: if regionalAdmin()
+        && collection in ["newsletter_subscribers", "volunteers", "reports"];
+      allow create: if collection == "newsletter_subscribers" && validNewsletter()
+        || collection == "volunteers" && validVolunteer()
+        || collection == "reports" && countryCode == request.resource.data.countryCode
+          && request.resource.data.keys().hasOnly(['countryCode', 'firstName', 'lastName', 'contactNumber', 'email', 'address', 'message', 'subscribeUpdates', 'source', 'createdAt']);
+
+      // Public site configuration is readable; AI prompts/settings remain administrator-only.
+      allow read: if collection == "settings" && (recordId == "main" || regionalAdmin());
+      allow create, update, delete: if collection == "settings" && regionalAdmin();
+    }
+
+    // Deny all other collection access unless explicitly added above.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

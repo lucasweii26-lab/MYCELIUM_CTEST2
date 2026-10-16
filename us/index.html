@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mycelium United States</title></head>
+<body><script>
+  const query = new URLSearchParams(location.search);
+  query.set("region", "US");
+  location.replace(`/index.html?${query.toString()}${location.hash}`);
+</script><noscript><a href="/index.html?region=US">Open the United States community site</a></noscript></body></html>

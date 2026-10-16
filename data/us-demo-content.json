@@ -1,0 +1,454 @@
+{
+  "_readme": "Sample data pack for the second MYCELIUM location (USA). Fictional community, real public emergency numbers. Names/addresses/phones marked [PLACEHOLDER] must be replaced by Lucas. Media (maps, photos, Hero frames, Logo) is NOT included. Field naming follows existing Firestore style (title_en, shortText_ms, ...). Interface languages available: en (default), es, zh-CN, ms, ta. Existing US content without ms/ta fields falls back to English until those translations are added. Dates: announcements/events use ISO 'YYYY-MM-DD'; the website formats announcement dates for display.",
+  "settings": {
+    "path": "locations/US/settings/main",
+    "countryCode": "US",
+    "urlPath": "/us/",
+    "displayName": "United States",
+    "communityName": "MYCELIUM Residences - Portland",
+    "city": "Portland",
+    "state": "Oregon",
+    "timezone": "America/Los_Angeles",
+    "defaultLanguage": "en",
+    "supportedLanguages": [
+      "en",
+      "es",
+      "zh-CN",
+      "ms",
+      "ta"
+    ],
+    "currency": "USD",
+    "currencySymbol": "$",
+    "dateDisplayFormat": "DD MON YYYY",
+    "measurementSystem": "imperial",
+    "phoneCountryCode": "+1",
+    "contact": {
+      "generalPhone": "+1 (234) 567-8910",
+      "generalEmail": "john.smith@company.com",
+      "managementOfficeHours": "Mon-Fri 9:00 AM - 5:00 PM PT",
+      "address": "John Smith, 123 Main Street, 12345"
+    },
+    "emergencyNumbers": {
+      "emergency": "911",
+      "nonEmergencyCityServices": "311",
+      "crisisLifeline": "988",
+      "poisonControl": "1-800-222-1222",
+      "securityDesk24h": "+1 (234) 567-8910"
+    },
+    "homepage": {
+      "heroTitle_en": "Live closer to nature. Live closer to each other.",
+      "heroTitle_es": "Vive más cerca de la naturaleza. Vive más cerca de los demás.",
+      "heroTitle_zh-CN": "亲近自然，也亲近彼此。",
+      "heroSubtitle_en": "A resident community in Portland built around gardens, walkable paths and everyday wellbeing.",
+      "heroSubtitle_es": "Una comunidad residencial en Portland pensada en torno a jardines, senderos peatonales y el bienestar diario.",
+      "heroSubtitle_zh-CN": "位于波特兰的居民社区，以花园、步行小径和日常身心健康为核心。"
+    }
+  },
+  "facilities": [
+    {
+      "id": "community-garden",
+      "name_en": "Community Garden",
+      "name_es": "Huerto comunitario",
+      "name_zh-CN": "社区花园",
+      "hours_en": "Daily 7:00 AM - 8:00 PM",
+      "hours_es": "Todos los días 7:00 - 20:00",
+      "hours_zh-CN": "每日 7:00 - 20:00",
+      "description_en": "Raised beds, shared tools and a seasonal planting calendar. Plots are assigned by sign-up.",
+      "description_es": "Bancales elevados, herramientas compartidas y calendario de siembra por temporada. Las parcelas se asignan por inscripción.",
+      "description_zh-CN": "高架种植床、共用工具和季节种植日历，种植位需报名分配。"
+    },
+    {
+      "id": "fitness-center",
+      "name_en": "Fitness Center",
+      "name_es": "Gimnasio",
+      "name_zh-CN": "健身中心",
+      "hours_en": "Daily 5:00 AM - 11:00 PM (resident key fob)",
+      "hours_es": "Todos los días 5:00 - 23:00 (llavero de residente)",
+      "hours_zh-CN": "每日 5:00 - 23:00（需居民门禁卡）",
+      "description_en": "Cardio, free weights and a stretching area.",
+      "description_es": "Cardio, pesas libres y zona de estiramientos.",
+      "description_zh-CN": "有氧器械、自由重量区和拉伸区。"
+    },
+    {
+      "id": "coworking-lounge",
+      "name_en": "Co-working Lounge",
+      "name_es": "Sala de coworking",
+      "name_zh-CN": "共享办公休息室",
+      "hours_en": "Mon-Sun 7:00 AM - 10:00 PM",
+      "hours_es": "Lun-Dom 7:00 - 22:00",
+      "hours_zh-CN": "每日 7:00 - 22:00",
+      "description_en": "Quiet desks, fast Wi-Fi and two bookable meeting rooms.",
+      "description_es": "Escritorios tranquilos, Wi-Fi rápido y dos salas de reuniones reservables.",
+      "description_zh-CN": "安静工位、高速 Wi-Fi，另有两间可预约会议室。"
+    },
+    {
+      "id": "bike-hub",
+      "name_en": "Bike Hub",
+      "name_es": "Centro de bicicletas",
+      "name_zh-CN": "自行车站",
+      "hours_en": "24 hours (resident access)",
+      "hours_es": "24 horas (acceso de residentes)",
+      "hours_zh-CN": "24 小时（居民可用）",
+      "description_en": "Secure bike storage, a repair stand and an air pump.",
+      "description_es": "Almacenamiento seguro de bicicletas, soporte de reparación y bomba de aire.",
+      "description_zh-CN": "安全存车处、维修架和打气筒。"
+    },
+    {
+      "id": "ev-charging",
+      "name_en": "EV Charging Stations",
+      "name_es": "Estaciones de carga para vehículos eléctricos",
+      "name_zh-CN": "电动车充电桩",
+      "hours_en": "24 hours; please move your vehicle once charged",
+      "hours_es": "24 horas; por favor retire su vehículo al terminar la carga",
+      "hours_zh-CN": "24 小时；充满后请及时挪车",
+      "description_en": "Level 2 chargers in the visitor and resident parking areas.",
+      "description_es": "Cargadores de nivel 2 en las zonas de estacionamiento de visitantes y residentes.",
+      "description_zh-CN": "访客及居民停车区设有 2 级充电桩。"
+    },
+    {
+      "id": "recycling-compost",
+      "name_en": "Recycling & Compost Center",
+      "name_es": "Centro de reciclaje y compostaje",
+      "name_zh-CN": "回收与堆肥中心",
+      "hours_en": "Daily 6:00 AM - 10:00 PM",
+      "hours_es": "Todos los días 6:00 - 22:00",
+      "hours_zh-CN": "每日 6:00 - 22:00",
+      "description_en": "Sorted bins for recycling, food scraps and glass.",
+      "description_es": "Contenedores separados para reciclaje, restos de comida y vidrio.",
+      "description_zh-CN": "设有可回收物、厨余和玻璃分类桶。"
+    },
+    {
+      "id": "walking-trail",
+      "name_en": "Woodland Walking Trail",
+      "name_es": "Sendero del bosque",
+      "name_zh-CN": "林间步道",
+      "hours_en": "Dawn to dusk",
+      "hours_es": "Del amanecer al anochecer",
+      "hours_zh-CN": "日出至日落",
+      "description_en": "A 0.8-mile loop through native plantings with benches along the way.",
+      "description_es": "Un circuito de 0,8 millas entre plantas nativas, con bancos en el recorrido.",
+      "description_zh-CN": "全长约 0.8 英里的环形步道，沿途种有本地植物并设有长椅。"
+    },
+    {
+      "id": "clubhouse",
+      "name_en": "Clubhouse",
+      "name_es": "Casa club",
+      "name_zh-CN": "社区会所",
+      "hours_en": "Daily 8:00 AM - 10:00 PM; bookable for events",
+      "hours_es": "Todos los días 8:00 - 22:00; se puede reservar para eventos",
+      "hours_zh-CN": "每日 8:00 - 22:00；可预约举办活动",
+      "description_en": "Shared kitchen, lounge and event hall for resident gatherings.",
+      "description_es": "Cocina compartida, salón y sala de eventos para reuniones de residentes.",
+      "description_zh-CN": "设有公用厨房、休息厅和活动大厅，供居民聚会使用。"
+    }
+  ],
+  "announcements": [
+    {
+      "id": "us-ann-fire-alarm-test",
+      "category": "emergency",
+      "date": "12 OCT 2026",
+      "title_en": "Fire Alarm Test",
+      "title_es": "Prueba de alarma contra incendios",
+      "title_zh-CN": "消防警报测试",
+      "shortText_en": "Annual fire alarm testing on 15 Oct, 10:00 AM - 12:00 PM.",
+      "shortText_es": "Prueba anual de alarmas el 15 de oct., de 10:00 a 12:00.",
+      "shortText_zh-CN": "年度消防警报测试：10月15日上午 10:00 - 12:00。",
+      "fullContent_en": "Dear Residents, our annual fire alarm test will take place on 15 October between 10:00 AM and 12:00 PM. You may hear alarms and strobe lights in common areas and inside units. No action is needed unless you are told otherwise by building staff. Please make sure someone can give access to your unit if you are away.",
+      "fullContent_es": "Estimados residentes: nuestra prueba anual de alarmas contra incendios se realizará el 15 de octubre entre las 10:00 y las 12:00. Es posible que escuche alarmas y luces estroboscópicas en las áreas comunes y dentro de las unidades. No es necesario hacer nada, salvo que el personal del edificio indique lo contrario. Si va a estar ausente, asegúrese de que alguien pueda dar acceso a su unidad.",
+      "fullContent_zh-CN": "亲爱的居民：我们将于10月15日上午 10:00 至 12:00 进行年度消防警报测试。届时公共区域及住户单元内可能出现警报声和闪光灯。除非工作人员另行通知，否则无需采取任何行动。如您不在家，请确保有人可以为您开门。"
+    },
+    {
+      "id": "us-ann-recycling",
+      "category": "community",
+      "date": "20 OCT 2026",
+      "title_en": "New Recycling & Compost Schedule",
+      "title_es": "Nuevo horario de reciclaje y compostaje",
+      "title_zh-CN": "回收与堆肥新时间表",
+      "shortText_en": "Compost pickup moves to Tuesdays and Fridays from 27 Oct.",
+      "shortText_es": "La recogida de compost pasa a martes y viernes desde el 27 de oct.",
+      "shortText_zh-CN": "自10月27日起，堆肥收集改为每周二和周五。",
+      "fullContent_en": "Starting 27 October, compost pickup will be on Tuesdays and Fridays, and recycling pickup stays on Wednesdays. Please use the labeled bins at the Recycling & Compost Center and keep food scraps free of plastic bags.",
+      "fullContent_es": "A partir del 27 de octubre, la recogida de compost será los martes y viernes, y la de reciclaje seguirá los miércoles. Use los contenedores etiquetados del Centro de reciclaje y compostaje y no deposite los restos de comida en bolsas de plástico.",
+      "fullContent_zh-CN": "自10月27日起，堆肥收集时间为每周二和周五，可回收物收集仍为每周三。请使用回收与堆肥中心的标识垃圾桶，厨余请勿装入塑料袋。"
+    },
+    {
+      "id": "us-ann-clocks",
+      "category": "community",
+      "date": "28 OCT 2026",
+      "title_en": "Daylight Saving Time Ends",
+      "title_es": "Termina el horario de verano",
+      "title_zh-CN": "夏令时结束",
+      "shortText_en": "Clocks go back one hour on Sunday, 1 November.",
+      "shortText_es": "Los relojes se atrasan una hora el domingo 1 de noviembre.",
+      "shortText_zh-CN": "11月1日（周日）时钟拨回一小时。",
+      "fullContent_en": "Daylight Saving Time ends on Sunday, 1 November at 2:00 AM. Clocks go back one hour. Common-area clocks and building schedules will be updated by management.",
+      "fullContent_es": "El horario de verano termina el domingo 1 de noviembre a las 2:00. Los relojes se atrasan una hora. La administración actualizará los relojes y horarios de las áreas comunes.",
+      "fullContent_zh-CN": "夏令时将于11月1日（周日）凌晨 2:00 结束，时钟拨回一小时。公共区域的时钟和楼宇时间表将由物业统一调整。"
+    },
+    {
+      "id": "us-ann-water-shutoff",
+      "category": "maintenance",
+      "date": "30 OCT 2026",
+      "title_en": "Scheduled Water Shut-off",
+      "title_es": "Corte de agua programado",
+      "title_zh-CN": "计划停水通知",
+      "shortText_en": "Water will be off on 4 Nov, 9:00 AM - 11:00 AM, for pipe maintenance.",
+      "shortText_es": "El agua se cortará el 4 de nov., de 9:00 a 11:00, por mantenimiento de tuberías.",
+      "shortText_zh-CN": "11月4日上午 9:00 - 11:00 因管道维护停水。",
+      "fullContent_en": "Dear Residents, water service will be shut off on 4 November between 9:00 AM and 11:00 AM while we maintain the main pipes. Please store the water you need in advance. Service may take a short time to return to normal afterward.",
+      "fullContent_es": "Estimados residentes: el servicio de agua se cortará el 4 de noviembre entre las 9:00 y las 11:00 mientras se realiza el mantenimiento de las tuberías principales. Almacene con antelación el agua que necesite. Puede tardar un poco en normalizarse después.",
+      "fullContent_zh-CN": "亲爱的居民：因主管道维护，11月4日上午 9:00 至 11:00 将暂停供水。请提前储备所需用水。恢复供水后，水压可能需要一点时间才能恢复正常。"
+    },
+    {
+      "id": "us-ann-garden-swap",
+      "category": "events",
+      "date": "21 OCT 2026",
+      "title_en": "Fall Garden Swap This Saturday",
+      "title_es": "Intercambio de otoño del huerto este sábado",
+      "title_zh-CN": "本周六秋季花园交换会",
+      "shortText_en": "Bring spare seeds and cuttings to the Community Garden on 24 Oct.",
+      "shortText_es": "Traiga semillas y esquejes sobrantes al huerto comunitario el 24 de oct.",
+      "shortText_zh-CN": "10月24日带上多余种子和插枝到社区花园。",
+      "fullContent_en": "Join your neighbors on 24 October at the Community Garden to swap seeds, bulbs and cuttings. Everyone is welcome, and no experience is needed.",
+      "fullContent_es": "Únase a sus vecinos el 24 de octubre en el huerto comunitario para intercambiar semillas, bulbos y esquejes. Todos son bienvenidos y no se necesita experiencia.",
+      "fullContent_zh-CN": "10月24日来社区花园和邻居们交换种子、球茎和插枝，欢迎所有人参加，无需任何经验。"
+    }
+  ],
+  "events": [
+    {
+      "id": "us-evt-garden-swap",
+      "date": "2026-10-24",
+      "title_en": "Fall Garden Swap",
+      "title_es": "Intercambio de otoño del huerto",
+      "title_zh-CN": "秋季花园交换会",
+      "description_en": "Bring spare seeds, bulbs and cuttings and take home something new. Meet at the Community Garden.",
+      "description_es": "Traiga semillas, bulbos y esquejes sobrantes y llévese algo nuevo. Punto de encuentro: el huerto comunitario.",
+      "description_zh-CN": "带上多余的种子、球茎和插枝，换回新品种。集合地点：社区花园。"
+    },
+    {
+      "id": "us-evt-fun-run",
+      "date": "2026-11-07",
+      "title_en": "Fun Run",
+      "title_es": "Carrera divertida",
+      "title_zh-CN": "欢乐跑",
+      "description_en": "A relaxed 5K along the Woodland Walking Trail. All ages and paces welcome.",
+      "description_es": "Una carrera tranquila de 5 km por el sendero del bosque. Todas las edades y ritmos son bienvenidos.",
+      "description_zh-CN": "沿林间步道举行的轻松 5 公里跑，欢迎各年龄段和各种速度的居民参加。"
+    },
+    {
+      "id": "us-evt-food-drive",
+      "date": "2026-11-14",
+      "title_en": "Neighborhood Food Drive",
+      "title_es": "Colecta de alimentos del vecindario",
+      "title_zh-CN": "社区食物捐赠活动",
+      "description_en": "Drop off non-perishable food at the Clubhouse between 10:00 AM and 2:00 PM.",
+      "description_es": "Deje alimentos no perecederos en la casa club entre las 10:00 y las 14:00.",
+      "description_zh-CN": "上午 10:00 至下午 2:00 可将不易变质的食品送至社区会所。"
+    },
+    {
+      "id": "us-evt-thanksgiving",
+      "date": "2026-11-26",
+      "title_en": "Community Thanksgiving Potluck",
+      "title_es": "Cena comunitaria de Acción de Gracias",
+      "title_zh-CN": "社区感恩节聚餐",
+      "description_en": "Bring a dish to share at the Clubhouse. Sign-up helps us plan seating.",
+      "description_es": "Traiga un plato para compartir en la casa club. La inscripción nos ayuda a organizar los asientos.",
+      "description_zh-CN": "请带一道菜到社区会所共享。提前报名有助于安排座位。"
+    }
+  ],
+  "services": [
+    {
+      "category_en": "Plumbing",
+      "category_es": "Fontanería",
+      "category_zh-CN": "管道维修",
+      "name_en": "Rose City Plumbing Co-op (Demo)",
+      "name_es": "Cooperativa de Fontanería Rose City (Demo)",
+      "name_zh-CN": "玫瑰城管道维修合作社（演示）",
+      "contact": "503-555-0101",
+      "email": "plumbing@example.com",
+      "note_en": "Fictional Portland-area demo provider for leak checks and fixture repairs. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para fugas y reparaciones. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供漏水检查和设施维修。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Electrical",
+      "category_es": "Electricidad",
+      "category_zh-CN": "电气维修",
+      "name_en": "Cascadia Community Electric (Demo)",
+      "name_es": "Electricidad Comunitaria Cascadia (Demo)",
+      "name_zh-CN": "卡斯卡迪亚社区电气服务（演示）",
+      "contact": "503-555-0102",
+      "email": "electric@example.com",
+      "note_en": "Fictional Portland-area demo provider for lighting, outlet and safety-check requests. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para iluminación, enchufes y revisiones de seguridad. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供照明、插座和安全检查需求。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Heating & Cooling",
+      "category_es": "Calefacción y climatización",
+      "category_zh-CN": "暖通空调",
+      "name_en": "Northbank Heating & Cooling (Demo)",
+      "name_es": "Calefacción y Climatización Northbank (Demo)",
+      "name_zh-CN": "北岸暖通空调服务（演示）",
+      "contact": "503-555-0103",
+      "email": "hvac@example.com",
+      "note_en": "Fictional Portland-area demo provider for seasonal HVAC maintenance and filter changes. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para mantenimiento estacional de climatización y cambio de filtros. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供季节性暖通维护和滤网更换。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Carpentry",
+      "category_es": "Carpintería",
+      "category_zh-CN": "木工",
+      "name_en": "Stumptown Woodworks (Demo)",
+      "name_es": "Carpintería Stumptown (Demo)",
+      "name_zh-CN": "树墩城木工服务（演示）",
+      "contact": "503-555-0104",
+      "email": "woodwork@example.com",
+      "note_en": "Fictional Portland-area demo provider for shelving, cabinet adjustments and small wood repairs. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para estanterías, ajustes de armarios y pequeñas reparaciones de madera. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供置物架、橱柜调整和小型木工维修。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Home Cleaning",
+      "category_es": "Limpieza del hogar",
+      "category_zh-CN": "家庭清洁",
+      "name_en": "Fern & Stone Home Care (Demo)",
+      "name_es": "Limpieza del Hogar Fern & Stone (Demo)",
+      "name_zh-CN": "蕨石家庭清洁服务（演示）",
+      "contact": "503-555-0105",
+      "email": "cleaning@example.com",
+      "note_en": "Fictional Portland-area demo provider for move-in cleaning and recurring home care. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para limpieza de entrada y mantenimiento periódico del hogar. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供入住清洁和定期家庭清洁。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Painting",
+      "category_es": "Pintura",
+      "category_zh-CN": "粉刷",
+      "name_en": "Bridgeview Paint & Repair (Demo)",
+      "name_es": "Pintura y Reparaciones Bridgeview (Demo)",
+      "name_zh-CN": "桥景粉刷与维修（演示）",
+      "contact": "503-555-0106",
+      "email": "paint@example.com",
+      "note_en": "Fictional Portland-area demo provider for touch-ups, small-room painting and patch repairs. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para retoques, pintura de habitaciones y reparación de paredes. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供补漆、小房间粉刷和墙面修补。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Landscaping",
+      "category_es": "Paisajismo",
+      "category_zh-CN": "园林绿化",
+      "name_en": "Willamette Garden Services (Demo)",
+      "name_es": "Servicios de Jardinería Willamette (Demo)",
+      "name_zh-CN": "威拉米特园艺服务（演示）",
+      "contact": "503-555-0107",
+      "email": "garden@example.com",
+      "note_en": "Fictional Portland-area demo provider for native planting, pruning and small-garden care. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para plantas autóctonas, poda y cuidado de jardines pequeños. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供本地植物种植、修剪和小型花园维护。联系方式为占位信息。"
+    },
+    {
+      "category_en": "Handyman",
+      "category_es": "Reparaciones del hogar",
+      "category_zh-CN": "家居维修",
+      "name_en": "Neighborhood Fix-It Collective (Demo)",
+      "name_es": "Colectivo Vecinal de Reparaciones (Demo)",
+      "name_zh-CN": "邻里家居维修合作社（演示）",
+      "contact": "503-555-0108",
+      "email": "handyman@example.com",
+      "note_en": "Fictional Portland-area demo provider for minor home repairs and accessibility upgrades. Contact details are placeholders.",
+      "note_es": "Proveedor ficticio de demostración en Portland para pequeñas reparaciones y mejoras de accesibilidad. Los datos de contacto son provisionales.",
+      "note_zh-CN": "波特兰地区虚构演示服务商，提供小型家居维修和无障碍改造。联系方式为占位信息。"
+    }
+  ],
+  "faq": [
+    {
+      "q_en": "How do I reserve the Clubhouse?",
+      "q_es": "¿Cómo reservo la casa club?",
+      "q_zh-CN": "如何预约社区会所？",
+      "a_en": "Submit a request to the management office at least 7 days ahead. Reservations are confirmed by email.",
+      "a_es": "Envíe una solicitud a la oficina de administración con al menos 7 días de antelación. Las reservas se confirman por correo electrónico.",
+      "a_zh-CN": "请至少提前 7 天向物业办公室提交申请，预约结果将通过电子邮件确认。"
+    },
+    {
+      "q_en": "What are the quiet hours?",
+      "q_es": "¿Cuál es el horario de silencio?",
+      "q_zh-CN": "安静时段是几点？",
+      "a_en": "Quiet hours are 10:00 PM to 7:00 AM every day.",
+      "a_es": "El horario de silencio es de 22:00 a 7:00 todos los días.",
+      "a_zh-CN": "每天晚上 10:00 至早上 7:00 为安静时段。"
+    },
+    {
+      "q_en": "Where do I put food scraps and recycling?",
+      "q_es": "¿Dónde dejo los restos de comida y el reciclaje?",
+      "q_zh-CN": "厨余和可回收物放在哪里？",
+      "a_en": "Use the labeled bins at the Recycling & Compost Center. Food scraps go in the compost bin without plastic bags.",
+      "a_es": "Use los contenedores etiquetados del Centro de reciclaje y compostaje. Los restos de comida van al contenedor de compost sin bolsas de plástico.",
+      "a_zh-CN": "请使用回收与堆肥中心的标识垃圾桶。厨余投入堆肥桶，请勿使用塑料袋。"
+    },
+    {
+      "q_en": "Can I charge my electric vehicle?",
+      "q_es": "¿Puedo cargar mi vehículo eléctrico?",
+      "q_zh-CN": "可以给电动车充电吗？",
+      "a_en": "Yes. Level 2 chargers are in the resident and visitor parking areas. Please move your car once it is charged.",
+      "a_es": "Sí. Hay cargadores de nivel 2 en las zonas de estacionamiento de residentes y visitantes. Retire su auto al terminar la carga.",
+      "a_zh-CN": "可以。居民和访客停车区均设有 2 级充电桩，充满后请及时挪车。"
+    },
+    {
+      "q_en": "Are pets allowed?",
+      "q_es": "¿Se permiten mascotas?",
+      "q_zh-CN": "可以养宠物吗？",
+      "a_en": "Pets are welcome on a leash in outdoor common areas. Please clean up after your pet.",
+      "a_es": "Se permiten mascotas con correa en las áreas comunes al aire libre. Recoja siempre los desechos de su mascota.",
+      "a_zh-CN": "欢迎携带宠物，在户外公共区域须牵绳，并请及时清理宠物排泄物。"
+    },
+    {
+      "q_en": "How do I report a maintenance problem?",
+      "q_es": "¿Cómo reporto un problema de mantenimiento?",
+      "q_zh-CN": "如何报修？",
+      "a_en": "Contact the management office during office hours. For urgent issues after hours, call the 24-hour security desk.",
+      "a_es": "Comuníquese con la oficina de administración en su horario. Para urgencias fuera de horario, llame al mostrador de seguridad 24 horas.",
+      "a_zh-CN": "办公时间请联系物业办公室；非办公时间如有紧急问题，请致电 24 小时保安台。"
+    }
+  ],
+  "rules": {
+    "note": "Sample community rules; Lucas should edit to taste.",
+    "items_en": [
+      "Quiet hours: 10:00 PM - 7:00 AM.",
+      "No smoking or vaping indoors or within common buildings.",
+      "Pets must be on a leash in outdoor common areas.",
+      "Sort waste into recycling, compost and landfill bins.",
+      "Guest parking is limited to 48 hours without management approval.",
+      "Move electric vehicles promptly once charging is complete."
+    ],
+    "items_es": [
+      "El horario de silencio es de 22:00 a 7:00.",
+      "No se permite fumar ni vapear en interiores ni en los edificios comunes.",
+      "Las mascotas deben llevar correa en las zonas comunes exteriores.",
+      "Separa los residuos en reciclaje, compost y basura general.",
+      "El estacionamiento para visitantes está limitado a 48 horas sin autorización de la administración.",
+      "Retira tu vehículo eléctrico cuando termine la carga."
+    ],
+    "items_zh-CN": [
+      "安静时段为晚上 10:00 至早上 7:00。",
+      "室内及公共建筑内禁止吸烟或使用电子烟。",
+      "宠物在室外公共区域必须使用牵引绳。",
+      "请将垃圾分类投入可回收物、堆肥和其他垃圾箱。",
+      "未经管理处批准，访客停车最长为 48 小时。",
+      "电动汽车充电完成后，请及时驶离充电位。"
+    ]
+  },
+  "newsletter": {
+    "subscribeTitle_en": "Stay in the loop",
+    "subscribeTitle_es": "Manténgase al día",
+    "subscribeTitle_zh-CN": "随时了解社区动态",
+    "subscribeText_en": "Monthly updates on events, announcements and community news.",
+    "subscribeText_es": "Novedades mensuales sobre eventos, anuncios y noticias de la comunidad.",
+    "subscribeText_zh-CN": "每月推送活动、公告和社区新闻。"
+  },
+  "aiKnowledge": {
+    "path": "locations/US/settings/ai",
+    "systemContext_en": "You are the assistant for MYCELIUM Residences - Portland, a resident community in Portland, Oregon, USA. Answer only with information about this location. Times are Pacific Time. Currency is USD and distances are in miles. Emergency number: 911. City non-emergency: 311. Crisis lifeline: 988. Management office: Mon-Fri 9:00 AM - 5:00 PM PT. Facilities: Community Garden, Fitness Center, Co-working Lounge, Bike Hub, EV Charging, Recycling & Compost Center, Woodland Walking Trail (0.8 mi loop), Clubhouse. Quiet hours 10 PM - 7 AM. If you do not know, say so and suggest contacting the management office. Do not use Malaysian information (MYR, Malaysian emergency numbers or facilities) for this location."
+  }
+}

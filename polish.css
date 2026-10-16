@@ -1,0 +1,334 @@
+/* ==========================================================================
+   polish.css — loaded AFTER style.css. Visual refinement only; no behaviour changes.
+   Sections: 1 tokens · 2 line icons · 3 Features cards · 4 Menu slides · 5 soft buttons & feedback
+             6 windowed-viewport fixes · 7 mobile · 8 footer hint · 9 reduced motion
+   Colours come only from the existing palette in style.css (:root).
+   ========================================================================== */
+
+/* 1 · Tokens ------------------------------------------------------------- */
+:root {
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 28px;
+  --radius-pill: 999px;
+  --card-bg: rgba(251, 250, 245, 0.72);
+  --card-bg-hover: #fbfaf5;
+  --lift: 0 14px 32px rgba(24, 61, 50, 0.08);
+}
+
+/* 2 · One line-icon style everywhere: 1.5px stroke, no fill ---------------- */
+.line-icon {
+  flex: none;
+  width: 36px;
+  height: 36px;
+  fill: none;
+  stroke: var(--pine);
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 3 · Features cards -------------------------------------------------------- */
+.features {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: clamp(16px, 2.2vw, 32px);
+  padding: clamp(48px, 7vw, 96px) clamp(20px, 5vw, 72px) clamp(56px, 8vw, 112px);
+  border-top: 0;
+  background: var(--paper);
+}
+.features-intro {
+  grid-column: 1 / -1;
+  max-width: 42rem;
+  padding: 0 0 clamp(8px, 2vw, 24px);
+  border: 0;
+  background: transparent;
+  justify-content: flex-start;
+}
+.features > .feature {
+  position: relative;
+  min-height: 292px;
+  padding: 32px 28px 28px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--card-bg);
+  transform: none; /* removes the 3D pointer tilt: calmer, more premium */
+  transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease), border-color 0.3s ease, background 0.3s ease;
+}
+.features > .feature:hover,
+.features > .feature:focus-visible,
+.features > .feature.is-pointer-following {
+  transform: translateY(-4px);
+  border-color: rgba(24, 61, 50, 0.32);
+  background: var(--card-bg-hover);
+  box-shadow: var(--lift);
+}
+.features > .feature:focus-visible { outline: 2px solid var(--moss); outline-offset: 3px; }
+.features > .feature .feature-icon { width: 40px; height: 40px; margin: 0 0 28px; }
+.features > .feature .feature-index {
+  position: absolute;
+  top: 30px;
+  right: 28px;
+  margin: 0;
+  color: var(--ink-soft);
+  opacity: 0.7;
+}
+.features > .feature .featureTitle {
+  margin: 0 0 10px;
+  font-size: 1.28rem;
+  font-weight: 600;
+  line-height: 1.25;
+  text-wrap: balance;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.features > .feature .featureDesc {
+  font-size: 0.92rem;
+  line-height: 1.65;
+  text-wrap: pretty;
+  overflow-wrap: normal;
+}
+/* "Click to read more" is now always visible as a quiet text link */
+.features > .feature .feature-tooltip {
+  position: static;
+  margin-top: auto;
+  padding-top: 22px;
+  opacity: 1;
+  visibility: visible;
+  color: var(--pine);
+}
+.features > .feature .feature-tooltip::after {
+  content: "→";
+  display: inline-block;
+  margin-left: 8px;
+  transition: transform 0.35s var(--ease);
+}
+.features > .feature:hover .feature-tooltip::after { transform: translateX(4px); }
+
+@media (max-width: 1100px) {
+  .features { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .features > .feature:nth-child(odd) { border-right: 1px solid var(--line); }
+}
+
+/* 4 · Menu slides (Announcement, Facilities, Directory, Events, Volunteer, FAQ) --- */
+.slider :is(.sliderItem, .sliderItem2, .sliderItem3, .sliderItem4, .sliderItem5, .sliderItem6) {
+  grid-template-columns: auto minmax(0, 520px);
+  gap: clamp(32px, 7vw, 96px);
+  padding: 96px clamp(24px, 6vw, 88px) 96px;
+}
+.slide-icon {
+  display: grid;
+  place-items: center;
+  width: clamp(120px, 14vw, 176px);
+  aspect-ratio: 1;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: var(--card-bg);
+}
+.slide-icon .line-icon { width: 44%; height: 44%; }
+
+/* The icon joins the existing arrival choreography that the old artwork used (--enter, drift, scale) */
+.slider .slide-icon {
+  transform: translate3d(0, calc((1 - var(--enter, 1)) * 22vh), 0);
+  opacity: clamp(0, calc((var(--enter, 1) - 0.15) * 2), 1);
+  translate: var(--slide-drift-x, 0px) var(--slide-drift-y, 0px);
+  scale: 0.965;
+  transition: scale 900ms var(--ease), translate 520ms var(--ease);
+}
+.slider :is(.sliderItem, .sliderItem2, .sliderItem3, .sliderItem4, .sliderItem5, .sliderItem6).is-current .slide-icon { scale: 1; }
+
+.slider :is(.sliderTitle1, .sliderTitle2, .sliderTitle3, .sliderTitle4, .sliderTitle5, .sliderTitle6) {
+  text-wrap: balance;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+.slider :is(.d1, .d2, .d3, .d4, .d5, .d6) {
+  line-height: 1.75;
+  max-width: 34rem;
+  text-wrap: pretty;
+}
+
+/* 5 · Softer buttons and fields, with quiet hover/press feedback ---------------- */
+:is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6,
+    .intro-btn, .intro-location-btn, .volunteerRegisterBtn, .volunteerSubmitBtn,
+    .footer-newsletter-btn, .report-submit-btn, .announcementReadMoreBtn, .report-btn,
+    .calendar-nav-btn, .service-nav-btn, .quick-reply-btn, .ai-mode-btn, .send-chat-btn,
+    .lang-toggle-btn, .back-to-top-btn) {
+  border-radius: var(--radius-pill);
+  transition: background-color 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease),
+    transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
+}
+:is(.footer-newsletter-input, .report-input) { border-radius: var(--radius-sm); }
+.report-textarea { border-radius: var(--radius-md); }
+:is(.report-form-card, .feature-modal-card) { border-radius: var(--radius-lg); }
+:is(.feature-detail-panel) { border-radius: var(--radius-md); }
+.chatbot { border-radius: var(--radius-md); overflow: hidden; }
+
+@media (hover: hover) {
+  :is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6,
+      .intro-btn, .intro-location-btn, .volunteerRegisterBtn, .volunteerSubmitBtn,
+      .footer-newsletter-btn, .report-submit-btn, .announcementReadMoreBtn):hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(24, 61, 50, 0.12);
+  }
+}
+:is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6,
+    .intro-btn, .intro-location-btn, .volunteerRegisterBtn, .volunteerSubmitBtn,
+    .footer-newsletter-btn, .report-submit-btn, .announcementReadMoreBtn):active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: none;
+}
+:is(a, button, [role="button"], input, textarea, select):focus-visible {
+  outline: 2px solid var(--moss);
+  outline-offset: 3px;
+}
+
+/* 6 · Normal (non-fullscreen) browser windows: nothing may sit under the browser UI --------
+   Several rules used 100vh / fixed pixel heights, which only fit when the browser is fullscreen.
+   svh = the visible height with browser bars showing. */
+.chatbot {
+  height: min(540px, calc(100svh - 120px));
+  max-height: calc(100svh - 120px);
+}
+.chatbot-toggler { bottom: max(24px, env(safe-area-inset-bottom)); right: max(24px, env(safe-area-inset-right)); }
+.lang-switcher-wrap { bottom: max(28px, env(safe-area-inset-bottom)); left: max(24px, env(safe-area-inset-left)); }
+.back-to-top-btn { bottom: max(88px, calc(env(safe-area-inset-bottom) + 60px)); left: max(24px, env(safe-area-inset-left)); }
+:is(.feature-modal-card, .report-form-card) { max-height: 88svh; overflow-y: auto; }
+
+/* The hero headline scales with window HEIGHT too, so title + copy + both buttons always fit */
+.intro-hero-inner { padding-bottom: clamp(24px, 6svh, 72px); }
+.intro-title { font-size: clamp(2.2rem, min(6vw, 9.5svh), 5.2rem); margin-bottom: clamp(12px, 2.4svh, 20px); }
+.intro-desc { margin-bottom: clamp(18px, 3.4svh, 32px); text-wrap: pretty; }
+.intro-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 14px; pointer-events: auto; }
+@media (max-height: 640px) {
+  .intro-kicker { margin-bottom: 8px; }
+  .intro-desc { font-size: 0.95rem; }
+}
+
+/* 7 · Mobile: a different layout, not a squeezed desktop --------------------------------- */
+@media (max-width: 760px) {
+  body { -webkit-text-size-adjust: 100%; }
+  h1, h2, h3, .section-title, .intro-title { text-wrap: balance; overflow-wrap: normal; word-break: normal; hyphens: manual; }
+  p, .featureDesc { text-wrap: pretty; overflow-wrap: break-word; word-break: normal; }
+
+  /* Hero: stacked, thumb-reachable actions */
+  .intro-hero-inner { padding: 0 24px calc(72px + env(safe-area-inset-bottom)); }
+  .intro-title { font-size: clamp(2.3rem, 11vw, 3.2rem); line-height: 1.08; }
+  .intro-actions { flex-direction: column; align-items: stretch; width: min(100%, 340px); margin: 0 auto; gap: 12px; }
+  .intro-btn, .intro-location-btn { width: 100%; min-height: 52px; justify-content: center; text-align: center; white-space: normal; }
+
+  /* Menu slides: icon above copy, left-aligned, one clear action */
+  .slider :is(.sliderItem, .sliderItem2, .sliderItem3, .sliderItem4, .sliderItem5, .sliderItem6) {
+    grid-template-columns: minmax(0, 1fr);
+    align-content: center;
+    justify-items: start;
+    gap: 28px;
+    padding: 76px 24px calc(96px + env(safe-area-inset-bottom));
+  }
+  .slide-icon { width: 92px; }
+  .slider :is(.sliderTitle1, .sliderTitle2, .sliderTitle3, .sliderTitle4, .sliderTitle5, .sliderTitle6) {
+    font-size: clamp(2rem, 9.5vw, 2.7rem);
+    line-height: 1.08;
+  }
+  .slider :is(.d1, .d2, .d3, .d4, .d5, .d6) { font-size: 1rem; line-height: 1.7; }
+  .slider :is(.d1, .d2, .d3, .d4, .d5, .d6) br { display: none; } /* hard line breaks fight narrow screens */
+  .slider :is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6) {
+    width: 100%;
+    max-width: 340px;
+    min-height: 52px;
+    justify-content: center;
+    text-align: center;
+  }
+  .slider .hero-meta { padding-inline: 24px; }
+  .hero-kicker { left: 0; }
+
+  /* Features: one calm column; icon beside copy instead of a tall stacked card */
+  .features { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 40px 20px 64px; }
+  .features > .feature {
+    display: grid;
+    grid-template-columns: 44px minmax(0, 1fr);
+    column-gap: 18px;
+    align-items: start;
+    min-height: 0;
+    padding: 24px 22px;
+  }
+  .features > .feature .feature-icon { grid-row: 1 / span 3; margin: 2px 0 0; width: 36px; height: 36px; }
+  .features > .feature > :not(.feature-icon) { grid-column: 2; }
+  .features > .feature .feature-index { display: none; }
+  .features > .feature .feature-tooltip { padding-top: 14px; }
+
+  /* Footer / forms: comfortable tap targets */
+  .footer-newsletter-form { flex-direction: column; align-items: stretch; gap: 10px; }
+  .footer-newsletter-input, .footer-newsletter-btn { width: 100%; min-height: 50px; }
+  .report-input, .report-textarea { font-size: 16px; } /* prevents iOS zoom-on-focus */
+
+  .chatbot { right: 12px; left: 12px; width: auto; bottom: 84px; }
+}
+
+/* 8 · Footer hint under the newsletter field (added by footer-actions.js) ------------------ */
+.footer-newsletter-hint { margin: 10px 0 0; color: inherit; opacity: 0.7; font-size: 0.78rem; line-height: 1.6; }
+.footer-newsletter-btn { transition: background-color 0.3s var(--ease), color 0.3s var(--ease), transform 0.35s var(--ease), box-shadow 0.35s var(--ease); }
+
+/* 9 · Reduced motion ------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .features > .feature,
+  .features > .feature .feature-tooltip::after,
+  :is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6, .intro-btn, .intro-location-btn) {
+    transition: none;
+  }
+  .features > .feature:hover, .features > .feature.is-pointer-following { transform: none; }
+}
+
+/* Menu slider drag state (swipe-nav.js) */
+.slider.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+
+/* Gallery drag (gallery.js) */
+.gallery-viewport.is-dragging { cursor: grabbing; user-select: none; -webkit-user-select: none; }
+.gallery-card img { -webkit-user-drag: none; user-select: none; }
+
+/* 10 · Globe loading placeholder (country-selector.js) --------------------------------------
+   The panel opens instantly; a quiet disc stands in for the globe, then the canvas fades in. */
+.country-globe-canvas { transition: opacity 0.7s var(--ease); }
+.country-picker.is-globe-loading .country-globe-canvas { opacity: 0; }
+.country-globe-skeleton {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 18px;
+  pointer-events: none;
+  color: var(--paper);
+  transition: opacity 0.6s var(--ease), visibility 0.6s var(--ease);
+}
+.country-picker:not(.is-globe-loading) .country-globe-skeleton { opacity: 0; visibility: hidden; }
+.country-globe-skeleton-disc {
+  width: min(62%, 340px);
+  aspect-ratio: 1;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  opacity: 0.28;
+  animation: globeSkeletonPulse 2.4s ease-in-out infinite;
+}
+.country-globe-skeleton-text { font-size: 0.8rem; letter-spacing: 0.04em; opacity: 0.7; text-align: center; text-wrap: balance; padding: 0 24px; }
+@keyframes globeSkeletonPulse { 0%, 100% { transform: scale(0.97); opacity: 0.18; } 50% { transform: scale(1); opacity: 0.34; } }
+@media (prefers-reduced-motion: reduce) {
+  .country-globe-skeleton-disc { animation: none; }
+  .country-globe-canvas, .country-globe-skeleton { transition: none; }
+}
+
+/* 11 · Loading screen -> hero: the logo mark becomes a window and we dive through it (loading-reveal.js)
+   Engages only when the script adds .is-revealing; without it the original fade is unchanged. */
+.loading-screen.is-revealing {
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: none;
+  background: transparent;
+  transition: none;
+}
+.loading-screen.is-revealing::before,
+.loading-screen.is-revealing::after { opacity: 0; transition: opacity 0.35s ease; }
+.loading-screen.is-revealing .loading-inner { opacity: 0; transition: opacity 0.4s ease; }
+.loading-screen.is-revealed { display: none !important; }
+.loading-reveal { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
+.loading-reveal svg { display: block; width: 100%; height: 100%; }

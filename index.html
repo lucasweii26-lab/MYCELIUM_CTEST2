@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <base href="/">
+    <script>
+  // Always start at the top of the hero: no hash jump, no restored scroll position.
+  try { history.scrollRestoration = 'manual'; } catch (e) {}
+  if (location.hash === '#hero') {
+    history.replaceState(null, '', location.pathname + location.search);
+  }
+  addEventListener('load', function () { scrollTo(0, 0); }, { once: true });
+</script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Mycelium — a smart residential community for health, safety, and connected neighbourhood living.">
+    <title>Mycelium — Smart Community</title>
+    <link rel="icon" href="./img/Icon/WEBSITEICON.png" type="image/png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.26/dist/lenis.css">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./country-selector.css">
+  <link rel="stylesheet" href="./polish.css">
+    <link rel="preload" as="image" href="./hero-frames/frame_0001.webp" fetchpriority="high">
+</head>
+
+<body>
+  <a class="skip-link" href="#hero">Skip to content</a>
+
+    <div class="loading-screen">
+    <div class="loading-inner">
+      <p class="loading-kicker">Mycelium Residences</p>
+      <div class="loading-logo-wrap">
+        <img src="./img/Contact/MYCELIUMtext.png" width="390" height="125" alt="MYCELIUM Logo" class="loading-logo">
+        <div class="loading-shine"></div>
+      </div>
+      <div class="loading-brand-mark-wrap" aria-hidden="true">
+        <svg class="loading-brand-mark" viewBox="0 0 182 182" role="img" aria-label="Mycelium mark"><path class="logo-path" d="m 3.2857897,178.30168 -0.58462,-0.94594 8.2339403,-8.80406 8.23394,-8.80406 9.45176,-9.37697 9.45177,-9.37697 0.0899,-38.2898 0.0899,-38.289799 0.52632,-0.526221 0.52632,-0.526221 6.47368,9.022956 6.47368,9.022956 3.5,4.822237 3.5,4.822237 6.91301,9.847795 6.91301,9.8478 5.58293,7.5 5.58293,7.5 3.00406,4.17655 3.00406,4.17655 7.78059,11.07345 7.78058,11.07345 h 24.40203 24.40202 l 0.49322,-1.75 0.49321,-1.75 0.004,-54.984046 0.004,-54.984046 2.32008,-1.87884 2.32008,-1.87884 0.25941,59.862886 0.2594,59.862886 -0.48401,1.26562 -0.48402,1.26561 -28.19634,-0.26561 -28.19615,-0.26562 -10.8575,-15 -10.85749,-15 -4.65913,-6.5 -4.65913,-6.5 -8.06242,-11.203 -8.06243,-11.202998 -5,-7.012922 -5,-7.012922 -1.25,-0.03408 -1.25,-0.03408 v 7.794237 7.794237 l 3.25,5.194688 3.25,5.19468 8.5,11.72758 8.5,11.72758 3.59013,5.0335 3.59012,5.0335 6.65988,9.37943 6.65987,9.37943 v 0.87057 0.87057 H 56.91649 26.0806 l -4.63099,3.60797 -4.63099,3.60797 -0.62443,1.96739 -0.62442,1.96739 0.67488,0.67464 0.67487,0.67464 76.66643,0.0256 76.66643,0.0256 1.25,-0.89802 1.25,-0.89802 V 98.299488 24.596247 l 2.5,-2.348628 2.5,-2.348628 V 99.573305 179.24762 H 90.8114 3.8704097 Z M 78.135,155.43754 l 0.50066,-0.81008 -3.73187,-4.93992 -4.227098,-5.43516 -29.155242,-0.0596 -4.97557,4.97558 -4.97558,4.97558 0.65006,1.05181 0.65005,1.05182 h 22.38197 22.38197 z m -13.22195,-18.68992 -0.33932,-2 -3.72604,-5 -3.72604,-5 -5.84591,-7.77958 -5.8459,-7.77957 -1.08873,0.36291 -1.08873,0.36291 0.0833,1.66666 0.0833,1.66667 0.16666,12.43963 0.254217,13.09624 c 7.061608,0.0804 14.230151,0.068 21.412453,-0.0359 z M 2.7523797,84.121933 V 5.6476191 l 1.2,-1.2 1.2,-1.2000005 h 86.3000003 86.3 v 0.9595315 0.959531 l -2.35556,2.290469 -2.35557,2.290469 -7.85469,8.9999999 -7.8547,9 -14.53974,15.568351 -14.53974,15.568352 -17,18.267822 -17,18.267823 -3.24114,3.355135 -3.24113,3.355138 0.64015,1.80869 0.64015,1.80869 2.0253,2.25 2.0253,2.25 h 1.73517 1.73517 l 22.55745,-24.53041 22.55744,-24.530409 0.56488,0.02983 0.56487,0.02983 0.0905,11.750576 0.0905,11.750582 -0.12229,29.750001 -0.1223,29.75 h -29.70797 l -1.36128,-0.0369 c -10.33533,-12.97635 0.008,-0.64467 -13.88427,-18.96307 l -4.92952,-6.5 -5.19563,-7.5 -5.19564,-7.5 -4.61285,-6.365007 -4.61286,-6.365006 -8,-10.836619 -8,-10.836619 -6.5,-9.104636 -6.5,-9.104637 -3.25,-4.55293 -3.25,-4.552929 v -1.890809 -1.890809 h 44 44 v 0.976947 0.976947 l -2.30635,1.511181 -2.30636,1.511181 L 86.16339,43.099402 51.1871,42.9749 l -2.21736,0.703762 -2.21736,0.703762 v 1.005071 1.00507 l 7.46113,10.177542 7.46113,10.177542 6.55248,9 6.55247,9 4.23639,6.229193 4.2364,6.229192 1.5,0.02039 1.5,0.02039 8.06519,-8.74958 8.06518,-8.74958 3.90697,-4.5 3.90697,-4.5 10.98382,-12 10.98382,-12 7.92197,-8.148003 7.92197,-8.148004 0.81927,-1.325603 0.81927,-1.325604 -1.19722,-0.76108 -1.19721,-0.761085 -60.19098,-0.01531 -60.19099,-0.01531 -0.80901,1.25 -0.80902,1.25 -0.31776,55.479182 -0.31776,55.479183 -1.05468,1.27082 -1.05469,1.27082 H 21.62994 20.75238 V 81.747989 21.248359 l 67.75,0.05104 67.75,0.05104 4.75,-4.97706 4.75,-4.97706 V 10.321973 9.2476191 H 87.35937 8.9663597 l -0.60699,1.5817869 -0.60699,1.581788 v 72.743898 72.743898 l -2.5,2.34863 -2.5,2.34863 z m 134.7915903,53.620917 0.29158,-0.24507 0.0743,-30.17585 0.0743,-30.175841 -0.66386,-0.663865 -0.66387,-0.663866 -1.70203,1.056457 -1.70201,1.056458 -16.76467,17.908173 -16.76467,17.908174 -0.92042,1.56298 -0.92043,1.56298 4.6851,6.51388 c 8.46097,11.85801 10.77059,14.39336 11.38655,14.91408 7.87767,-0.0243 15.56277,0.0835 23.29854,-0.31362 z"/></svg>
+      </div>
+      <p class="loading-system-label" aria-hidden="true">COMMUNITY SYSTEM <span>//</span> INITIALISING</p>
+      <p class="loading-tagline">
+        <span class="tagline-line">Empowering health</span>
+        <span class="tagline-line">Enriching lives</span>
+      </p>
+      <div class="loading-bar-container">
+        <div class="loading-bar">
+          <div class="loading-bar-shine"></div>
+        </div>
+      </div>
+      <p class="loading-progress-value" aria-live="polite">0%</p>
+    </div>
+  </div>
+
+  <main id="main-content" style="display: contents">
+  <div class="hero-sequence" id="heroSequence">
+  <section class="intro-hero" id="introHero">
+    <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
+    <div class="intro-hero-inner">
+      <p class="intro-kicker">MYCELIUM RESIDENCES</p>
+      <h1 class="intro-title">Smart living,<br>rooted in nature.</h1>
+      <p class="intro-desc" data-i18n="heroIntro.description">A gated residential community built for wellness, safety and connection.</p>
+      <div class="intro-actions">
+        <button class="intro-btn" type="button" onclick="scrollToNav()" data-i18n="heroIntro.explore">EXPLORE THE COMMUNITY</button>
+        <button class="intro-location-btn" type="button" data-open-country-picker><span data-country-hero-label data-i18n="heroIntro.chooseLocation">CHOOSE YOUR LOCATION</span> <span aria-hidden="true">↗</span></button>
+      </div>
+    </div>
+  </section>
+  </div>
+
+
+    <nav id="nav">
+        <div class="navTop">
+            <div class="navItem">
+                <img src="./img/Contact/MYCELIUM.png" alt="Mycelium Residences">
+                <a class="admin-access" href="/admin/login" aria-label="Administrator sign in" title="Administrator sign in"></a>
+            </div>
+
+            <button class="nav-toggle" id="navToggle" type="button" aria-expanded="false" aria-controls="navMenu" aria-label="Open menu">
+              <span></span>
+              <span></span>
+            </button>
+
+            <div class="nav-tools">
+              <button class="country-switcher" id="countrySwitcher" type="button" data-open-country-picker aria-haspopup="dialog" aria-controls="countryPicker">
+                <span class="country-switcher-label" data-country-nav-label>MYCELIUM LOCATION</span>
+                <span class="country-switcher-value" data-current-country>Malaysia</span>
+                <span class="country-switcher-chevron" aria-hidden="true">⌄</span>
+              </button>
+              <div class="search">
+                  <input type="text" placeholder="Search ....." class="searchInput" id="navSearchInput" data-i18n-placeholder="nav.searchPlaceholder">
+                  <img src="./img/Contact/MYCELIUM.png" width="20" height="20" alt="" class="searchIcon">
+              </div>
+            </div>
+        </div>
+
+    <div class="navBottom" id="navMenu">
+        <h3 class="menuItem" data-i18n="nav.announcement">ANNOUNCEMENT</h3>
+        <h3 class="menuItem" data-i18n="nav.facilities">FACILITIES</h3>
+        <h3 class="menuItem" data-i18n="nav.services">LOCAL SERVICE DIRECTORY</h3>
+        <h3 class="menuItem" data-i18n="nav.events">EVENTS</h3>
+        <h3 class="menuItem" data-i18n="nav.volunteer">VOLUNTEER REGISTRATION</h3>
+        <h3 class="menuItem" data-i18n="nav.faq">FAQ</h3>
+    </div>
+    </nav>
+
+    <section class="slider" id="hero">
+        <div class="hero-meta">
+          <p class="hero-kicker">Neighbourhood living, quietly elevated</p>
+          <p class="hero-index"><span data-hero-index>01</span><span class="hero-index-total"> / 06</span></p>
+        </div>
+        <div class="sliderWrapper">
+            <div class="sliderItem">
+                <div class="slide-icon" aria-hidden="true"><svg class="line-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 10v4a1 1 0 0 0 1 1h2l5 4V5L7 9H5a1 1 0 0 0-1 1z"/><path d="M16 9a4 4 0 0 1 0 6"/><path d="M18.5 6.5a8 8 0 0 1 0 11"/></svg></div>
+                <div class="sliderBg"></div>
+                <div class="announcementSlideContent">
+                    <p class="slide-label">01 — Notices</p>
+                    <h1 class="sliderTitle1" data-i18n="slider.announcement.title">ANNOUNCEMENT</h1>
+                    <p class="d1" data-i18n="slider.announcement.desc">Stay updated with the latest community news,<br>notices and important announcement</p>
+                    <button class="buyButton" id="openAnnouncementBtn" type="button" data-i18n="slider.announcement.btn">CHECK NOW !</button>
+                </div>
+            </div>
+            <div class="sliderItem2">
+                <div class="slide-icon" aria-hidden="true"><svg class="line-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21s-6.5-5.2-6.5-10.5a6.5 6.5 0 0 1 13 0C18.5 15.8 12 21 12 21z"/><circle cx="12" cy="10.5" r="2.3"/></svg></div>
+                <div class="sliderBg"></div>
+                <div class="sliderContent">
+                    <p class="slide-label">02 — Grounds</p>
+                    <h1 class="sliderTitle2" data-i18n="slider.facilities.title">FACILITIES</h1>
+                    <p class="d2" data-i18n="slider.facilities.desc">Explore community facilities,<br>including the gym, playground,<br>swimming pool and more</p>
+                    <button class="buyButton2" id="openMapBtn" type="button" data-i18n="slider.facilities.btn">CHECK NOW!</button>
+                </div>
+            </div>
+            <div class="sliderItem3">
+                <div class="slide-icon" aria-hidden="true"><svg class="line-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="5" y="3.5" width="14" height="17" rx="1.5"/><circle cx="12" cy="10" r="2.5"/><path d="M8 17c.6-2 2.2-3 4-3s3.4 1 4 3"/></svg></div>
+                <div class="sliderBg"></div>
+                <div class="sliderContent">
+                    <p class="slide-label">03 — Neighbours</p>
+                    <h1 class="sliderTitle3" data-i18n="slider.services.title">LOCAL SERVICE <br>DIRECTORY</h1>
+                    <p class="d3" data-i18n="slider.services.desc">Find trusted local services such as<br>plumbers, electricians, cleaners<br>and technicians</p>
+                    <button class="buyButton3" id="openServiceDirectoryBtn" data-lenis-prevent-wheel data-i18n="slider.services.btn">CONTACT NOW!</button>
+                </div>
+            </div>
+            <div class="sliderItem4">
+                <div class="slide-icon" aria-hidden="true"><svg class="line-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><rect x="4" y="5.5" width="16" height="14.5" rx="1.5"/><path d="M4 10h16M8.5 3.5v4M15.5 3.5v4"/></svg></div>
+                <div class="sliderBg"></div>
+                <div class="sliderContent">
+                    <p class="slide-label">04 — Calendar</p>
+                    <h1 class="sliderTitle4" data-i18n="slider.events.title">EVENTS</h1>
+                    <p class="d4" data-i18n="slider.events.desc">Discover upcoming community events,<br>activities and celebrations happening<br>near you</p>
+                    <button class="buyButton4" id="openCalendarBtn" type="button" data-i18n="slider.events.btn">CHECK NOW!</button>
+                </div>
+            </div>
+            <div class="sliderItem5">
+                <div class="slide-icon" aria-hidden="true"><svg class="line-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></div>
+                <div class="sliderBg"></div>
+                <div class="sliderContent">
+                    <p class="slide-label">05 — Give back</p>
+                    <h1 class="sliderTitle5" data-i18n="slider.volunteer.title">VOLUNTEER <br>REGISTRATION</h1>
+                    <p class="d5" data-i18n="slider.volunteer.desc">Join our volunteer team and make<br>a positive impact in the<br>community</p>
+                    <button class="buyButton5" id="openVolunteerBtn" type="button" data-i18n="slider.volunteer.btn">REGISTER NOW!</button>
+                </div>
+            </div>
+             <div class="sliderItem6">
+                <div class="slide-icon" aria-hidden="true"><svg class="line-icon " viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="8.5"/><path d="M9.7 9.6a2.4 2.4 0 1 1 3.4 2.2c-.7.4-1.1.9-1.1 1.7"/><path d="M12 16.6v.1"/></svg></div>
+                <div class="sliderBg"></div>
+                <div class="sliderContent">
+                    <p class="slide-label">06 — Guidance</p>
+                    <h1 class="sliderTitle6" data-i18n="slider.faq.title">FAQ</h1>
+                    <p class="d6" data-i18n="slider.faq.desc">Find quick answers to frequently asked<br>questions about community services<br>and facilities</p>
+                    <button class="buyButton6" id="openFAQBtn" data-i18n="slider.faq.btn">CHECK NOW!</button>
+                </div>
+            </div>
+         </div>
+         <div class="hero-dots" role="tablist" aria-label="Community sections">
+            <button class="hero-dot active" type="button" data-index="0" aria-label="Announcements"></button>
+            <button class="hero-dot" type="button" data-index="1" aria-label="Facilities"></button>
+            <button class="hero-dot" type="button" data-index="2" aria-label="Services"></button>
+            <button class="hero-dot" type="button" data-index="3" aria-label="Events"></button>
+            <button class="hero-dot" type="button" data-index="4" aria-label="Volunteer"></button>
+            <button class="hero-dot" type="button" data-index="5" aria-label="FAQ"></button>
+         </div>
+    </section>
+
+        <div class="announcement-overlay" id="announcementOverlay" aria-hidden="true">
+        <div class="announcement" id="announcement">
+            <button class="announcement-close-btn" id="announcementCloseBtn" type="button" aria-label="Close announcements">&times;</button>
+            <div class="announcementHeader">
+                <p class="section-kicker">Board</p>
+                <h1 class="announcementTitle" data-i18n="announcement.title">Announcement</h1>
+                <p class="announcementSubtitle" data-i18n="announcement.subtitle">Stay informed with the latest news and notices from your community</p>
+            </div>
+            <div class="announcementTabs">
+                <button class="announcementTab active" data-category="all" type="button" data-i18n="announcement.tabAll">All</button>
+                <button class="announcementTab" data-category="emergency" type="button" data-i18n="announcement.tabEmergency">Emergency</button>
+                <button class="announcementTab" data-category="maintenance" type="button" data-i18n="announcement.tabMaintenance">Maintenance</button>
+                <button class="announcementTab" data-category="community" type="button" data-i18n="announcement.tabCommunity">Community</button>
+                <button class="announcementTab" data-category="events" type="button" data-i18n="announcement.tabEvents">Events</button>
+            </div>
+            <div class="announcementContent">
+                <ul class="announcementList"></ul>
+            </div>
+        </div>
+    </div>
+
+        <div class="map-overlay" id="mapOverlay" aria-hidden="true">
+      <div class="map-modal" role="dialog" aria-modal="true" aria-label="Community facilities map">
+        <div class="map-modal-header">
+          <h2 data-i18n="map.title">Community Facilities Map</h2>
+          <button class="map-close-btn" id="mapCloseBtn" type="button" aria-label="Close map">&times;</button>
+        </div>
+        <div class="map-body">
+          <div class="map-image-wrap">
+            <img src="./img/Slide/facility_map.jpg" alt="Community site plan" class="map-image" loading="lazy" decoding="async">
+
+            <button class="pin" type="button" aria-pressed="false" aria-label="Tennis court" data-pin-id="tennis" data-name="Tennis court" data-desc="A tennis court near the front entrance, beside the row of front-facing homes." style="left: 8%; top: 16%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="clubhouse" data-name="Clubhouse" data-desc="The main community building, adjoining the pool deck and open lawn near the center of the neighborhood." style="left: 54%; top: 51%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="pool" data-name="Main pool" data-desc="The community's central pool with a sun deck, loungers, and umbrellas, right next to the clubhouse." style="left: 65%; top: 42%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="playground" data-name="Playground" data-desc="A sand-based play area with slide equipment, just behind the clubhouse." style="left: 66%; top: 65%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="park" data-name="Community park" data-desc="An open green lawn with a looping walking path, on the east side of the property." style="left: 83%; top: 50%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="parking" data-name="Guest parking" data-desc="A striped parking lot for residents and visitors, just south of the clubhouse." style="left: 64%; top: 83%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="basketball" data-name="Basketball court" data-desc="A basketball court near the southwest corner homes." style="left: 11%; top: 92%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="gym" data-name="Gym" data-desc="The grey-roofed house beside the basketball court, used as the community gym." style="left: 5%; top: 84%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="pond" data-name="Pond" data-desc="A natural pond along the southeast edge of the community, bordered by trees." style="left: 93%; top: 96%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="recycle1" data-name="Recycling point" data-desc="Recycling point near guest parking." style="left: 58%; top: 88%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+<button class="pin" data-pin-id="recycle2" data-name="Recycling point" data-desc="Recycling point near the bottom row of homes." style="left: 40%; top: 92%;">
+  <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
+</button>
+          </div>
+          <div class="map-info-box" id="mapInfoBox" aria-live="polite" aria-atomic="true">
+            <p class="map-info-title" id="mapInfoTitle"></p>
+            <p class="map-info-desc" id="mapInfoDesc"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <div class="calendar-overlay" id="calendarOverlay" aria-hidden="true">
+      <div class="calendar-titlebar">
+        <p class="section-kicker">Diary</p>
+        <h2 class="calendar-title" data-i18n="calendar.title">Community Events Calendar</h2>
+        <button class="calendar-close-btn" id="calendarCloseBtn" type="button" aria-label="Close calendar">&times;</button>
+      </div>
+    <div class="calendar-month-bar">
+        <button class="calendar-nav-btn" id="prevMonthBtn" type="button">‹</button>
+        <h3 class="calendar-month">JULY</h3>
+        <button class="calendar-nav-btn" id="nextMonthBtn" type="button">›</button>
+    </div>
+    <div class="calendar-body">
+        <table class="calendar-table">
+          <thead>
+            <tr>
+              <th class="cal-sun">Sun</th>
+              <th>Mon</th>
+              <th>Tue</th>
+              <th>Wed</th>
+              <th>Thu</th>
+              <th>Fri</th>
+              <th class="cal-sat">Sat</th>
+            </tr>
+          </thead>
+          <tbody id="calendarBody"></tbody>
+        </table>
+        <div class="calendar-info-box" id="calendarInfoBox">
+          <p class="calendar-info-hint" id="calendarInfoHint" data-i18n="calendar.hint">Click a starred date to see the upcoming community event.</p>
+          <p class="calendar-info-title" id="calendarInfoTitle"></p>
+          <p class="calendar-info-desc" id="calendarInfoDesc"></p>
+        </div>
+      </div>
+    </div>
+
+        <div class="service-section" id="serviceSection" aria-hidden="true" tabindex="-1" data-lenis-prevent-wheel>
+        <div class="service-section-header">
+            <h2 data-i18n="service.title">Local Service Directory</h2>
+            <button class="Service-Close-Btn" id="serviceCloseBtn" type="button" aria-label="Close directory">&times;</button>
+        </div>
+        <div class="service-section-body">
+            <div class="carousel-window-wrapper">
+                <div class="service-track" id="serviceTrack"></div>
+            </div>
+            <div class="service-carousel-controls">
+                <button class="service-nav-btn service-nav-prev" id="servicePrevBtn" disabled type="button">&#10094;</button>
+                <button class="service-nav-btn service-nav-next" id="serviceNextBtn" type="button">&#10095;</button>
+            </div>
+        </div>
+    </div>
+
+        <div class="faq-section" id="faqSection" aria-hidden="true">
+        <div class="faq-section-header">
+            <h2 data-i18n="faq.title">Frequently Asked Questions</h2>
+            <button class="FAQ-Close-Btn" id="faqCloseBtn" type="button" aria-label="Close FAQ">&times;</button>
+        </div>
+        <div class="faq-section-body" id="faqBody"></div>
+    </div>
+
+    <div class="volunteer" id="volunteer" aria-hidden="true">
+        <div class="volunteerHeader">
+            <p class="section-kicker" data-i18n="volunteer.kicker">Participate</p>
+            <h1 class="volunteerTitle" data-i18n="volunteer.title">Volunteer Registration</h1>
+            <p class="volunteerSubtitle" data-i18n="volunteer.subtitle">Join our volunteer team and make a positive impact in the community</p>
+        </div>
+        <div class="volunteerGrid">
+            <div class="volunteerCard">
+                <img src="./img/volunteer/tree.gif" alt="Tree Planting Day" class="volunteerImg" loading="lazy" decoding="async">
+                <div class="volunteerCardBody">
+                    <h2 class="volunteerCardTitle" data-i18n="volunteer.card1.title">Tree Planting Day</h2>
+                    <p class="volunteerCardDate" data-i18n="volunteer.card1.date">1 August 2026 · 8:00 AM · Community Park</p>
+                    <p class="volunteerCardDesc" data-i18n="volunteer.card1.desc">Help beautify our neighbourhood and promote environmental awareness by planting trees around the community.</p>
+                    <p class="volunteerCardBring" data-i18n="volunteer.card1.bring"><strong>What to bring:</strong> Gardening gloves, a small shovel, a reusable water bottle</p>
+                    <button class="volunteerRegisterBtn" type="button" data-activity="Tree Planting Day" data-i18n="volunteer.card1.btn">Register Now</button>
+                </div>
+            </div>
+            <div class="volunteerCard">
+                <img src="./img/volunteer/clean.gif" alt="Neighborhood Cleanup Day" class="volunteerImg" loading="lazy" decoding="async">
+                <div class="volunteerCardBody">
+                    <h2 class="volunteerCardTitle" data-i18n="volunteer.card2.title">Neighborhood Cleanup Day</h2>
+                    <p class="volunteerCardDate" data-i18n="volunteer.card2.date">9 August 2026 · 9:00 AM · Guest Parking Lot</p>
+                    <p class="volunteerCardDesc" data-i18n="volunteer.card2.desc">Join a walk-and-clean around the pond and park to help keep our community tidy and green.</p>
+                    <p class="volunteerCardBring" data-i18n="volunteer.card2.bring"><strong>What to bring:</strong> Gloves, face mask, tongs (garbage bags provided)</p>
+                    <button class="volunteerRegisterBtn" type="button" data-activity="Neighborhood Cleanup Day" data-i18n="volunteer.card2.btn">Register Now</button>
+                </div>
+            </div>
+            <div class="volunteerCard">
+                <img src="./img/volunteer/run.gif" alt="Fun Run Marshal" class="volunteerImg" loading="lazy" decoding="async">
+                <div class="volunteerCardBody">
+                    <h2 class="volunteerCardTitle" data-i18n="volunteer.card3.title">Fun Run Marshal</h2>
+                    <p class="volunteerCardDate" data-i18n="volunteer.card3.date">22 August 2026 · 7:00 AM · Community Park</p>
+                    <p class="volunteerCardDesc" data-i18n="volunteer.card3.desc">Support runners along the route as a marshal, guiding directions and handing out refreshments.</p>
+                    <p class="volunteerCardBring" data-i18n="volunteer.card3.bring"><strong>What to bring:</strong> Comfortable shoes, cap, reusable water bottle</p>
+                    <button class="volunteerRegisterBtn" type="button" data-activity="Fun Run Marshal" data-i18n="volunteer.card3.btn">Register Now</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+        <section class="features" aria-label="Community pillars">
+            <header class="features-intro">
+              <p class="section-kicker">The neighbourhood</p>
+              <h2 class="section-title">Four quiet promises of daily life</h2>
+            </header>
+
+<div class="feature feature-modal-trigger" data-modal="smartFacilitiesModal">
+    <svg class="line-icon feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 21V5.5A1.5 1.5 0 0 1 5.5 4h7A1.5 1.5 0 0 1 14 5.5V21"/><path d="M14 10h4.5a1.5 1.5 0 0 1 1.5 1.5V21"/><path d="M3 21h18"/><path d="M8 8h2M8 12h2M8 16h2"/></svg>
+    <span class="feature-index">01</span>
+    <span class="featureTitle" data-i18n="features.smart.title">SMART FACILITIES</span>
+    <span class="featureDesc" data-i18n="features.smart.desc">Access modern facilities and services designed to improve daily community life.</span>
+    <span class="feature-tooltip" data-i18n="features.tooltip">CLICK TO READ MORE</span>
+</div>
+
+
+<div class="feature feature-modal-trigger" data-modal="communitySafetyModal">
+    <svg class="line-icon feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 3l7 3v5.5c0 4.2-2.9 8-7 9.5-4.1-1.5-7-5.3-7-9.5V6l7-3z"/><path d="M9 12l2 2 4-4"/></svg>
+    <span class="feature-index">02</span>
+    <span class="featureTitle" data-i18n="features.safety.title">COMMUNITY SAFETY</span>
+    <span class="featureDesc" data-i18n="features.safety.desc">Creating a safer and more connected neighborhood.</span>
+    <span class="feature-tooltip" data-i18n="features.tooltip">CLICK TO READ MORE</span>
+</div>
+
+
+<div class="feature feature-modal-trigger" data-modal="greenLivingModal">
+    <svg class="line-icon feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M12 21v-8"/><path d="M12 13c0-4 3-6.5 7-6.5 0 4-2.7 6.5-7 6.5z"/><path d="M12 15c0-3-2.2-5-5.5-5C6.5 13 8.6 15 12 15z"/></svg>
+    <span class="feature-index">03</span>
+    <span class="featureTitle" data-i18n="features.green.title">GREEN LIVING</span>
+    <span class="featureDesc" data-i18n="features.green.desc">Promoting a clean, healthy and sustainable environment.</span>
+    <span class="feature-tooltip" data-i18n="features.tooltip">CLICK TO READ MORE</span>
+</div>
+
+
+<div class="feature feature-modal-trigger" id="connectWithUsBtn" data-modal="communityConnectModal">
+    <svg class="line-icon feature-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M5 5h14a1.5 1.5 0 0 1 1.5 1.5v8A1.5 1.5 0 0 1 19 16h-7l-4 3.5V16H5a1.5 1.5 0 0 1-1.5-1.5v-8A1.5 1.5 0 0 1 5 5z"/></svg>
+    <span class="feature-index">04</span>
+    <span class="featureTitle" data-i18n="features.connect.title">CONNECT WITH US</span>
+    <span class="featureDesc" data-i18n="features.connect.desc">Share ideas, feedback and stay connected with the community.</span>
+    <span class="feature-tooltip" data-i18n="features.tooltip">CLICK TO CONTACT</span>
+</div>
+    </section>
+
+    <section class="gallery" id="gallery" aria-label="Community gallery">
+        <header class="gallery-head">
+            <p class="section-kicker" data-g="kicker">Gallery</p>
+            <h2 class="section-title" data-g="title">Moments worth remembering</h2>
+            <p class="gallery-sub" data-g="sub">Scroll to travel back in time — newest on the left.</p>
+        </header>
+        <span class="gallery-progress" aria-hidden="true"><i></i></span>
+        <div class="gallery-viewport" id="galleryViewport">
+            <ol class="gallery-list" id="galleryList"></ol>
+        </div>
+    </section>
+
+    <div class="gallery-article" id="galleryArticle" role="dialog" aria-modal="true" aria-hidden="true" data-lenis-prevent></div>
+
+    <div class="product" id="product"></div>
+
+    <div class="volunteerFormOverlay" id="volunteerFormOverlay">
+        <div class="volunteerForm" role="dialog" aria-label="Volunteer registration form">
+            <span class="volunteerFormClose" id="volunteerFormClose">&times;</span>
+            <h1 class="volunteerFormTitle"  data-i18n="volunteer.formTitle">Register as a Volunteer</h1>
+            <p class="volunteerFormActivity" id="volunteerFormActivity"></p>
+            <form id="volunteerFormEl">
+                <label data-i18n="volunteer.fullName">Full Name</label>
+                <input type="text" placeholder="John Doe" data-i18n-placeholder="volunteer.namePlaceholder" class="volunteerInput" id="volFullName" required>
+
+                <label data-i18n="volunteer.phone">Phone Number</label>
+                <input type="text" placeholder="+6012 345 6781" class="volunteerInput" id="volPhone" maxlength="20" required>
+
+                <label data-i18n="volunteer.address">House Address</label>
+                <input type="text" placeholder="Elton St 21 22-145" data-i18n-placeholder="volunteer.addressPlaceholder" class="volunteerInput" id="volAddress" required>
+
+                <label data-i18n="volunteer.notes">Requirements / Notes (optional)</label>
+                <textarea placeholder="e.g. dietary restrictions, accessibility needs" data-i18n-placeholder="volunteer.notesPlaceholder" class="volunteerTextarea" id="volNotes"></textarea>
+
+                <button type="submit" class="volunteerSubmitBtn" data-i18n="volunteer.submitBtn">Submit Registration</button>
+            </form>
+        </div>
+    </div>
+
+    <button class="chatbot-toggler" type="button" aria-label="Open community chatbot" aria-expanded="false">
+        <span class="chatbot-open-icon" aria-hidden="true" data-i18n="chatbot.open">Chat</span>
+        <span class="chatbot-close-icon" aria-hidden="true">×</span>
+    </button>
+
+    <aside class="chatbot" aria-label="Smart Community chatbot" aria-hidden="true">
+        <header class="chatbot-header">
+            <button class="report-btn" type="button" aria-label="Submit feedback" data-i18n="chatbot.report">Report</button>
+            <h2 data-i18n="chatbot.title">Community Assistant</h2>
+            <button class="close-btn" type="button" aria-label="Close chatbot">×</button>
+        </header>
+
+        <ul class="chatbox" aria-live="polite">
+            <li class="chat incoming">
+                <span class="bot-avatar" aria-hidden="true">AI</span>
+                <p data-i18n="chatbot.welcome">Hi there. How can I help you today?</p>
+            </li>
+        </ul>
+
+        <div class="quick-replies">
+            <button class="quick-reply-btn" type="button" data-keyword="announcement" data-i18n="chatbot.quickReply.announcement">Announcements</button>
+<button class="quick-reply-btn" type="button" data-keyword="facilities" data-i18n="chatbot.quickReply.facilities">Facilities</button>
+<button class="quick-reply-btn" type="button" data-keyword="service" data-i18n="chatbot.quickReply.services">Services</button>
+<button class="quick-reply-btn" type="button" data-keyword="event" data-i18n="chatbot.quickReply.events">Events</button>
+<button class="quick-reply-btn" type="button" data-keyword="volunteer" data-i18n="chatbot.quickReply.volunteer">Volunteer</button>
+<button class="quick-reply-btn" type="button" data-keyword="faq" data-i18n="chatbot.quickReply.faq">FAQ</button>
+        </div>
+
+        <div class="chat-input">
+            <textarea data-i18n-placeholder="chatbot.placeholder" placeholder="Enter a message..." aria-label="Chat message" required></textarea>
+            <button class="ai-mode-btn" id="aiModeBtn" type="button" aria-label="Toggle AI mode">AI MODE</button>
+            <button class="send-chat-btn" type="button" aria-label="Send message" data-i18n="chatbot.send">Send</button>
+        </div>
+    </aside>
+
+    <div class="report-modal" id="reportModal" aria-hidden="true">
+        <div class="report-form-card">
+            <button class="report-close-btn" type="button" aria-label="Close report form">&times;</button>
+            <h3 class="report-title" data-i18n="report.title">Submit Feedback</h3>
+            <form id="reportForm">
+                <div class="form-row">
+                    <label data-i18n="report.name">Name</label>
+                    <input type="text" class="report-input" name="firstName" required>
+                </div>
+                <div class="form-row">
+                    <label data-i18n="report.surname">Surname</label>
+                    <input type="text" class="report-input" name="lastName" required>
+                </div>
+                <div class="form-row">
+                    <label data-i18n="report.contactNumber">Contact Number</label>
+                    <input type="tel" class="report-input" name="contactNumber" required>
+                </div>
+                <div class="form-row">
+                    <label data-i18n="report.email">Email Address</label>
+                    <input type="email" class="report-input" name="email" required>
+                </div>
+                <div class="form-row">
+                    <label data-i18n="report.address">Your Address</label>
+                    <input type="text" class="report-input" name="address">
+                </div>
+                <div class="form-row">
+                    <label data-i18n="report.message">Write Your Message</label>
+                    <textarea class="report-textarea" name="message" rows="4" required></textarea>
+                </div>
+                <div class="form-checkbox">
+                    <input type="checkbox" id="campaignUpdates" name="subscribeUpdates">
+                    <label for="campaignUpdates" data-i18n="report.subscribe">I would like to receive updates on campaigns.</label>
+                </div>
+                <button type="submit" class="report-submit-btn" data-i18n="report.submit">Submit</button>
+            </form>
+        </div>
+    </div>
+
+         <div class="feature-modal-overlay" id="smartFacilitiesModal" aria-hidden="true">
+    <div class="feature-modal-card">
+        <button class="feature-modal-close" type="button" aria-label="Close">&times;</button>
+        <h2 class="feature-modal-title" data-i18n="features.smart.modal.title">Smart Facilities</h2>
+        <div class="feature-modal-items">
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="16" y="12" width="32" height="40" rx="4"/>
+                    <line x1="24" y1="24" x2="40" y2="24"/>
+                    <line x1="24" y1="32" x2="40" y2="32"/>
+                    <circle cx="32" cy="44" r="4"/>
+                </svg>
+                <span data-i18n="features.smart.modal.items.digitalPayments">Digital Payments</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="12" y="16" width="40" height="36" rx="4"/>
+                    <line x1="12" y1="28" x2="52" y2="28"/>
+                    <line x1="22" y1="16" x2="22" y2="28"/>
+                    <line x1="42" y1="16" x2="42" y2="28"/>
+                    <rect x="20" y="36" width="8" height="8" rx="1"/>
+                    <rect x="36" y="36" width="8" height="8" rx="1"/>
+                </svg>
+                <span data-i18n="features.smart.modal.items.facilityBooking">Facility Booking</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <polygon points="32,12 48,24 48,40 32,52 16,40 16,24"/>
+                    <circle cx="32" cy="32" r="6"/>
+                    <path d="M32 12 V4 M32 52 V60 M12 24 H4 M52 24 H60 M12 40 H4 M52 40 H60"/>
+                </svg>
+                <span data-i18n="features.smart.modal.items.procurement">Procurement</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="12" y="16" width="40" height="32" rx="4"/>
+                    <line x1="20" y1="26" x2="44" y2="26"/>
+                    <line x1="20" y1="34" x2="36" y2="34"/>
+                    <line x1="20" y1="42" x2="32" y2="42"/>
+                    <path d="M44 38 L52 46 L44 54"/>
+                </svg>
+                <span data-i18n="features.smart.modal.items.eform">eForm</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+     <div class="feature-modal-overlay" id="communitySafetyModal" aria-hidden="true">
+    <div class="feature-modal-card">
+        <button class="feature-modal-close" type="button" aria-label="Close">&times;</button>
+        <h2 class="feature-modal-title" data-i18n="features.safety.modal.title">Community Safety</h2>
+        <div class="feature-modal-items">
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="16" y="12" width="32" height="40" rx="4"/>
+                    <line x1="24" y1="22" x2="40" y2="22"/>
+                    <line x1="24" y1="30" x2="40" y2="30"/>
+                    <line x1="24" y1="38" x2="36" y2="38"/>
+                    <path d="M44 28 L52 36 L44 44"/>
+                </svg>
+                <span data-i18n="features.safety.modal.items.contractManagement">Contract Management</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="32" cy="28" r="10"/>
+                    <path d="M16 52 C16 42 24 36 32 36 C40 36 48 42 48 52"/>
+                    <path d="M22 18 A10 10 0 0 1 42 18" fill="none"/>
+                </svg>
+                <span data-i18n="features.safety.modal.items.visitorManagement">Visitor Management</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="12" y="20" width="40" height="28" rx="4"/>
+                    <circle cx="32" cy="34" r="8"/>
+                    <path d="M20 48 L24 44"/>
+                    <path d="M44 44 L48 48"/>
+                    <line x1="12" y1="48" x2="52" y2="48"/>
+                </svg>
+                <span data-i18n="features.safety.modal.items.videoAnalytics">Video Analytics</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 24 L16 44 L24 48 L40 48 L48 44 L48 24 Z"/>
+                    <path d="M24 24 L24 16 L40 16 L40 24"/>
+                    <circle cx="32" cy="36" r="4"/>
+                </svg>
+                <span data-i18n="features.safety.modal.items.virtualPatrol">Virtual Patrol</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="feature-modal-overlay" id="greenLivingModal" aria-hidden="true">
+    <div class="feature-modal-card">
+        <button class="feature-modal-close" type="button" aria-label="Close">&times;</button>
+        <h2 class="feature-modal-title" data-i18n="features.green.modal.title">Green Living</h2>
+        <div class="feature-modal-items">
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M32 56 V36"/>
+                    <path d="M32 36 C32 28 24 24 16 24 C24 24 32 28 32 36"/>
+                    <path d="M32 36 C32 28 40 24 48 24 C40 24 32 28 32 36"/>
+                    <path d="M32 44 C32 36 24 32 16 32 C24 32 32 36 32 44"/>
+                    <path d="M32 44 C32 36 40 32 48 32 C40 32 32 36 32 44"/>
+                </svg>
+                <span data-i18n="features.green.modal.items.smartIrrigation">Smart Irrigation</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="16" y="20" width="32" height="36" rx="4"/>
+                    <path d="M24 28 L24 36 L32 36 L32 44 L40 44 L40 52"/>
+                    <circle cx="32" cy="24" r="2"/>
+                </svg>
+                <span data-i18n="features.green.modal.items.wasteManagement">Waste Management</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="20" y="16" width="24" height="32" rx="4"/>
+                    <path d="M28 52 L36 52"/>
+                    <path d="M32 48 V52"/>
+                    <circle cx="32" cy="28" r="6"/>
+                    <path d="M32 34 V40"/>
+                </svg>
+                <span data-i18n="features.green.modal.items.evCharging">EV Charging</span>
+            </div>
+            <div class="feature-modal-item">
+                <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M16 40 L32 16 L48 40 Z"/>
+                    <path d="M24 40 V48 L40 48 V40"/>
+                    <line x1="32" y1="28" x2="32" y2="36"/>
+                </svg>
+                <span data-i18n="features.green.modal.items.energyEfficiency">Energy Efficiency</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="feature-modal-overlay" id="communityConnectModal" aria-hidden="true">
+    <div class="feature-modal-card">
+        <button class="feature-modal-close" type="button" aria-label="Close">&times;</button>
+        <h2 class="feature-modal-title" data-i18n="features.connect.title">Connect with us</h2>
+        <p class="feature-modal-intro">Choose a community channel to learn how it works.</p>
+        <div class="feature-modal-items">
+            <div class="feature-modal-item"><span class="feature-detail-number">01</span><span>Community updates</span></div>
+            <div class="feature-modal-item"><span class="feature-detail-number">02</span><span>Events calendar</span></div>
+            <div class="feature-modal-item"><span class="feature-detail-number">03</span><span>Volunteer activities</span></div>
+            <div class="feature-modal-item"><span class="feature-detail-number">04</span><span>Contact management</span></div>
+        </div>
+    </div>
+</div>
+
+<div class="announcement-modal-overlay" id="announcementDetailModal" aria-hidden="true">
+    <div class="announcement-modal-card">
+        <button class="announcement-modal-close" type="button" aria-label="Close">&times;</button>
+        <h3 class="announcement-modal-title" id="announcementModalTitle"></h3>
+        <div class="announcement-modal-content" id="announcementModalContent"></div>
+    </div>
+</div>
+
+    <button id="backToTopBtn" class="back-to-top-btn" type="button" aria-label="Back to community menu">↑</button>
+
+<div class="lang-switcher-wrap">
+  <button id="langToggleBtn" class="lang-toggle-btn">
+    <span class="lang-icon">EN</span>
+    <span id="currentLangText">English</span>
+    <span class="lang-arrow">▾</span>
+  </button>
+  <div id="langPanel" class="lang-panel">
+    <button class="lang-item" data-lang="en">English</button>
+    <button class="lang-item" data-lang="es">Español</button>
+    <button class="lang-item" data-lang="zh-CN">简体中文</button>
+    <button class="lang-item" data-lang="ms">Bahasa Melayu</button>
+    <button class="lang-item" data-lang="ta">தமிழ்</button>
+  </div>
+</div>
+
+        </main>
+
+        <footer class="footer">
+        <div class="footer-container">
+            <div class="footer-col footer-brand">
+                <img src="./img/Contact/MYCELIUMtext.png" alt="MYCELIUM" class="footer-logo" loading="lazy" decoding="async">
+                <p class="footer-tagline" data-i18n="footer.tagline"></p>
+                <p class="footer-desc" data-i18n="footer.desc">Building a smarter, greener and more connected community for all residents.</p>
+                <div class="footer-socials">
+                    <a href="https://web.facebook.com/people/Mycelium-Residence/61592859503956/?rdid=4hiliZjmMM9vdLF2&share_url=https%3A%2F%2Fweb.facebook.com%2Fshare%2F1HFJfNJFCT%2F%3F_rdc%3D1%26_rdr" class="social-icon" aria-label="Facebook" target="_blank" rel="noopener noreferrer"><img src="./img/Contact/facebook.png" alt=""></a>
+                    <a href="https://www.instagram.com/myceliumresidence" class="social-icon" aria-label="Instagram" target="_blank" rel="noopener noreferrer"><img src="./img/Contact/instagram.png" alt=""></a>
+                    <a href="https://api.whatsapp.com/send/?phone=%2B60105570900&text&type=phone_number&app_absent=0&wame_ctl=1" class="social-icon" aria-label="WhatsApp" target="_blank" rel="noopener noreferrer"><img src="./img/Contact/whatsapp.png" alt=""></a>
+                    <a href="https://x.com/myceliumres" class="social-icon" aria-label="X" target="_blank" rel="noopener noreferrer"><img src="./img/Contact/twitter.png" alt=""></a>
+                    <a href="mailto:john.smith@company.com" class="social-icon" aria-label="Email Mycelium" data-region-email style="display:none"><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3.5 5.5h17v13h-17z"/><path d="m4 6 8 7 8-7"/></svg></a>
+                </div>
+            </div>
+<div class="footer-col">
+    <h4 class="footer-title" data-i18n="footer.quickLinks">Quick Links</h4>
+    <ul class="footer-links">
+        <li><a href="#" class="footer-link" data-slide="0" data-i18n="footer.linkAnnouncement">Announcements</a></li>
+        <li><a href="#" class="footer-link" data-slide="1" data-i18n="footer.linkMap">Facilities Map</a></li>
+        <li><a href="#" class="footer-link" data-slide="2" data-i18n="footer.linkService">Service Directory</a></li>
+        <li><a href="#" class="footer-link" data-slide="3" data-i18n="footer.linkEvent">Events Calendar</a></li>
+        <li><a href="#" class="footer-link" data-slide="4" data-i18n="footer.linkVolunteer">Volunteer</a></li>
+        <li><a href="#" class="footer-link" data-slide="5" data-i18n="footer.linkFaq">FAQ</a></li>
+    </ul>
+</div>
+
+<div class="footer-col">
+    <h4 class="footer-title" data-i18n="footer.contactTitle">Contact Us</h4>
+    <ul class="footer-contact">
+        <li data-i18n="footer.contactAddr">Management Office, Clubhouse Level 1</li>
+        <li data-i18n="footer.contactPhone">+60 3-1234 5678</li>
+        <li data-i18n="footer.contactEmail">info@mycelium-community.com</li>
+        <li data-i18n="footer.contactHour">Mon – Fri: 9.00 AM – 6.00 PM</li>
+    </ul>
+</div>
+
+<div class="footer-col">
+    <h4 class="footer-title" data-i18n="footer.newsletterTitle">Newsletter</h4>
+    <p class="footer-newsletter-desc" data-i18n="footer.newsletterDesc">Subscribe for weekly community updates and event notices.</p>
+    <form class="footer-newsletter-form" id="newsletterForm">
+  <input
+    type="email"
+    class="footer-newsletter-input"
+    id="newsletterEmail"
+    placeholder="Your email"
+    data-i18n-placeholder="footer.newsletterPlaceholder"
+    required
+  >
+  <button type="submit" class="footer-newsletter-btn" data-i18n="footer.newsletterBtn">
+    Subscribe
+  </button>
+</form>
+</div>
+        </div>
+
+<div class="footer-bottom">
+    <p data-i18n="footer.copyright">© 2026 MYCELIUM Smart Community. All rights reserved.</p>
+    <div class="footer-bottom-links">
+        <a href="#" data-doc="privacy" data-i18n="footer.privacy">Privacy Policy</a>
+        <a href="#" data-doc="terms" data-i18n="footer.terms">Terms of Service</a>
+        <a href="#" data-doc="rules" data-i18n="footer.rules">Community Rules</a>
+    </div>
+</div>
+    </footer>
+
+<audio
+  id="bgWhiteNoise"
+  src="./audio/howdoyoudance.mp3"
+  preload="auto"
+  loop
+  autoplay
+  style="display: none; pointer-events: none;"
+  aria-hidden="true"
+></audio>
+
+<div id="legalModal" class="doc-modal-overlay" aria-hidden="true">
+  <div class="doc-modal-card">
+    <button id="legalModalClose" class="doc-modal-close">&times;</button>
+    <h2 id="legalModalTitle" class="doc-modal-title"></h2>
+    <div id="legalModalContent" class="doc-modal-content"></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
+    <script src="./local-preview.js"></script>
+    <script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
+    <script src="./smooth-scroll.js" defer></script>
+    <script src ="./app.js" defer></script>
+    <script src ="./script.js" defer></script>
+    <script src ="./hero-sequence.js" defer></script>
+    <script src="./scroll-story.js" defer></script>
+    <script src="./gallery.js" defer></script>
+    <script src="./live-news.js" defer></script>
+    <script src="./air-quality.js" defer></script>
+    <script src="./swipe-nav.js" defer></script>
+    <script src="./footer-actions.js" defer></script>
+    <script src="./feature-details.js" defer></script>
+    <script src="./scroll-indicator.js" defer></script>
+    <script src="./text-protection.js" defer></script>
+    <script type="module" src="./country-selector.js"></script>
+    <script src="./loading-reveal.js" defer></script>
+    <script type="module" src="./loading-manager.js"></script>
+    <script type="module" src="./HeroSectionShader.js"></script>
+</body>
+</html>

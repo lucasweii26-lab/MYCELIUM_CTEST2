@@ -1,0 +1,27 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[[edge_functions]]
+  function = "mycelium-country"
+  path = "/"
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/my/*"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/us/*"
+  to = "/index.html"
+  status = 200
