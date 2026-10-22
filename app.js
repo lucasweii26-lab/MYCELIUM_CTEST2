@@ -2283,21 +2283,32 @@ const db = firebase.firestore();
       btn.addEventListener("click", () => setCalendarOpen(false));
     });
 
-  mapPins.forEach((pin) => {
-    pin.addEventListener("click", () => {
-      mapPins.forEach((p) => {
-        p.classList.remove("active");
-        p.setAttribute("aria-pressed", "false");
-      });
-      pin.classList.add("active");
-      pin.setAttribute("aria-pressed", "true");
-      mapInfoTitle.textContent = pin.dataset.name;
-      mapInfoDesc.textContent = pin.dataset.desc;
-      mapInfoBox.classList.remove("is-visible");
-      requestAnimationFrame(() => mapInfoBox.classList.add("is-visible"));
-      scrollPageToElement(mapInfoBox, { behavior: "smooth", block: "nearest" });
+    mapPins.forEach((pin) => {
+  pin.addEventListener("click", () => {
+    mapPins.forEach((p) => {
+      p.classList.remove("active");
+      p.setAttribute("aria-pressed", "false");
+    });
+    pin.classList.add("active");
+    pin.setAttribute("aria-pressed", "true");
+    mapInfoTitle.textContent = pin.dataset.name;
+    mapInfoDesc.textContent = pin.dataset.desc;
+    mapInfoBox.classList.remove("is-visible");
+    
+    requestAnimationFrame(() => {
+      mapInfoBox.classList.add("is-visible");
+      setTimeout(() => {
+        // 自己计算目标位置：元素位置 - 0.5 * 视口高度 = 往上半屏
+        const rect = mapInfoBox.getBoundingClientRect();
+        const targetY = window.scrollY + rect.top - window.innerHeight / 2;
+        window.scrollTo({
+          top: targetY,
+          behavior: "smooth"
+        });
+      }, 50);
     });
   });
+});
 
 const SERVICE_DATA = {
   en: [
@@ -2754,11 +2765,13 @@ if (backToTopBtn) {
     return Math.max(0, communityNav.getBoundingClientRect().top + window.scrollY);
   };
 
-  const toggleBackToTopBtn = () => {
-    const showAfter = getNavPageTop() + (communityNav ? communityNav.offsetHeight : 400);
+const toggleBackToTopBtn = () => {
+    const sliderEl = document.querySelector('.slider');
+    const offset = sliderEl ? sliderEl.offsetHeight : (communityNav ? communityNav.offsetHeight : 600);
+    // 只有当用户向下滑动，且几乎越过 menuitem (slider) 界面时，按钮才会出现
+    const showAfter = getNavPageTop() + offset - (window.innerHeight * 0.3);
     backToTopBtn.classList.toggle("show", window.scrollY > showAfter);
   };
-
   toggleBackToTopBtn();
   window.addEventListener("scroll", toggleBackToTopBtn);
   window.addEventListener("resize", toggleBackToTopBtn, { passive: true });

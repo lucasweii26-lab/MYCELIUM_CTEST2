@@ -388,38 +388,23 @@
   // tied to the scroll position (so it is clearly visible and reverses when you scroll back).
   // Uses the site's GSAP + ScrollTrigger (shared with Lenis); falls back to class-based fades without them.
   // Opacity and a small lift only: no blur/filter, which would force the video layer to re-composite.
-  function watchVisibility() {
-    const inner = section.querySelector(".ln-inner");
-    const gsap = window.MYCELIUM_GSAP;
-    const ScrollTrigger = window.MYCELIUM_SCROLL_TRIGGER;
-
-    if (gsap && ScrollTrigger && inner && !calm()) {
-      section.classList.add("ln-scrub");
-      gsap.timeline({
-        defaults: { ease: "none" },
-        scrollTrigger: { trigger: section, start: "top 96%", end: "bottom 4%", scrub: 0.5, invalidateOnRefresh: true },
-      })
-        .fromTo(inner, { autoAlpha: 0, y: 72 }, { autoAlpha: 1, y: 0, duration: 0.3 })
-        .to(inner, { autoAlpha: 1, y: 0, duration: 0.4 })
-        .to(inner, { autoAlpha: 0, y: -56, duration: 0.3 });
-    }
-
+function watchVisibility() {
     if (!("IntersectionObserver" in window) || calm()) { section.classList.add("is-visible"); return; }
     new IntersectionObserver(([entry]) => {
-      // Class fade is only the fallback; with ScrollTrigger the scrub above owns the opacity.
-      if (!section.classList.contains("ln-scrub")) section.classList.toggle("is-visible", entry.isIntersecting && entry.intersectionRatio > 0.12);
+      section.classList.toggle("is-visible", entry.isIntersecting && entry.intersectionRatio > 0.12);
       if (!entry.isIntersecting) {
         clearTimeout(offscreenTimer);
         if (playing) offscreenTimer = setTimeout(() => unload(true), UNLOAD_AFTER_OFFSCREEN_MS);
-      } else clearTimeout(offscreenTimer);
+      } else {
+        clearTimeout(offscreenTimer);
+      }
     }, { threshold: [0, 0.12, 0.3] }).observe(section);
-    if (!section.classList.contains("ln-scrub")) {
-      setTimeout(() => {
-        if (!section.classList.contains("is-visible") && section.getBoundingClientRect().top < innerHeight) section.classList.add("is-visible");
-      }, 2500);
-    }
+    
+    // Safety fallback: if it's already in viewport but hasn't triggered
+    setTimeout(() => {
+      if (!section.classList.contains("is-visible") && section.getBoundingClientRect().top < innerHeight) section.classList.add("is-visible");
+    }, 1000);
   }
-
   // ---------- live status (optional endpoint) ----------
   async function refreshStatus() {
     const url = activeConfig().liveStatusUrl;
