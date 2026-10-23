@@ -155,7 +155,7 @@
     if (on) window.MYCELIUM_LENIS?.stop(); else window.MYCELIUM_LENIS?.start();
   };
 
-  function renderArticle(i) {
+function renderArticle(i) {
     const ev = events[i];
     const l = L();
     const newer = events[i - 1];
@@ -166,20 +166,29 @@
     const quote = pick(ev, "quote");
     const quoteBy = pick(ev, "quoteBy");
     const caption = pick(ev, "caption");
-    const figs = ev.photos || [];
-    const figsHtml = `<div class="ga-figs">
-      <figure><span class="ga-photo">${photo(figs[0], title)}</span></figure>
-      <figure><span class="ga-photo">${photo(figs[1], title)}</span></figure>
-    </div>`;
+    
+    // 正文内部插图（如果 photos 数组有内容，则渲染；否则不显示多余空框）
+    const figs = Array.isArray(ev.photos) ? ev.photos.filter(Boolean) : [];
+    const figsHtml = figs.length > 0 ? `<div class="ga-figs">
+      ${figs.slice(0, 2).map((figSrc) => `<figure><span class="ga-photo">${photo(figSrc, title)}</span></figure>`).join("")}
+    </div>` : "";
+
     const quoteHtml = quote
       ? `<blockquote class="ga-quote"><p>${esc(quote)}</p>${quoteBy ? `<cite>${esc(quoteBy)}</cite>` : ""}</blockquote>` : "";
 
     const parts = [];
     paras.forEach((p, idx) => {
       parts.push(`<p>${esc(p)}</p>`);
-      if (idx === 1) parts.push(figsHtml, quoteHtml);
+      // 在第 1 段或第 2 段之间自然插入配图与名言
+      if (idx === 1) {
+        if (figsHtml) parts.push(figsHtml);
+        if (quoteHtml) parts.push(quoteHtml);
+      }
     });
-    if (paras.length < 2) parts.push(figsHtml, quoteHtml);
+    if (paras.length < 2) {
+      if (figsHtml) parts.push(figsHtml);
+      if (quoteHtml) parts.push(quoteHtml);
+    }
 
     const fact = (k, v) => (v ? `<dt>${esc(k)}</dt><dd>${esc(v)}</dd>` : "");
     const pager = (ev2, cls, label) => ev2
@@ -212,7 +221,6 @@
       </nav>
     </div>`;
   }
-
   function openArticle(slug) {
     const i = events.findIndex((e) => e.slug === slug);
     if (i < 0) { closeArticle(); return; }

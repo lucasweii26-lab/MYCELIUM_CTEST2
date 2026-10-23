@@ -71,11 +71,11 @@ if (!routeCode || unsupportedRoute) {
 }
 
 const copyByLanguage = {
-  en: { kicker: "MYCELIUM LOCATIONS", title: "Choose your community.", body: "Explore Mycelium locations around the world. Select a community to see whether its site is available.", selected: "Selected location", active: "Community site available", coming: "More locations will appear here as Mycelium communities launch.", button: "Continue to Mycelium", help: "Your location choice is saved on this device. You can change it any time.", close: "Close location selector", list: "Available Mycelium locations", status: "Only cities with a live Mycelium community appear here.", heroLabel: "CHOOSE YOUR LOCATION", navLabel: "MYCELIUM LOCATION" },
-  es: { kicker: "UBICACIONES MYCELIUM", title: "Elige tu comunidad.", body: "Explora las ubicaciones de Mycelium en todo el mundo. Selecciona un país para consultar su sitio comunitario.", selected: "Ubicación seleccionada", active: "Sitio comunitario disponible", coming: "Aquí aparecerán más ubicaciones cuando se abran nuevas comunidades Mycelium.", button: "Continuar a Mycelium", help: "Tu elección de país se guarda en este dispositivo. Puedes cambiarla cuando quieras.", close: "Cerrar selector de ubicación", list: "Ubicaciones Mycelium disponibles", status: "Aquí solo aparecen los países con una comunidad Mycelium activa.", heroLabel: "ELIGE TU UBICACIÓN", navLabel: "UBICACIÓN MYCELIUM" },
-  "zh-CN": { kicker: "MYCELIUM 地区", title: "选择您的社区。", body: "探索世界各地的 Mycelium 社区。选择一个城市地区，查看当地社区网站是否已开放。", selected: "已选择地区", active: "社区网站已开放", coming: "随着 Mycelium 社区陆续开放，更多地区将在此显示。", button: "进入 Mycelium", help: "您的地点选择会保存在此设备上，之后可随时更改。", close: "关闭地区选择器", list: "已开放的 Mycelium 地区", status: "此处仅显示已开放 Mycelium 社区网站的地区。", heroLabel: "选择所在地区", navLabel: "MYCELIUM 地区" },
-  ms: { kicker: "LOKASI MYCELIUM", title: "Pilih komuniti anda.", body: "Terokai lokasi Mycelium di seluruh dunia. Pilih negara untuk melihat sama ada laman komuniti tersedia.", selected: "Lokasi dipilih", active: "Laman komuniti tersedia", coming: "Lebih banyak lokasi akan dipaparkan apabila komuniti Mycelium dilancarkan.", button: "Teruskan ke Mycelium", help: "Pilihan negara disimpan pada peranti ini. Anda boleh menukarnya pada bila-bila masa.", close: "Tutup pemilih lokasi", list: "Lokasi Mycelium tersedia", status: "Hanya negara dengan laman komuniti Mycelium yang aktif dipaparkan di sini.", heroLabel: "PILIH LOKASI ANDA", navLabel: "LOKASI MYCELIUM" },
-  ta: { kicker: "MYCELIUM இடங்கள்", title: "உங்கள் சமூகத்தைத் தேர்ந்தெடுக்கவும்.", body: "உலகம் முழுவதும் உள்ள Mycelium இடங்களைப் பாருங்கள். சமூக இணையதளம் கிடைக்கிறதா என்பதை அறிய ஒரு நாட்டைத் தேர்ந்தெடுக்கவும்.", selected: "தேர்ந்தெடுத்த இடம்", active: "சமூக இணையதளம் கிடைக்கிறது", coming: "Mycelium சமூகங்கள் தொடங்கும்போது மேலும் இடங்கள் இங்கே தோன்றும்.", button: "Mycelium-க்கு தொடரவும்", help: "உங்கள் நாட்டுத் தேர்வு இந்தச் சாதனத்தில் சேமிக்கப்படும். எப்போது வேண்டுமானாலும் மாற்றலாம்.", close: "இடத் தேர்வியை மூடு", list: "கிடைக்கும் Mycelium இடங்கள்", status: "செயலில் உள்ள Mycelium சமூகத் தளம் கொண்ட நாடுகள் மட்டுமே இங்கே காட்டப்படும்.", heroLabel: "உங்கள் இடத்தைத் தேர்வுசெய்க", navLabel: "MYCELIUM இடம்" },
+  en: { kicker: "MYCELIUM LOCATIONS", title: "Choose your community.", selected: "SELECTED", active: "Community site available", button: "Continue to Mycelium", help: "Your location choice is saved on this device. You can change it any time.", close: "Close location selector", heroLabel: "CHOOSE YOUR LOCATION", navLabel: "MYCELIUM LOCATION" },
+  es: { kicker: "UBICACIONES MYCELIUM", title: "Elige tu comunidad.", selected: "SELECCIONADO", active: "Sitio comunitario disponible", button: "Continuar a Mycelium", help: "Tu elección de país se guarda en este dispositivo. Puedes cambiarla cuando quieras.", close: "Cerrar selector de ubicación", heroLabel: "ELIGE TU UBICACIÓN", navLabel: "UBICACIÓN MYCELIUM" },
+  "zh-CN": { kicker: "MYCELIUM 地区", title: "选择您的社区。", selected: "已选择", active: "社区网站已开放", button: "进入 Mycelium", help: "您的地点选择会保存在此设备上，之后可随时更改。", close: "关闭地区选择器", heroLabel: "选择所在地区", navLabel: "MYCELIUM 地区" },
+  ms: { kicker: "LOKASI MYCELIUM", title: "Pilih komuniti anda.", selected: "DIPILIH", active: "Laman komuniti tersedia", button: "Teruskan ke Mycelium", help: "Pilihan negara disimpan pada peranti ini. Anda boleh menukarnya pada bila-bila masa.", close: "Tutup pemilih lokasi", heroLabel: "PILIH LOKASI ANDA", navLabel: "LOKASI MYCELIUM" },
+  ta: { kicker: "MYCELIUM இடங்கள்", title: "உங்கள் சமூகத்தைத் தேர்ந்தெடுக்கவும்.", selected: "தேர்ந்தெடுக்கப்பட்டது", active: "சமூக இணையதளம் கிடைக்கிறது", button: "Mycelium-க்கு தொடரவும்", help: "உங்கள் நாட்டுத் தேர்வு இந்தச் சாதனத்தில் சேமிக்கப்படும். எப்போது வேண்டுமானாலும் மாற்றலாம்.", close: "இடத் தேர்வியை மூடு", heroLabel: "உங்கள் இடத்தைத் தேர்வுசெய்க", navLabel: "MYCELIUM இடம்" },
 };
 
 function getCopy() {
@@ -97,23 +97,32 @@ picker.innerHTML = `
   </div>
   <div class="country-picker-panel">
     <button class="country-picker-close" type="button" aria-label="Close location selector">×</button>
-    <header>
-      <p class="country-picker-kicker" data-copy="kicker"></p>
-      <h2 class="country-picker-title" id="countryPickerTitle" data-copy="title"></h2>
-      <p class="country-picker-copy" data-copy="body"></p>
+    <header class="country-picker-header">
+      <p class="country-picker-kicker" data-copy="kicker">MYCELIUM LOCATIONS</p>
+      <h2 class="country-picker-title" id="countryPickerTitle" data-copy="title">Choose your community.</h2>
     </header>
-  <div class="country-picker-options" role="group" data-country-list></div>
-  <div class="country-picker-selection" aria-live="polite">
-      <p class="country-picker-kicker" data-copy="selected"></p>
-    <div class="country-picker-country">
-      <span class="country-picker-marker" aria-hidden="true"></span>
-      <div><p class="country-picker-country-name" data-selected-name></p><p class="country-picker-country-meta" data-selected-status></p></div>
+
+    <div class="country-picker-options-wrap">
+      <div class="country-picker-options" role="group" data-country-list></div>
     </div>
-      <p class="country-picker-note" data-copy="coming"></p>
+
+    <div class="country-picker-selection" aria-live="polite">
+      <p class="country-picker-kicker" data-copy="selected">SELECTED</p>
+      <div class="country-picker-country">
+        <span class="country-picker-marker" aria-hidden="true"></span>
+        <div>
+          <p class="country-picker-country-name" data-selected-name></p>
+          <p class="country-picker-country-meta" data-selected-status>Community site available</p>
+        </div>
+      </div>
     </div>
-    <button class="country-picker-continue" type="button"><span data-copy="button"></span><span aria-hidden="true">→</span></button>
+
+    <button class="country-picker-continue" type="button">
+      <span data-copy="button">Continue to Mycelium</span>
+      <span aria-hidden="true">→</span>
+    </button>
+    
     <p class="country-picker-help" data-copy="help"></p>
-    <p class="country-picker-help" data-copy="status"></p>
   </div>`;
 document.body.appendChild(picker);
 
@@ -153,10 +162,10 @@ let globeSlowTimer = 0;
 function beginGlobeLoadingUi() {
   const text = GLOBE_LOADING_TEXT[localStorage.getItem("preferredLang") || "en"] || GLOBE_LOADING_TEXT.en;
   const label = globeSkeleton.querySelector(".country-globe-skeleton-text");
-  label.textContent = text[0];
+  if (label) label.textContent = text[0];
   picker.classList.add("is-globe-loading");
   window.clearTimeout(globeSlowTimer);
-  globeSlowTimer = window.setTimeout(() => { label.textContent = text[1]; }, 5000);
+  globeSlowTimer = window.setTimeout(() => { if (label) label.textContent = text[1]; }, 5000);
 }
 function endGlobeLoadingUi() {
   window.clearTimeout(globeSlowTimer);
@@ -189,35 +198,42 @@ function applyCopy() {
     const key = node.dataset.copy;
     node.textContent = copy[key] || copyByLanguage.en[key] || "";
   });
-  closeButton.setAttribute("aria-label", copy.close);
+  if (closeButton) closeButton.setAttribute("aria-label", copy.close);
   const heroLabel = document.querySelector("[data-country-hero-label]");
   const navLabel = document.querySelector("[data-country-nav-label]");
   if (heroLabel) heroLabel.textContent = copy.heroLabel;
   if (navLabel) navLabel.textContent = copy.navLabel;
-  const status = picker.querySelector("[data-copy='status']");
-  if (status) status.textContent = copy.status;
-  picker.querySelector(".country-picker-scene").setAttribute("aria-label", copy.list);
-  countryList.setAttribute("aria-label", copy.list);
   renderSelection();
 }
 
 function renderSelection() {
   const copy = getCopy();
-  selectedName.textContent = selectedCountry.displayName || selectedCountry.name;
-  selectedStatus.textContent = copy.active;
+  // 安全赋值，绝不报 null 错误
+  if (selectedName) {
+    selectedName.textContent = selectedCountry.displayName || selectedCountry.name;
+  }
+  if (selectedStatus) {
+    selectedStatus.textContent = copy.active || "Community site available";
+  }
   countryList.querySelectorAll("[data-select-country]").forEach((button) => {
     const active = button.dataset.selectCountry === selectedCountry.code;
     button.setAttribute("aria-pressed", String(active));
     button.classList.toggle("is-selected", active);
   });
-  continueButton.disabled = selectedCountry.status !== "active";
-  continueButton.setAttribute("aria-label", `${copy.button} ${selectedCountry.displayName || selectedCountry.name}`);
+  if (continueButton) {
+    continueButton.disabled = selectedCountry.status !== "active";
+    continueButton.setAttribute("aria-label", `${copy.button} ${selectedCountry.displayName || selectedCountry.name}`);
+  }
 }
 
 countryList.innerHTML = Object.values(COUNTRY_SITES)
   .filter((country) => country.status === "active")
-  .map((country) => `<button class="country-option" type="button" data-select-country="${country.code}" aria-pressed="false"><span class="country-option-marker" aria-hidden="true"></span><span class="country-option-name">${country.displayName || country.name}</span><span class="country-option-code">${country.city || country.code}</span></button>`)
-  .join("");
+  .map((country) => `
+    <button class="country-option" type="button" data-select-country="${country.code}" aria-pressed="false">
+      <span class="country-option-marker" aria-hidden="true"></span>
+      <span class="country-option-name">${country.displayName || country.name}</span>
+    </button>
+  `).join("");
 
 function showToast(message) {
   let toast = document.querySelector(".country-location-toast");
@@ -279,7 +295,6 @@ async function createGlobe() {
   if (renderer) return;
   if (globeLoadPromise) return globeLoadPromise;
   globeLoadPromise = (async () => {
-    // 自动适配加载 Three.js，无需环境判断脚本
     THREE = await import("three").catch(() => import("./node_modules/three/build/three.module.js"));
     try {
       renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
@@ -592,7 +607,7 @@ async function openPicker(event) {
   picker.classList.add("is-open");
   picker.setAttribute("aria-hidden", "false");
   document.body.classList.add("country-picker-open");
-  closeButton.focus();
+  if (closeButton) closeButton.focus();
   if (!sceneState) beginGlobeLoadingUi();
   await createGlobe();
   endGlobeLoadingUi();
@@ -675,7 +690,7 @@ countryList.addEventListener("focusout", (event) => {
   if (event.target.closest("[data-select-country]") && !event.relatedTarget?.closest?.("[data-select-country]")) restoreGlobePosition();
 });
 
-closeButton.addEventListener("click", closePicker);
+if (closeButton) closeButton.addEventListener("click", closePicker);
 picker.addEventListener("click", (event) => { if (event.target === picker) closePicker(); });
 document.addEventListener("keydown", (event) => {
   if (!picker.classList.contains("is-open")) return;
@@ -688,18 +703,20 @@ document.addEventListener("keydown", (event) => {
   else if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first.focus(); }
 });
 
-continueButton.addEventListener("click", () => {
-  if (selectedCountry.status !== "active") return;
-  localStorage.setItem(STORE_KEY, selectedCountry.code);
-  const secureCookie = window.location.protocol === "https:" ? "; Secure" : "";
-  document.cookie = `myceliumCountry=${selectedCountry.code}; Path=/; Max-Age=31536000; SameSite=Lax${secureCookie}`;
-  window.dispatchEvent(new CustomEvent("mycelium:countrychange", { detail: selectedCountry }));
-  if (window.location.pathname === selectedCountry.route) {
-    closePicker();
-    return;
-  }
-  window.location.assign(selectedCountry.route);
-});
+if (continueButton) {
+  continueButton.addEventListener("click", () => {
+    if (selectedCountry.status !== "active") return;
+    localStorage.setItem(STORE_KEY, selectedCountry.code);
+    const secureCookie = window.location.protocol === "https:" ? "; Secure" : "";
+    document.cookie = `myceliumCountry=${selectedCountry.code}; Path=/; Max-Age=31536000; SameSite=Lax${secureCookie}`;
+    window.dispatchEvent(new CustomEvent("mycelium:countrychange", { detail: selectedCountry }));
+    if (window.location.pathname === selectedCountry.route) {
+      closePicker();
+      return;
+    }
+    window.location.assign(selectedCountry.route);
+  });
+}
 
 window.addEventListener("mycelium:languagechange", applyCopy);
 window.addEventListener("resize", () => sceneState?.resize?.());

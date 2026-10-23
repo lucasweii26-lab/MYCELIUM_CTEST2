@@ -26,7 +26,7 @@ html {
   scrollbar-color: #91a98a #21343e;
 }
 
-/* Branded browser scrollbar, including independently scrolling panels. */
+/* 品牌原生滚动条 */
 * {
   scrollbar-width: thin;
   scrollbar-color: #91a98a rgba(24, 61, 50, .12);
@@ -54,7 +54,7 @@ body {
   line-height: 1.55;
 }
 
-/* Discourage casual text selection while keeping form fields usable. */
+/* 防止页面普通文字被随意框选，表单不受影响 */
 body, body * {
   -webkit-user-select: none;
   user-select: none;
@@ -91,7 +91,7 @@ a { color: inherit; }
   line-height: 1.1;
 }
 
-/* Loading */
+/* Loading 界面 */
 .loading-screen {
   position: fixed;
   inset: 0;
@@ -176,7 +176,6 @@ a { color: inherit; }
   overflow: visible;
 }
 .logo-path {
-  /* Keep the brand visible if JavaScript or the optional GSAP animation fails. */
   fill: var(--paper);
   stroke: var(--paper);
   stroke-width: 1.7;
@@ -276,7 +275,6 @@ a { color: inherit; }
   from { transform: translateX(0); }
   to { transform: translateX(360%); }
 }
-
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(14px); }
   to { opacity: 1; transform: translateY(0); }
@@ -287,7 +285,7 @@ a { color: inherit; }
   100% { left: 120%; }
 }
 
-/* Visual-only page progress thumb. The native scrollbar remains available as fallback. */
+/* 视觉滚动指示器 */
 .mycelium-scroll-thumb {
   position: fixed;
   z-index: 10060;
@@ -313,7 +311,7 @@ html.has-mycelium-scroll-thumb body::-webkit-scrollbar { display: none; }
   .mycelium-scroll-thumb { display: none !important; }
 }
 
-/* Nav */
+/* 导航栏 Nav */
 nav#nav {
   position: sticky;
   top: 0;
@@ -322,11 +320,13 @@ nav#nav {
   background: rgba(244, 241, 231, 0.86);
   backdrop-filter: blur(16px);
   border-bottom: 1px solid transparent;
-  transition: border-color 0.3s ease, background 0.3s ease;
+  transition: padding 0.35s var(--ease), background 0.35s var(--ease), border-color 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
 nav#nav.is-scrolled {
   border-bottom-color: var(--line);
-  background: rgba(244, 241, 231, 0.96);
+  padding: 8px 40px 6px;
+  background: rgba(244, 241, 231, 0.98);
+  box-shadow: 0 4px 20px rgba(24, 61, 50, 0.06);
 }
 .navTop {
   display: flex;
@@ -338,6 +338,11 @@ nav#nav.is-scrolled {
   width: 168px;
   height: 42px;
   object-fit: contain;
+  transition: transform 0.35s var(--ease);
+}
+nav#nav.is-scrolled .navItem img {
+  transform: scale(0.85);
+  transform-origin: left center;
 }
 .navItem { position: relative; flex: 0 0 auto; line-height: 0; }
 .admin-access {
@@ -350,28 +355,116 @@ nav#nav.is-scrolled {
 }
 .admin-access:focus-visible { outline: 2px solid var(--copper); outline-offset: 3px; }
 .nav-tools { display: flex; align-items: center; gap: 12px; }
-.search {
+
+/* 导航栏地名胶囊转换 */
+.country-switcher {
+  border-radius: 999px;
+  transition: all 0.35s var(--ease);
+}
+nav#nav.is-scrolled:not(.nav-user-expanded) .country-switcher {
+  min-height: 32px;
+  padding: 5px 12px;
+  background: rgba(24, 61, 50, 0.05);
+  border-color: rgba(24, 61, 50, 0.15);
+}
+nav#nav.is-scrolled:not(.nav-user-expanded) .country-switcher-label {
+  display: none;
+}
+nav#nav.is-scrolled:not(.nav-user-expanded) .country-switcher-value {
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+}
+nav#nav.is-scrolled.nav-user-expanded {
+  padding: 14px 40px 10px;
+}
+nav#nav.is-scrolled.nav-user-expanded .navItem img {
+  transform: scale(1);
+}
+nav#nav.is-scrolled.nav-user-expanded .country-switcher-label {
+  display: block;
+}
+
+/* Apple 风格平滑展开搜索栏 */
+.search-container {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
-  min-width: 220px;
-  padding: 8px 12px;
-  border-bottom: 1px solid var(--line);
 }
-.searchInput {
+.search-trigger-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+.search-trigger-btn:hover {
+  background: var(--paper-2);
+  border-color: var(--copper);
+}
+.search-expand-bar {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleX(0.85);
+  transform-origin: right center;
+  display: flex;
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px 4px 16px;
+  width: 280px;
+  box-shadow: 0 8px 24px rgba(24, 61, 50, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0.3s;
+  z-index: 90;
+}
+.search-container.is-active .search-expand-bar {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(-50%) scaleX(1);
+}
+.search-expand-bar .searchInput {
   flex: 1;
   border: 0;
   background: transparent;
+  font-size: 0.88rem;
   color: var(--ink);
-  font-size: 0.85rem;
   outline: none;
+  padding: 6px 0;
 }
-.searchInput::placeholder { color: #75857a; }
-.search img {
-  width: 18px;
-  height: 18px;
-  object-fit: contain;
-  opacity: 0.45;
+.search-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.search-close-btn:hover { color: var(--ink); }
+
+/* 移除输入聚焦时的绿色边框 */
+.search-expand-bar .searchInput:focus,
+.search-expand-bar .searchInput:focus-visible,
+#navSearchInput:focus,
+#navSearchInput:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+.search-expand-bar:focus-within {
+  border-color: rgba(24, 61, 50, 0.35);
+  box-shadow: 0 4px 16px rgba(24, 61, 50, 0.08);
 }
 
 .nav-toggle {
@@ -440,7 +533,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 .menuItem:hover::after,
 .menuItem.active::after { transform: scaleX(1); }
 
-/* Hero */
+/* Hero Slider */
 .slider {
   position: relative;
   min-height: calc(100vh - var(--nav-h));
@@ -677,7 +770,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 
 .product { display: none; }
 
-/* Shared panels */
+/* 覆盖层组件 */
 .announcement-overlay,
 .map-overlay,
 .calendar-overlay {
@@ -798,7 +891,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   color: var(--paper);
 }
 
-/* Map */
+/* 设施地图与 Pin 样式 */
 .map-modal {
   width: min(1040px, 100%);
   margin: 0 auto;
@@ -839,6 +932,8 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   border: 1px solid var(--line);
 }
 .map-image { width: 100%; }
+
+/* Pin 移动端与桌面端统一：加大触摸热区、统一放大高亮与平滑光环 */
 .map-image-wrap .pin {
   position: absolute;
   width: 24px;
@@ -848,17 +943,54 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   padding: 0;
   background: none;
   border: none;
-  z-index: 1;
-  isolation: isolate;
-  transition: transform 0.22s cubic-bezier(.2,.75,.25,1), filter 0.22s ease;
+  z-index: 2;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.25s cubic-bezier(0.2, 0.75, 0.25, 1), filter 0.25s ease;
 }
-.map-image-wrap .pin:hover { transform: translate(-50%, -100%) scale(1.12); }
+.map-image-wrap .pin::before {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 44px;
+  height: 48px;
+  background: transparent;
+  pointer-events: auto;
+  z-index: 1;
+}
+.map-image-wrap .pin:hover,
+.map-image-wrap .pin.active {
+  transform: translate(-50%, -100%) scale(1.18);
+  z-index: 10;
+  filter: drop-shadow(0 4px 10px rgba(255, 180, 50, 0.8));
+}
 .map-image-wrap .pin:focus-visible {
   outline: 3px solid #fff8de;
-  outline-offset: 5px;
-  filter: drop-shadow(0 0 8px rgba(255, 195, 77, .95));
-  z-index: 4;
+  outline-offset: 4px;
+  z-index: 10;
 }
+.map-image-wrap .pin.active::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 33.333%;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #ffbe4a;
+  border-radius: 50%;
+  box-shadow: 0 0 10px rgba(255, 190, 74, 0.85), inset 0 0 6px rgba(255, 190, 74, 0.45);
+  transform: translate(-50%, -50%) scale(0.6);
+  animation: map-pin-pulse 1.8s cubic-bezier(0.2, 0.8, 0.2, 1) infinite;
+  pointer-events: none;
+  z-index: -1;
+}
+@keyframes map-pin-pulse {
+  0% { transform: translate(-50%, -50%) scale(0.55); opacity: 0.95; }
+  100% { transform: translate(-50%, -50%) scale(1.65); opacity: 0; }
+}
+
 .map-image-wrap .pin svg path { fill: var(--pin-color, #e8794f); stroke: rgba(24, 43, 37, .72); stroke-width: .8px; }
 .map-image-wrap .pin svg circle { fill: #fff8e5; }
 .map-image-wrap .pin[data-pin-id="tennis"] { --pin-color: #e96f55; }
@@ -872,41 +1004,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 .map-image-wrap .pin[data-pin-id="pond"] { --pin-color: #238e9e; }
 .map-image-wrap .pin[data-pin-id="recycle1"],
 .map-image-wrap .pin[data-pin-id="recycle2"] { --pin-color: #87a43e; }
-.map-image-wrap .pin.active { z-index: 3; filter: drop-shadow(0 0 7px rgba(255, 195, 77, .95)); }
-.map-image-wrap .pin.active::before {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 33.333%;
-  width: 42px;
-  height: 42px;
-  border-radius: 50%;
-  background: conic-gradient(from 0deg, transparent 0 12%, #ffe17a 26%, #ff784f 42%, transparent 58% 100%);
-  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-  mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2px));
-  transform: translate(-50%, -50%);
-  animation: map-pin-spin 2s linear infinite;
-  pointer-events: none;
-}
-.map-image-wrap .pin.active::after {
-  content: "";
-  position: absolute;
-  z-index: -1;
-  left: 50%;
-  top: 33.333%;
-  width: 38px;
-  height: 38px;
-  border: 2px solid rgba(255, 225, 122, .9);
-  border-radius: 50%;
-  transform: translate(-50%, -50%) scale(.55);
-  animation: map-pin-pulse 1.6s ease-out infinite;
-  pointer-events: none;
-}
-.map-image-wrap .pin.active svg path { fill: #fa6846; stroke: #fff8de; stroke-width: 1.6px; }
-.map-image-wrap .pin svg { width: 100%; height: 100%; display: block; }
-@keyframes map-pin-spin { from { transform: translate(-50%, -50%) rotate(0deg); } to { transform: translate(-50%, -50%) rotate(360deg); } }
-@keyframes map-pin-pulse { 0% { transform: translate(-50%, -50%) scale(.55); opacity: .95; } 100% { transform: translate(-50%, -50%) scale(1.55); opacity: 0; } }
+
 .map-info-box {
   position: relative;
   margin-top: 16px;
@@ -927,24 +1025,19 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: translateY(0); }
 }
-@media (prefers-reduced-motion: reduce) {
-  .map-info-box.is-visible { animation: none; }
-  .map-image-wrap .pin { transition: none; }
-  .map-image-wrap .pin.active::before,
-  .map-image-wrap .pin.active::after { animation: none; }
-}
 
-/* Calendar */
+/* 日历组件：固定按钮物理宽度，杜绝长短月导致的晃动 */
 .calendar-titlebar {
   position: relative;
   width: min(1100px, 100%);
   margin: 0 auto 24px;
 }
 .calendar-month-bar {
-  display: flex;
+  display: grid;
+  grid-template-columns: 40px 240px 40px;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 16px;
   width: min(1100px, 100%);
   margin: 0 auto 20px;
 }
@@ -964,6 +1057,8 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   font-size: 1.5rem;
   font-weight: 500;
   letter-spacing: 0.08em;
+  text-align: center;
+  user-select: none;
 }
 .calendar-close-btn {
   position: absolute;
@@ -1007,6 +1102,10 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   font-size: 1rem;
   position: relative;
 }
+.calendar-table td.has-event:hover {
+  background: rgba(24, 61, 50, 0.06);
+  transition: background-color 0.2s ease;
+}
 .calendar-star {
   background: none;
   border: none;
@@ -1045,7 +1144,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   background: var(--copper);
 }
 
-/* Services */
+/* 服务目录与志愿者 */
 .service-section,
 .faq-section,
 .volunteer {
@@ -1139,7 +1238,6 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 .service-nav-btn:hover { background: var(--pine); color: var(--paper); }
 .service-nav-btn:disabled { opacity: 0.3; cursor: not-allowed; }
 
-/* Volunteer */
 .volunteerHeader { text-align: left; margin-bottom: 36px; max-width: 40rem; }
 .volunteerGrid {
   display: grid;
@@ -1203,6 +1301,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   color: var(--pine);
 }
 
+/* 模态框通用 */
 .volunteerFormOverlay,
 .report-modal,
 .feature-modal-overlay,
@@ -1422,7 +1521,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   font-size: 0.92rem;
 }
 
-/* Chat */
+/* Chatbot UI：AI 头像微光边框、用户与顶部 Header 区分色、去除滚动条 */
 .chatbot-toggler {
   position: fixed;
   right: 24px;
@@ -1522,32 +1621,41 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   list-style: none;
 }
 .chatbox .chat { display: flex; align-items: flex-end; margin-bottom: 14px; }
+
+/* AI 头像微光边框 */
 .chatbox .incoming .bot-avatar {
   flex: 0 0 28px;
   width: 28px;
   height: 28px;
   margin: 0 8px 4px 0;
-  background: var(--pine);
-  color: var(--paper);
+  background: #15332a;
+  color: #dfd8cf;
   text-align: center;
   font-size: 9px;
   font-weight: 700;
-  line-height: 28px;
+  line-height: 26px;
   border-radius: 50%;
+  border: 1px solid rgba(145, 169, 138, 0.5);
+  box-shadow: 0 0 0 2px rgba(24, 61, 50, 0.2), 0 2px 6px rgba(0, 0, 0, 0.12);
 }
+
 .chatbox .outgoing { justify-content: flex-end; }
 .chatbox .chat p {
   max-width: 75%;
   margin: 0;
   padding: 10px 14px;
-  background: var(--pine);
-  color: var(--paper);
   font-size: 0.88rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
   border-radius: 16px 16px 0 16px;
 }
-.chatbox .incoming p { background: var(--paper-2); color: var(--ink); border-radius: 16px 16px 16px 0;}
+/* 用户气泡颜色与顶部 Header 解耦，视觉更舒服 */
+.chatbox .outgoing p {
+  background: #3a5347;
+  color: #f7f5ed;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+.chatbox .incoming p { background: var(--paper-2); color: var(--ink); border-radius: 16px 16px 16px 0; }
 .chatbox .chat p.error { background: #f3e4dc; color: #6b2e1e; }
 .quick-replies {
   position: absolute;
@@ -1572,6 +1680,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   cursor: pointer;
 }
 .quick-reply-btn:hover { border-color: var(--pine); }
+
 .chatbot .chat-input {
   position: absolute;
   bottom: 0;
@@ -1584,6 +1693,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   background: #fbfaf5;
 }
 
+/* 彻底移除输入框自带的滚动条 */
 .chat-input textarea {
   width: 100%;
   height: 44px;
@@ -1595,7 +1705,13 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   background: var(--paper);
   outline: 0;
   font-size: 0.88rem;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
 }
+.chat-input textarea::-webkit-scrollbar {
+  display: none;
+}
+
 .send-chat-btn,
 .ai-mode-btn {
   min-width: 56px;
@@ -1626,11 +1742,77 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 @property --ai-edge-angle { syntax: "<angle>"; inherits: false; initial-value: 0deg; }
 @keyframes ai-edge-cycle { to { --ai-edge-angle: 360deg; } }
 @media (prefers-reduced-motion: reduce) {
-  .map-image-wrap .pin.active::before,
-  .map-image-wrap .pin.active::after,
   .ai-mode-btn.active { animation: none; }
 }
 .send-chat-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+/* 优雅感谢弹窗样式 */
+.mycelium-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+  background: rgba(18, 43, 35, 0.55);
+  backdrop-filter: blur(8px);
+  display: none;
+  place-items: center;
+  padding: 24px;
+}
+.mycelium-dialog-overlay.active {
+  display: grid;
+  animation: fadeIn 0.25s ease forwards;
+}
+.mycelium-dialog-card {
+  width: min(420px, 100%);
+  background: var(--paper, #f4f1e7);
+  border: 1px solid var(--line, rgba(24, 61, 50, 0.18));
+  border-radius: 20px;
+  padding: 36px 32px 28px;
+  text-align: center;
+  box-shadow: 0 16px 40px rgba(18, 43, 35, 0.16);
+  animation: modalIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+}
+.mycelium-dialog-icon {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 16px;
+  border-radius: 50%;
+  background: var(--pine, #183d32);
+  color: var(--paper, #f4f1e7);
+  display: grid;
+  place-items: center;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+.mycelium-dialog-title {
+  margin: 0 0 10px;
+  font-family: var(--serif);
+  font-size: 1.45rem;
+  color: var(--pine, #183d32);
+}
+.mycelium-dialog-msg {
+  margin: 0 0 24px;
+  font-size: 0.92rem;
+  color: var(--ink-soft, #526258);
+  line-height: 1.6;
+}
+.mycelium-dialog-btn {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid var(--pine);
+  border-radius: 999px;
+  background: var(--pine);
+  color: var(--paper);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+.mycelium-dialog-btn:hover {
+  background: #112d25;
+  transform: translateY(-1px);
+}
 
 /* Footer */
 .footer {
@@ -1868,7 +2050,6 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 @media (max-width: 900px) {
   nav#nav { padding: 12px 20px 0; }
   .nav-toggle { display: block; }
-  .search { display: none; }
   .navBottom {
     display: none;
     flex-direction: column;
@@ -1934,20 +2115,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   }
 }
 
-/* ==========================================================================
-   Hero scroll scene — pinned hero, colour-continuous handoff
-   The hero stays pinned (sticky) for the whole track. The NEXT scene (nav +
-   slider) is pulled up over the last --hero-handoff-vh of that track with a
-   negative margin, so plain scrolling slides it in. Meanwhile:
-     - the hero film melts into the page colour (.intro-hero::after "veil"),
-       so the rising scene meets no visible edge;
-     - the hero copy exits upward (JS), each line at its own speed;
-     - the slider's own layers ride in from below at different speeds,
-       driven by --enter (0 → 1, set on .slider by hero-sequence.js).
-   JS sets --hero-scroll-vh / --hero-handoff-vh on <html>; the fallbacks below
-   match its desktop values so the page still works if JS fails
-   (--enter / --veil also default to their "finished" values).
-   ========================================================================== */
+/* 英雄视差卷轴 */
 .hero-sequence {
   position: relative;
   width: 100%;
@@ -1959,7 +2127,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
 .intro-hero {
   position: sticky;
   top: 0;
-  z-index: 1;                       /* hero layer … */
+  z-index: 1;
   width: 100%;
   height: 100vh;
   height: 100svh;
@@ -1980,7 +2148,7 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   z-index: 0;
   background: #183d32;
   pointer-events: none;
-  transform-origin: 50% 50%;        /* the film pushes in about its centre */
+  transform-origin: 50% 50%;
 }
 
 .hero-fluid-canvas {
@@ -1993,14 +2161,11 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
   pointer-events: none;
 }
 
-/* [MYCELIUM UPGRADE] Paper veil: the SAME background as .slider, so when the next scene
-   arrives the two are one continuous surface. If its texture ever looks mismatched at the
-   seam, replace the whole background below with:  background: var(--paper); */
 .intro-hero::after {
   content: "";
   position: absolute;
   inset: 0;
-  z-index: 1;                       /* above the background canvases, below the copy (z-index 10) */
+  z-index: 1;
   pointer-events: none;
   opacity: var(--veil, 0);
   background:
@@ -2008,40 +2173,28 @@ nav#nav.nav-open .nav-toggle span { background: var(--ink); }
     linear-gradient(180deg, rgba(244,241,231,0.55) 0%, rgba(244,241,231,0.88) 100%);
 }
 
-/* [MYCELIUM UPGRADE] Next scene: pulled up over the end of the track and layered above the hero. */
 nav#nav {
   margin-top: calc(var(--hero-handoff-vh, 100) * -1vh);
   margin-top: calc(var(--hero-handoff-vh, 100) * -1svh);
 }
 .slider {
-  z-index: 2;                       /* … next scene layer (nav keeps its own z-index: 80) */
-  background-color: var(--paper);   /* opaque base so the hero can never show through */
-  /* nav + slider must fill one viewport when the handoff completes (+16px safety) */
+  z-index: 2;
+  background-color: var(--paper);
   min-height: calc(100vh - var(--nav-h) + 16px);
   min-height: calc(100svh - var(--nav-h) + 16px);
 }
 
-/* [MYCELIUM UPGRADE] Next scene arrives in layers. --enter runs 0 → 1 across the handoff;
-   each layer is held back by a different distance, so they settle at different speeds
-   (images lowest, copy next, meta line least). All resolve to 0 offset at --enter: 1. */
 .slider .sliderImg,
 .slider .sliderImg2 {
   transform: translate3d(0, calc((1 - var(--enter, 1)) * 22vh), 0);
   opacity: clamp(0, calc((var(--enter, 1) - 0.15) * 2), 1);
-}
-.slider .sliderContent,
-.slider .announcementSlideContent {
-  transform: translate3d(0, calc((1 - var(--enter, 1)) * 14vh), 0);
-  opacity: clamp(0, calc((var(--enter, 1) - 0.25) * 2), 1);
-}
-/* Small cursor-led depth shift: artwork travels farther than the copy. */
-.slider .sliderImg,
-.slider .sliderImg2 {
   translate: var(--slide-drift-x, 0px) var(--slide-drift-y, 0px);
   transition: translate 520ms var(--ease);
 }
 .slider .sliderContent,
 .slider .announcementSlideContent {
+  transform: translate3d(0, calc((1 - var(--enter, 1)) * 14vh), 0);
+  opacity: clamp(0, calc((var(--enter, 1) - 0.25) * 2), 1);
   translate: var(--slide-copy-drift-x, 0px) var(--slide-copy-drift-y, 0px);
   transition: translate 520ms var(--ease);
 }
@@ -2069,14 +2222,10 @@ nav#nav {
   transform: translate3d(0, calc((1 - var(--enter, 1)) * 6vh), 0);
   opacity: clamp(0, calc((var(--enter, 1) - 0.35) * 2), 1);
 }
-/* Headline wipe: revealed top → bottom while arriving. The class is only present
-   during the arrival, so nothing is ever left clipped (descenders, tight tracking). */
 .slider.is-entering :is(.sliderTitle1, .sliderTitle2, .sliderTitle3, .sliderTitle4, .sliderTitle5, .sliderTitle6) {
   clip-path: inset(-12% -6% calc(-12% + (1 - var(--enter, 1)) * 124%) -6%);
 }
 
-/* Reduced motion: a plain ~100vh hero showing the final frame, normal scrolling,
-   no pinned choreography, no overlap, no veil, no arrival motion. */
 @media (prefers-reduced-motion: reduce) {
   .hero-sequence { height: 100vh; height: 100svh; }
   nav#nav { margin-top: 0; }
@@ -2110,8 +2259,6 @@ nav#nav {
   pointer-events: auto;
 }
 
-/* Scroll-led scene entrances for the content after the hero. The separate
-   translate property composes with existing card tilt and image transforms. */
 .motion-reveal {
   opacity: 0;
   translate: 0 34px;
@@ -2180,7 +2327,6 @@ nav#nav {
   cursor: pointer;
   transition: background 0.3s var(--ease), color 0.3s var(--ease), transform 0.3s var(--ease);
 }
-
 .intro-btn:hover {
   background: var(--paper);
   color: var(--pine);
@@ -2196,9 +2342,7 @@ nav#nav {
   }
 }
 
-/* =========================================================
-   GALLERY — horizontal event timeline + news-style story
-   ========================================================= */
+/* 画廊图库时间轴与故事层 */
 .gallery {
   position: relative;
   min-height: 100vh;
@@ -2245,7 +2389,6 @@ nav#nav {
   font: 600 .7rem var(--sans); letter-spacing: .16em; text-transform: uppercase;
 }
 
-/* the timeline line: each node draws its own segment so the line is continuous */
 .gallery-node { position: relative; display: block; height: 28px; margin-top: 22px; }
 .gallery-node::before {
   content: ""; position: absolute; left: 0; right: 0; top: 50%;
@@ -2270,13 +2413,11 @@ nav#nav {
 }
 .gallery-name { display: block; margin-top: 6px; font: 500 1.25rem/1.25 var(--serif); color: var(--pine); }
 
-/* phones / reduced motion: native horizontal scroll */
 .gallery.is-native { min-height: 0; }
 .gallery.is-native .gallery-viewport { overflow-x: auto; scroll-snap-type: x mandatory; padding-bottom: 32px; }
 .gallery.is-native .gallery-item { scroll-snap-align: start; flex-basis: min(72vw, 320px); }
 .gallery.is-native .gallery-progress { display: none; }
 
-/* ---------- Story layer (news-style detail) ---------- */
 html.ga-lock { overflow: hidden; }
 .gallery-article {
   position: fixed; inset: 0; z-index: 300;
@@ -2328,72 +2469,3 @@ html.ga-lock { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .gallery-article, .gallery-article.is-open { transition: none; }
 }
-
-/* Apple-style Expandable Search Bar */
-.search-container {
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.search-trigger-btn {
-  background: transparent;
-  border: 1px solid var(--line);
-  color: var(--ink);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  padding: 0;
-  transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease);
-}
-.search-trigger-btn:hover {
-  background: var(--paper-2);
-  border-color: var(--copper);
-}
-.search-expand-bar {
-  position: absolute;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%) scaleX(0.85);
-  transform-origin: right center;
-  display: flex;
-  align-items: center;
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 999px;
-  padding: 4px 12px 4px 16px;
-  width: 280px;
-  box-shadow: 0 8px 24px rgba(24, 61, 50, 0.12);
-  opacity: 0;
-  visibility: hidden;
-  pointer-events: none;
-  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0.3s;
-  z-index: 90;
-}
-.search-container.is-active .search-expand-bar {
-  opacity: 1;
-  visibility: visible;
-  pointer-events: auto;
-  transform: translateY(-50%) scaleX(1);
-}
-.search-expand-bar .searchInput {
-  flex: 1;
-  border: 0;
-  background: transparent;
-  font-size: 0.88rem;
-  color: var(--ink);
-  outline: none;
-  padding: 6px 0;
-}
-.search-close-btn {
-  background: transparent;
-  border: none;
-  color: var(--ink-soft);
-  font-size: 1.2rem;
-  line-height: 1;
-  cursor: pointer;
-  padding: 4px 8px;
-}
-.search-close-btn:hover { color: var(--ink); }
