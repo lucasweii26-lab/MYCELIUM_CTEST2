@@ -69,7 +69,10 @@
 
   // Keep every viewport on the same canonical sequence so the base, depth,
   // and wireframe layers always resolve the same frame index and dimensions.
-  const PATHS = ['./hero-frames/'];
+  const isLargeScreen = (window.innerWidth >= 1920) || (window.innerWidth * (window.devicePixelRatio || 1) >= 2560);
+  const PATHS = isLargeScreen 
+    ? ['./hero-frames-large/', './hero-frames/'] 
+    : ['./hero-frames/', './hero-frames-large/'];
   const BG = '#0b0905';               // canvas / hero base colour
 
   /* ------------------------------ ELEMENTS ------------------------------ */
@@ -610,16 +613,19 @@
   };
 
 window.scrollToNav = () => {
-    const navEl = document.getElementById('nav');
-    if (!navEl) return;
-
+    const slider = document.querySelector('.slider');
+    if (!slider) return;
     const from = window.scrollY;
-    // 🎯 直接拿nav的页面Y坐标，滚动到nav贴视口顶部（menuItem就在nav内部）
-    const to = Math.max(0, navEl.getBoundingClientRect().top + window.scrollY);
-
-    const distance = to - from;
+    const sliderTop = slider.getBoundingClientRect().top + window.scrollY;
+    const target = Math.max(0, sliderTop + (slider.offsetHeight / 2) - (window.innerHeight / 2));
+    const distance = Math.abs(target - from);
     if (distance <= 0) return;
-    if (reduced) { window.scrollTo(0, to); return; }
+    if (reduced) { window.scrollTo(0, target); return; }
+
+    if (window.MYCELIUM_LENIS) {
+      window.MYCELIUM_LENIS.scrollTo(target, { duration: 0.9 });
+      return;
+    }
 
     stopGlide();
     gliding = true;
@@ -631,12 +637,11 @@ window.scrollToNav = () => {
 
     const step = now => {
       const k = clamp01((now - startTime) / duration);
-      window.scrollTo(0, from + distance * easeInOutCubic(k));
+      window.scrollTo(0, from + (target - from) * easeInOutCubic(k));
       if (k < 1) glideRaf = requestAnimationFrame(step); else stopGlide();
     };
     glideRaf = requestAnimationFrame(step);
 };
-
   /* -------------------------------- START -------------------------------- */
   applyScrollBudget();
   refreshMetrics();

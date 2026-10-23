@@ -1709,23 +1709,25 @@ function scrollPageToElement(element, options = {}) {
   element.scrollIntoView(options);
 }
 
-function scrollToSlider() {
+function getSliderCenterTarget() {
   const slider = document.querySelector('.slider');
-  if (!slider) return;
+  if (!slider) return 0;
   const sliderTopToPage = slider.getBoundingClientRect().top + window.scrollY;
   const sliderHeight = slider.offsetHeight;
   const viewportHeight = window.innerHeight;
-  const targetScroll = sliderTopToPage + sliderHeight / 2 - viewportHeight / 2;
-  if (window.MYCELIUM_LENIS) window.MYCELIUM_LENIS.scrollTo(Math.max(0, targetScroll), { duration: 0.9 });
-  else window.scrollTo({ top: Math.max(0, targetScroll), behavior: 'smooth' });
+  return Math.max(0, sliderTopToPage + (sliderHeight / 2) - (viewportHeight / 2));
 }
 
-// [MYCELIUM UPGRADE] Keep the intro hero action connected to the existing community navigation.
-function scrollToNav() {
-  const nav = document.getElementById('nav');
-  if (!nav) return scrollToSlider();
-  scrollPageToElement(nav, { behavior: 'smooth', block: 'start' });
+function scrollToSlider() {
+  const targetScroll = getSliderCenterTarget();
+  if (window.MYCELIUM_LENIS) window.MYCELIUM_LENIS.scrollTo(targetScroll, { duration: 0.9 });
+  else window.scrollTo({ top: targetScroll, behavior: 'smooth' });
 }
+
+function scrollToNav() {
+  scrollToSlider();
+}
+window.scrollToNav = scrollToNav;
 
 function initApp() {
   initLanguage();
@@ -1747,6 +1749,47 @@ function initApp() {
       navEl.classList.toggle("is-scrolled", window.scrollY > 8);
     }, { passive: true });
   }
+  // Apple-style Search Expand Interaction
+const searchContainer = document.getElementById("navSearchContainer");
+const searchTriggerBtn = document.getElementById("searchTriggerBtn");
+const searchCloseBtn = document.getElementById("searchCloseBtn");
+const customSearchImg = document.getElementById("customSearchImg");
+
+// 如果用户配置了自定义图片地址，则自动显示图片并隐藏 SVG
+if (customSearchImg && customSearchImg.getAttribute("src") && customSearchImg.getAttribute("src").trim() !== "") {
+  customSearchImg.style.display = "block";
+  const svg = searchTriggerBtn.querySelector(".search-icon-svg");
+  if (svg) svg.style.display = "none";
+}
+
+if (searchTriggerBtn && searchContainer) {
+  searchTriggerBtn.addEventListener("click", () => {
+    const isActive = searchContainer.classList.toggle("is-active");
+    searchTriggerBtn.setAttribute("aria-expanded", String(isActive));
+    if (isActive) {
+      setTimeout(() => searchInput?.focus(), 150);
+    }
+  });
+
+  searchCloseBtn?.addEventListener("click", () => {
+    searchContainer.classList.remove("is-active");
+    searchTriggerBtn.setAttribute("aria-expanded", "false");
+  });
+
+  document.addEventListener("click", (e) => {
+    if (!searchContainer.contains(e.target)) {
+      searchContainer.classList.remove("is-active");
+      searchTriggerBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && searchContainer.classList.contains("is-active")) {
+      searchContainer.classList.remove("is-active");
+      searchTriggerBtn.setAttribute("aria-expanded", "false");
+    }
+  });
+}
   const products = [
     {
       id: 1,
@@ -2892,15 +2935,11 @@ if (volunteerFormEl) {
         address: address,
         notes: notes,
         activity: activity,
-        createdAt: window.MYCELIUM_LOCAL_PREVIEW ? new Date().toISOString() : firebase.firestore.FieldValue.serverTimestamp()
+        createdAt: firebase.firestore.FieldValue.serverTimestamp()
       };
-      if (window.MYCELIUM_LOCAL_PREVIEW && window.MYCELIUM_PREVIEW_STORE) {
-        window.MYCELIUM_PREVIEW_STORE.save(activeCountryCode, "volunteers", volunteerRecord);
-      } else {
-        await locationCollection("volunteers").add(volunteerRecord);
-      }
-
       
+      await locationCollection("volunteers").add(volunteerRecord);
+
       alert(fullName + ", " + t("volunteer.successTip"));
       closeVolunteerForm();
 
@@ -3195,20 +3234,6 @@ if (searchInput) {
   });
 }  
 
-const quickReplyBtns = document.querySelectorAll(".quick-reply-btn");
-if (quickReplyBtns.length > 0 && chatbox && sendChatBtn && chatInput) {
-  quickReplyBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
-      const keyword = btn.dataset.keyword;
-      if (!keyword) return;
-      
-      
-      chatInput.value = keyword;
-      handleChat();
-    });
-  });
-}
-
     
   const featureTriggers = document.querySelectorAll(".feature-modal-trigger");
   const modalOverlays = document.querySelectorAll(".feature-modal-overlay");
@@ -3377,14 +3402,12 @@ if (newsletterForm) {
       const newsletterRecord = {
         countryCode: activeCountryCode,
         email: email,
-        subscribedAt: window.MYCELIUM_LOCAL_PREVIEW ? new Date().toISOString() : firebase.firestore.FieldValue.serverTimestamp(),
+        subscribedAt: firebase.firestore.FieldValue.serverTimestamp(),
         language: currentLang, 
         source: 'website_footer'
       };
-      const savedNewsletter = window.MYCELIUM_LOCAL_PREVIEW && window.MYCELIUM_PREVIEW_STORE
-        ? window.MYCELIUM_PREVIEW_STORE.save(activeCountryCode, "newsletter_subscribers", newsletterRecord)
-        : await locationCollection('newsletter_subscribers').add(newsletterRecord);
 
+      const savedNewsletter = await locationCollection('newsletter_subscribers').add(newsletterRecord);
       console.info('Newsletter subscription saved to Firestore.', {
         countryCode: activeCountryCode,
         collectionPath: activeCountryCode === "MY" ? "newsletter_subscribers" : `locations/${activeCountryCode}/newsletter_subscribers`,

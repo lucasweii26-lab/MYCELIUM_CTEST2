@@ -1,3 +1,4 @@
+// script.js
 const chatInput = document.querySelector(".chat-input textarea");
 const sendChatBtn = document.querySelector(".send-chat-btn");
 const chatbox = document.querySelector(".chatbox");
@@ -6,7 +7,7 @@ const chatbotCloseBtn = document.querySelector(".close-btn");
 const chatbotPanel = document.querySelector(".chatbot");
 let userMessage = "";
 const inputInitHeight = chatInput ? chatInput.scrollHeight : 54;
-
+let isChatHandling = false; // 提交互斥锁，彻底杜绝双发
 
 const createChatLi = (message, className) => {
   const chatLi = document.createElement("li");
@@ -24,14 +25,13 @@ const createChatLi = (message, className) => {
   return chatLi;
 };
 
-
+// 普通本地关键词回复规则
 const generateResponse = (incomingChatLi) => {
   const messageElement = incomingChatLi.querySelector("p");
   const msg = userMessage.toLowerCase();
   let response;
   let isError = false;
 
-  
   const rules = [
     { keywords: ["announcement", "announcements", "news", "notice", "update", "emergency", "maintenance"], replyKey: "announcement" },
     { keywords: ["hello", "hi", "hey", "greeting", "good morning", "good afternoon"], replyKey: "greeting" },
@@ -44,7 +44,6 @@ const generateResponse = (incomingChatLi) => {
     { keywords: ["contact", "staff", "management", "office"], replyKey: "contact" }
   ];
 
-  
   let bestMatch = null;
   let maxMatch = 0;
   rules.forEach(rule => {
@@ -58,7 +57,6 @@ const generateResponse = (incomingChatLi) => {
     }
   });
 
-  
   if (bestMatch && maxMatch > 0) {
     response = t(`chatbot.replies.${bestMatch.replyKey}`);
   } else {
@@ -71,35 +69,38 @@ const generateResponse = (incomingChatLi) => {
   chatbox.scrollTo(0, chatbox.scrollHeight);
 };
 
-
+// 发送消息主函数（防抖+锁）
 const handleChat = async () => {
+  if (isChatHandling) return;
   userMessage = chatInput.value.trim();
   if (!userMessage) return;
+
+  isChatHandling = true;
   chatInput.value = "";
   chatInput.style.height = `${inputInitHeight}px`;
-  sendChatBtn.disabled = true;
+  if (sendChatBtn) sendChatBtn.disabled = true;
 
-  
   chatbox.appendChild(createChatLi(userMessage, "outgoing"));
   chatbox.scrollTo(0, chatbox.scrollHeight);
 
-  
   const incomingChatLi = createChatLi(t("chatbot.thinking"), "incoming");
   chatbox.appendChild(incomingChatLi);
   chatbox.scrollTo(0, chatbox.scrollHeight);
 
-  
   window.setTimeout(async () => {
-    if (isAIMode) {
-      await generateResponseAI(incomingChatLi, userMessage);
-    } else {
-      generateResponse(incomingChatLi);
+    try {
+      if (isAIMode) {
+        await generateResponseAI(incomingChatLi, userMessage);
+      } else {
+        generateResponse(incomingChatLi);
+      }
+    } finally {
+      isChatHandling = false;
+      if (sendChatBtn) sendChatBtn.disabled = false;
+      chatInput.focus();
     }
-    sendChatBtn.disabled = false;
-    chatInput.focus();
-  }, 700);
+  }, 600);
 };
-
 
 const setChatbotOpen = (isOpen) => {
   document.body.classList.toggle("show-chatbot", isOpen);
@@ -108,15 +109,12 @@ const setChatbotOpen = (isOpen) => {
   if (isOpen) chatInput.focus();
 };
 
-
 if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && chatbotPanel) {
-  
   chatInput.addEventListener("input", () => {
     chatInput.style.height = `${inputInitHeight}px`;
     chatInput.style.height = `${Math.min(chatInput.scrollHeight, 180)}px`;
   });
 
-  
   chatInput.addEventListener("keydown", (event) => {
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
@@ -124,308 +122,183 @@ if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && 
     }
   });
 
-  
   sendChatBtn.addEventListener("click", handleChat);
-  
   chatbotCloseBtn.addEventListener("click", () => setChatbotOpen(false));
-  
   chatbotToggler.addEventListener("click", () => {
     setChatbotOpen(!document.body.classList.contains("show-chatbot"));
   });
 }
 
+// --------------------------------------------------------------------------
+// 针对三大城市完全独立隔离的 AI 记忆库（方便后期单独拓展，不互相干扰）
+// --------------------------------------------------------------------------
 
-const reportBtn = document.querySelector(".report-btn");
-const reportModal = document.getElementById("reportModal");
-const reportCloseBtn = document.querySelector(".report-close-btn");
-const reportForm = document.getElementById("reportForm");
-
-function openReportForm() {
-  if (!reportModal) return;
-  reportModal.classList.add("active");
-  reportModal.setAttribute("aria-hidden", "false");
-}
-
-function closeReportForm() {
-  if (!reportModal || !reportForm) return;
-  reportModal.classList.remove("active");
-  reportModal.setAttribute("aria-hidden", "true");
-  reportForm.reset();
-}
-
-if (reportBtn) reportBtn.addEventListener("click", openReportForm);
-if (reportCloseBtn) reportCloseBtn.addEventListener("click", closeReportForm);
-
-
-if (reportModal) {
-  reportModal.addEventListener("click", (e) => {
-    if (e.target === reportModal) closeReportForm();
-  });
-}
-
-
-if (reportForm && chatbox) {
-  reportForm.addEventListener("submit", async (e) => {
-    e.preventDefault();
-
-    const submitBtn = reportForm.querySelector(".report-submit-btn");
-    const originalBtnText = submitBtn ? submitBtn.textContent : "Submit";
-
-    
-    const formData = new FormData(reportForm);
-    const reportData = {
-      countryCode: window.MYCELIUM_COUNTRY || "MY",
-      firstName: formData.get("firstName") || "",
-      lastName: formData.get("lastName") || "",
-      contactNumber: formData.get("contactNumber") || "",
-      email: formData.get("email") || "",
-      address: formData.get("address") || "",
-      message: formData.get("message") || "",
-      subscribeUpdates: formData.get("subscribeUpdates") === "on",
-      source: "chatbot_report",
-      createdAt: null 
-    };
-
-    
-    if (submitBtn) {
-      submitBtn.disabled = true;
-      submitBtn.textContent = "Submitting...";
-    }
-
-    try {
-      
-      if (window.MYCELIUM_LOCAL_PREVIEW && window.MYCELIUM_PREVIEW_STORE) {
-        window.MYCELIUM_PREVIEW_STORE.save(reportData.countryCode, "reports", reportData);
-      } else if (typeof db !== "undefined" && db.collection) {
-        const docData = { ...reportData };
-        
-        if (typeof firebase !== "undefined" && firebase.firestore && firebase.firestore.FieldValue) {
-          docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
-        }
-        const countryCode = String(window.MYCELIUM_COUNTRY || "MY").toUpperCase();
-        const reports = countryCode === "MY"
-          ? db.collection("reports")
-          : db.collection("locations").doc(countryCode).collection("reports");
-        await reports.add(docData);
-      } else {
-        console.warn("Firestore db not available, skipping database write");
-      }
-
-      
-      closeReportForm();
-      const successMsg = t("report.successAlert");
-      alert(successMsg);
-      
-      const thankYouText = t("chatbot.thankFeedback");
-      const replyLi = createChatLi(thankYouText, "incoming");
-      chatbox.appendChild(replyLi);
-      chatbox.scrollTo(0, chatbox.scrollHeight);
-    } catch (error) {
-      console.error("Error submitting report:", error);
-      
-      const errorMsg = t("report.errorAlert");
-      alert(errorMsg);
-      const replyLi = createChatLi(errorMsg, "incoming");
-      const p = replyLi.querySelector("p");
-      if (p) p.classList.add("error");
-      chatbox.appendChild(replyLi);
-      chatbox.scrollTo(0, chatbox.scrollHeight);
-    } finally {
-      
-      if (submitBtn) {
-        submitBtn.disabled = false;
-        submitBtn.textContent = originalBtnText;
-      }
-    }
-  });
-}
-
-
-const aiModeBtn = document.getElementById("aiModeBtn");
-let isAIMode = false;
-
-if (aiModeBtn) {
-  aiModeBtn.addEventListener("click", () => {
-    isAIMode = !isAIMode;
-    aiModeBtn.classList.toggle("active", isAIMode);
-    aiModeBtn.setAttribute("aria-pressed", String(isAIMode));
-  });
-}
-
-const siteKnowledge = {
+// 1. 槟城 Pulau Tikus 独立知识库
+const penangSiteKnowledge = {
   announcements: `
-    Community Announcements (as of July 2026):
-    - 30 July 2026: Heavy rain warning from 2pm to 8pm. Secure loose outdoor items and avoid the pond area.
-    - 24 August 2026: Water supply interruption 9am-4pm for scheduled maintenance.
-    - 15 August 2026: Annual community meeting at multipurpose hall, 8pm, all residents welcome.
-    - 08 August 2026: New recycling points added near guest parking area.
-    - 01 August 2026: Tree Planting Day at 8am.
-    Categories available: All, Emergency, Maintenance, Community, Events.
+    Pulau Tikus (Penang) Community Announcements:
+    - 30 July 2026: Heavy rain & flash flood warning (2pm-8pm) along coastal George Town areas.
+    - 24 August 2026: Scheduled PBA water supply maintenance (9am-4pm) for Pulau Tikus residential zone.
+    - 15 August 2026: Penang Annual Residents General Meeting at Multipurpose Hall, 8pm.
   `,
   facilities: `
-    Community Facilities Map locations:
-    - Tennis court: near front entrance, beside front-facing homes.
-    - Clubhouse: main community building, adjoining pool deck and open lawn near the center of neighborhood.
-    - Main pool: central pool with sun deck, loungers and umbrellas, right next to the clubhouse.
-    - Playground: sand-based play area with slide equipment, just behind the clubhouse.
-    - Community park: open green lawn with looping walking path, on the east side of the property.
-    - Guest parking: striped parking lot for residents and visitors, just south of the clubhouse.
-    - Basketball court: near southwest corner homes.
-    - Gym: grey-roofed house beside basketball court.
-    - Pond: natural pond along southeast edge, bordered by trees.
-    - Recycling points: near guest parking and near bottom row of homes.
+    Pulau Tikus Facilities:
+    - Tennis court near entrance, central Swimming Pool with sun deck, sand Playground behind Clubhouse, Gym beside basketball court, 2-acre Community Park along Jalan Kelawei.
   `,
   services: `
-    Local Service Directory (8 trusted local services):
-    - Ahmad Razali (Plumber): +60 12-345 6789, ahmad.plumb@email.com. Pipe installation, leak repair, bathroom fitting, water heater maintenance.
-    - Siti Aminah (Electrician): +60 13-456 7890, siti.elec@email.com. Certified wiring, circuit breaker repair, lighting installation, safety inspection.
-    - Raj Kumar (Air-Cond Technician): +60 14-567 8901, raj.ac@email.com. AC servicing, gas top-up, compressor repair, annual maintenance contracts.
-    - Lee Wei Ming (Carpenter): +60 15-678 9012, lee.carpentry@email.com. Custom furniture, kitchen cabinet, wardrobe, home renovation woodwork.
-    - Nurul Izzati (Cleaner): +60 16-789 0123, nurul.clean@email.com. Deep cleaning, move-in/out cleaning, office cleaning, regular housekeeping.
-    - Tan Boon Heng (Painter): +60 17-890 1234, tan.paint@email.com. Interior/exterior painting, waterproof coating, wall texture repair, color consultation.
-    - Dr. Priya (Home Doctor): +60 18-901 2345, dr.priya@email.com. General practitioner home visits, health screening, vaccination, elderly care.
-    - Zainab Yusof (Landscaper): +60 19-012 3456, zainab.green@email.com. Garden design, lawn maintenance, tree trimming, irrigation system.
-  `,
-  events: `
-    Upcoming Community Events (July 2026):
-    - 1 August: Tree Planting Day, 8:00 AM, Community Park. Bring gardening gloves, small shovel, reusable water bottle.
-    - 9 August: Neighborhood Cleanup Day, 9:00 AM, Guest Parking Lot. Bring gloves, face mask, tongs; garbage bags provided.
-    - 22 August: Fun Run, 7:00 AM, Community Park. 3KM family run and 5KM open run. Light refreshments provided.
-  `,
-  volunteer: `
-    Volunteer Registration activities:
-    - Tree Planting Day: 1 August 2026, 8AM, Community Park.
-    - Neighborhood Cleanup Day: 9 August 2026, 9AM, Guest Parking Lot.
-    - Fun Run Marshal: 22 August 2026, 7AM, Community Park.
-    Registration requires full name, phone number, house address. Optional notes for dietary or accessibility needs.
-  `,
-  faq: `
-    Frequently Asked Questions:
-    1. How to become a member? Open to all residents. Visit Volunteer Registration or contact community office. New members get welcome package.
-    2. What facilities are available? Community Hall (200 capacity), Health Clinic, Children's Playground, Library (10,000+ books), Sports Center with gym and pool, 2-acre Central Park.
-    3. How to report maintenance/safety issues? Use chatbot, email facilities@smartcommunity.local, or call 24/7 hotline +60 3-1234 5678. Non-emergency addressed within 48 hours.
-    4. Age-specific programs? Yes: toddler storytime, youth sports leagues, teen mentorship, adult fitness classes, senior wellness walks.
-    5. Community newsletter? Weekly email every Monday. Subscribe at footer.
-    6. Community rules? Quiet hours 10PM-7AM, waste sorting, pet leash in common areas, parking regulations. Full handbook available at office.
+    Penang Local Service Directory:
+    - Ahmad Razali (Plumber): +60 12-345 6789.
+    - Siti Aminah (Electrician): +60 13-456 7890.
+    - Dr. Priya (Home Doctor / GP): +60 18-901 2345.
   `,
   general: `
-    Website name: MYCELIUM Smart Community.
-    Tagline: Empowering Health, Enriching Lives.
-    Community management contact: +60 10-557 0900, myceliumresidence07@gmail.com.
-    Office hours: 9am-6pm weekdays.
+    Community: MYCELIUM Residences in Pulau Tikus, George Town, Penang, Malaysia.
+    Management Office: +60 10-557 0900, myceliumresidence07@gmail.com. Mon-Fri 9am-6pm.
   `
 };
 
-// Separate Portland demo knowledge prevents US visitors from receiving MY contacts or rules.
-const usSiteKnowledge = {
-  announcements: "Fictional Portland demo notices: annual fire alarm test 15 Oct 2026, 10 AM–12 PM; compost pickup moves to Tuesdays and Fridays from 27 Oct; scheduled water shut-off 4 Nov 2026, 9–11 AM.",
-  facilities: "Portland community facilities: Community Garden; Fitness Center; Co-working Lounge; Bike Hub; EV Charging Stations; Recycling & Compost Center; 0.8-mile Woodland Walking Trail; Clubhouse.",
-  services: "US directory: emergency 911; City of Portland non-emergency 311; 988 Suicide & Crisis Lifeline; Poison Control 1-800-222-1222; management office +1 (234) 567-8910, Mon–Fri 9 AM–5 PM Pacific; 24-hour security demo line +1 (234) 567-8910.",
-  events: "Fictional Portland demo events: Fall Garden Swap 24 Oct 2026; Fun Run 7 Nov 2026; Neighborhood Food Drive 14 Nov 2026; Community Thanksgiving Potluck 26 Nov 2026.",
-  volunteer: "Volunteer interest can be submitted through the site's volunteer registration form. The form asks for name, phone, address, notes and activity. Events shown are fictional demonstration content.",
-  faq: "Portland demo community: quiet hours 10 PM–7 AM; clubhouse reservations should be requested from management at least 7 days in advance; report urgent danger to 911, and contact management for community questions.",
-  general: "MYCELIUM Residences – Portland, Oregon, USA. Demo contact: John Smith, 123 Main Street, 12345; +1 (234) 567-8910; john.smith@company.com. Local time is Pacific Time, currency USD, distance miles. This location's announcements and events are fictional demonstration content."
+// 2. 柔佛新山 Johor Bahru 独立知识库
+const jbSiteKnowledge = {
+  announcements: `
+    Johor Bahru Community Announcements:
+    - 12 August 2026: Cross-border traffic advisory & community shuttle update to JB Sentral / RTS Link.
+    - 26 August 2026: Skudai riverfront park conservation and neighborhood green tree-planting drive.
+    - 05 September 2026: Scheduled electrical maintenance at Clubhouse, 10am-2pm.
+  `,
+  facilities: `
+    Johor Bahru Facilities:
+    - Straits-view Infinity Swimming Pool, Community Gym, Co-working lounge for remote professionals, EV fast-charging bay, Badminton court.
+  `,
+  services: `
+    Johor Bahru Local Service Directory:
+    - Tan Boon Seng (Plumbing & Water Works): +60 7-331 4567.
+    - Muhammad Faizal (Air-Cond & Electrical): +60 19-712 3456.
+    - Dr. Faridah (Family Clinic Home Care): +60 7-224 8900.
+  `,
+  general: `
+    Community: MYCELIUM Residences in Johor Bahru, Johor, Malaysia.
+    Management Office: +60 7-223 8899, jb.management@mycelium-community.com. Mon-Fri 9am-6pm.
+  `
 };
 
+// 3. 美国波特兰 Portland 独立知识库
+const portlandSiteKnowledge = {
+  announcements: `
+    Portland, Oregon Community Announcements:
+    - October 15, 2026: Annual building fire alarm inspection (10 AM - 12 PM).
+    - October 27, 2026: Curbside compost collection schedule changes to Tuesdays/Fridays.
+    - November 04, 2026: Water main maintenance shut-off (9 AM - 11 AM).
+  `,
+  facilities: `
+    Portland Community Amenities:
+    - Community Garden, Fitness Center, Co-working Lounge, Bike Hub & Repair, EV Charging Stations, 0.8-mile Woodland Walking Trail, Clubhouse.
+  `,
+  services: `
+    Portland Emergency & Local Contacts:
+    - Emergency: 911 | City of Portland Non-Emergency: 311.
+    - Building Maintenance: +1 (234) 567-8910 (John Smith).
+  `,
+  general: `
+    Community: MYCELIUM Residences – Portland, Oregon, United States.
+    Management Office: +1 (234) 567-8910, john.smith@company.com. Mon-Fri 9am-5pm Pacific Time.
+  `
+};
 
 const knowledgeKeywords = [
   { keywords: ["announcement", "news", "notice", "emergency", "maintenance", "rain", "water supply"], key: "announcements" },
-  { keywords: ["facility", "facilities", "map", "gym", "pool", "playground", "park", "tennis", "basketball", "clubhouse", "parking", "pond", "recycling"], key: "facilities" },
-  { keywords: ["service", "directory", "plumber", "electrician", "cleaner", "carpenter", "painter", "landscaper", "doctor", "air cond", "repair", "contact"], key: "services" },
-  { keywords: ["event", "calendar", "tree planting", "cleanup", "fun run", "july", "activity"], key: "events" },
+  { keywords: ["facility", "facilities", "map", "gym", "pool", "playground", "park", "tennis", "basketball", "clubhouse", "parking"], key: "facilities" },
+  { keywords: ["service", "directory", "plumber", "electrician", "cleaner", "carpenter", "painter", "landscaper", "doctor", "air cond"], key: "services" },
+  { keywords: ["event", "calendar", "tree planting", "cleanup", "fun run", "activity"], key: "events" },
   { keywords: ["volunteer", "register", "marshal", "help"], key: "volunteer" },
-  { keywords: ["faq", "question", "rule", "membership", "report", "issue", "newsletter", "parking rule", "quiet hour"], key: "faq" },
+  { keywords: ["faq", "question", "rule", "membership", "report", "issue"], key: "faq" },
   { keywords: ["mycelium", "community", "website", "contact", "management", "office"], key: "general" }
 ];
 
+// 获取当前准确的地点编码
+function getCurrentLocKey() {
+  const current = (window.MYCELIUM_COUNTRY || "").toUpperCase();
+  if (current === "US_PL" || current === "US") return "US_PL";
+  if (current === "MY_JB") return "MY_JB";
+  return "MY_PP";
+}
+
+function getRelevantSiteContent(userMsg) {
+  const msg = userMsg.toLowerCase();
+  const loc = getCurrentLocKey();
+  let knowledge = penangSiteKnowledge;
+  if (loc === "US_PL") knowledge = portlandSiteKnowledge;
+  else if (loc === "MY_JB") knowledge = jbSiteKnowledge;
+
+  let matchedContent = "";
+  knowledgeKeywords.forEach(item => {
+    const hit = item.keywords.some(kw => msg.includes(kw));
+    if (hit && knowledge[item.key]) matchedContent += knowledge[item.key] + "\n";
+  });
+  return (matchedContent || knowledge.general).trim();
+}
 
 async function callOpenRouter(prompt) {
-  if (window.MYCELIUM_LOCAL_PREVIEW) {
-    const question = prompt.split("User question:").pop().trim();
-    const siteContent = getRelevantSiteContent(question);
-    const sampleLines = siteContent.split("\n").map((line) => line.trim()).filter((line) => line.startsWith("-") || /^\d+\./.test(line)).slice(0, 3);
-    return sampleLines.length
-      ? `Local preview sample (not a live AI response): ${sampleLines.join(" ")}`
-      : "Local preview sample: please check the relevant community page or contact the local management office for details.";
-  }
 
   try {
     const response = await fetch("/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, countryCode: window.MYCELIUM_COUNTRY || "MY" })
+      body: JSON.stringify({ prompt, locationCode: getCurrentLocKey() })
     });
 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
-      console.error("Mycelium AI request failed:", {
-        httpStatus: response.status,
-        reason: data.error || "Unknown server error",
-        providerStatus: data.providerStatus || undefined,
-      });
       return "The AI assistant is temporarily unavailable. Please try again shortly.";
     }
     return typeof data.text === "string" && data.text.trim()
       ? data.text
-      : "The AI assistant did not return an answer. Please try again.";
+      : "No answer returned. Please consult the management office.";
   } catch (err) {
-    console.error("Mycelium AI request failed:", err);
-    return "The AI assistant could not connect. Please try again shortly.";
+    return "Connection error. Please try again shortly.";
   }
 }
-
-
-function getRelevantSiteContent(userMsg) {
-  const msg = userMsg.toLowerCase();
-  const knowledge = window.MYCELIUM_COUNTRY === "US" ? usSiteKnowledge : siteKnowledge;
-  let matchedContent = "";
-  knowledgeKeywords.forEach(item => {
-    const hit = item.keywords.some(kw => msg.includes(kw));
-    if (hit) matchedContent += knowledge[item.key] + "\n";
-  });
-  return matchedContent.trim();
-}
-
 
 async function generateResponseAI(incomingChatLi, userMsg) {
   const messageElement = incomingChatLi.querySelector("p");
   const siteContent = getRelevantSiteContent(userMsg);
-  const locationName = window.MYCELIUM_COUNTRY === "US" ? "MYCELIUM Residences – Portland, Oregon, USA" : "MYCELIUM Smart Community in Pulau Tikus, Penang, Malaysia";
+  const loc = getCurrentLocKey();
+  const locationLabel = loc === "US_PL" ? "Portland, Oregon, USA" : (loc === "MY_JB" ? "Johor Bahru, Johor, Malaysia" : "Pulau Tikus, Penang, Malaysia");
 
-  if (siteContent) {
-    const prompt = `
-      You are a helpful community assistant for ${locationName}.
-      Use ONLY the following website information to answer the user's question.
-      If the answer is not in the information, say you don't know and suggest contacting management.
-      Keep the answer friendly, concise and well-structured.
-      Answer in the user's language when possible.
-      Website information:
-      ${siteContent}
-      User question: ${userMsg}
-    `;
-    const reply = await callOpenRouter(prompt);
-    messageElement.textContent = reply;
-  } else {
-    const prompt = `
-      You are a friendly assistant for ${locationName}. Do not invent location-specific facts; direct the user to the community office if unsure.
-      Answer in the user's language when possible.
-      User question: ${userMsg}
-    `;
-    const reply = await callOpenRouter(prompt);
-    messageElement.textContent = reply;
-  }
+  const prompt = `
+    You are the official community assistant for MYCELIUM Residences in ${locationLabel}.
+    Answer strictly using the following verified local data:
+    ${siteContent}
+    If information is not present, guide the resident to the local management office.
+    Keep answers friendly, clear and concise.
+    User question: ${userMsg}
+  `;
+  const reply = await callOpenRouter(prompt);
+  messageElement.textContent = reply;
   chatbox.scrollTo(0, chatbox.scrollHeight);
 }
 
-
+// 唯一绑定快捷回复（只在 script.js 中注册，app.js 中的需删除，双发彻底解决）
 const quickReplyBtns = document.querySelectorAll(".quick-reply-btn");
-if (quickReplyBtns.length > 0 && chatbox && sendChatBtn && chatInput) {
+if (quickReplyBtns.length > 0 && chatbox && chatInput) {
   quickReplyBtns.forEach(btn => {
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
       const keyword = btn.dataset.keyword;
-      if (!keyword) return;
+      if (!keyword || isChatHandling) return;
       chatInput.value = keyword;
       handleChat();
     });
+  });
+}
+
+// 切换 AI 模式
+const aiModeBtn = document.getElementById("aiModeBtn");
+let isAIMode = false;
+if (aiModeBtn) {
+  aiModeBtn.addEventListener("click", () => {
+    isAIMode = !isAIMode;
+    aiModeBtn.classList.toggle("active", isAIMode);
+    aiModeBtn.setAttribute("aria-pressed", String(isAIMode));
   });
 }

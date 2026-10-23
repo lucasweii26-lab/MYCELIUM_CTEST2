@@ -68,18 +68,6 @@ img { max-width: 100%; display: block; }
 button, input, textarea { font-family: inherit; }
 a { color: inherit; }
 
-.skip-link {
-  position: absolute;
-  left: 16px;
-  top: -48px;
-  z-index: 10000;
-  background: #00ff88;
-  color: var(--paper);
-  padding: 8px 14px;
-  text-decoration: none;
-}
-.skip-link:focus { top: 12px; }
-
 :focus-visible {
   outline: 2px solid var(--copper);
   outline-offset: 3px;
@@ -2340,3 +2328,72 @@ html.ga-lock { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .gallery-article, .gallery-article.is-open { transition: none; }
 }
+
+/* Apple-style Expandable Search Bar */
+.search-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-trigger-btn {
+  background: transparent;
+  border: 1px solid var(--line);
+  color: var(--ink);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.25s var(--ease), border-color 0.25s var(--ease);
+}
+.search-trigger-btn:hover {
+  background: var(--paper-2);
+  border-color: var(--copper);
+}
+.search-expand-bar {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%) scaleX(0.85);
+  transform-origin: right center;
+  display: flex;
+  align-items: center;
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 4px 12px 4px 16px;
+  width: 280px;
+  box-shadow: 0 8px 24px rgba(24, 61, 50, 0.12);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s var(--ease), transform 0.3s var(--ease), visibility 0.3s;
+  z-index: 90;
+}
+.search-container.is-active .search-expand-bar {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(-50%) scaleX(1);
+}
+.search-expand-bar .searchInput {
+  flex: 1;
+  border: 0;
+  background: transparent;
+  font-size: 0.88rem;
+  color: var(--ink);
+  outline: none;
+  padding: 6px 0;
+}
+.search-close-btn {
+  background: transparent;
+  border: none;
+  color: var(--ink-soft);
+  font-size: 1.2rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.search-close-btn:hover { color: var(--ink); }

@@ -1,0 +1,7 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Mycelium Portland</title></head>
+<body><script>
+  const query = new URLSearchParams(location.search);
+  query.set("region", "US_PL");
+  location.replace(`/index.html?${query.toString()}${location.hash}`);
+</script><noscript><a href="/index.html?region=US_PL">Open the Portland community site</a></noscript></body></html>

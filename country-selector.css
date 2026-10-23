@@ -110,6 +110,20 @@ body.country-picker-open { overflow: hidden; }
   text-align: left;
   cursor: pointer;
 }
+.country-picker-panel {
+  padding: clamp(20px, 3.5vh, 48px) clamp(24px, 4vw, 56px);
+  gap: clamp(14px, 2vh, 24px);
+  overflow-y: auto;
+}
+.country-picker-title {
+  font-size: clamp(1.8rem, 3.2vw, 3rem);
+}
+.country-globe-canvas {
+  transition: opacity 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), transform 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.country-picker.is-open .country-globe-canvas {
+  transform: scale(1);
+}
 .country-picker-country:focus-visible { outline: 2px solid var(--copper-soft); outline-offset: 6px; }
 .country-picker-marker { width: 10px; height: 10px; border-radius: 50%; background: var(--copper-soft); box-shadow: 0 0 0 5px rgba(145,169,138,.13); }
 .country-picker-country-name { margin: 0; font-size: 1rem; font-weight: 600; }

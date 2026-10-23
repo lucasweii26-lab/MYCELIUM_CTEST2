@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const classicScripts = ["app.js", "script.js", "hero-sequence.js", "local-preview.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js"];
+const classicScripts = ["app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js"];
 
 const copyClassicScripts = {
   name: "copy-classic-scripts-to-publish-directory",
@@ -38,7 +38,7 @@ const copyClassicScripts = {
       path.join(outputDirectory, "hero-wire"),
       { recursive: true },
     );
-    for (const directoryName of ["hero-depth", "hero-depth-frames", "hero-frames-depth", "depth-frames"]) {
+    for (const directoryName of ["hero-depth", "hero-frames-large", "hero-depth-frames", "hero-frames-depth", "depth-frames"]) {
       const sourceDirectory = path.resolve(projectRoot, directoryName);
       if (existsSync(sourceDirectory)) {
         cpSync(sourceDirectory, path.join(outputDirectory, directoryName), { recursive: true });

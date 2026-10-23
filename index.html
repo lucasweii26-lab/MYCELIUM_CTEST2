@@ -26,7 +26,6 @@
 </head>
 
 <body>
-  <a class="skip-link" href="#hero">Skip to content</a>
 
     <div class="loading-screen">
     <div class="loading-inner">
@@ -87,11 +86,21 @@
                 <span class="country-switcher-value" data-current-country>Malaysia</span>
                 <span class="country-switcher-chevron" aria-hidden="true">⌄</span>
               </button>
-              <div class="search">
-                  <input type="text" placeholder="Search ....." class="searchInput" id="navSearchInput" data-i18n-placeholder="nav.searchPlaceholder">
-                  <img src="./img/Contact/MYCELIUM.png" width="20" height="20" alt="" class="searchIcon">
-              </div>
-            </div>
+<div class="search-container" id="navSearchContainer">
+  <!-- 自定义图标插槽：如果后续需要使用本地图片，在此 img 的 src 填入图片路径即可 -->
+  <button class="search-trigger-btn" id="searchTriggerBtn" type="button" aria-label="Search" aria-expanded="false">
+    <!-- 如果使用图片图标，填入路径，如 src="./img/Icon/my-search-icon.png"，不为空时会自动隐藏 SVG -->
+    <img src="" alt="" class="custom-search-img" id="customSearchImg" style="display: none;">
+    <svg class="search-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"></circle>
+      <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+    </svg>
+  </button>
+  <div class="search-expand-bar" id="searchExpandBar">
+    <input type="text" placeholder="Search ....." class="searchInput" id="navSearchInput" data-i18n-placeholder="nav.searchPlaceholder" autocomplete="off">
+    <button class="search-close-btn" id="searchCloseBtn" type="button" aria-label="Close search">&times;</button>
+  </div>
+</div>            </div>
         </div>
 
     <div class="navBottom" id="navMenu">
@@ -769,7 +778,6 @@
 
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
-    <script src="./local-preview.js"></script>
     <script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
