@@ -416,10 +416,15 @@
 <div class="gi-viewport" id="galleryViewport">
 <ol class="gi-list" id="galleryList"></ol>
 </div>
-<div class="gi-hint" id="galleryHint" aria-hidden="true">
-<span class="gi-hint-ring">SCROLL</span>
-</div>
-</div>
+      <div class="gi-hint is-visible" id="galleryHint" aria-hidden="true">
+        <div class="gi-hint-ring" data-mode="scroll">
+          <span class="gi-hint-chev gi-hint-up" aria-hidden="true"></span>
+          <span class="gi-hint-label">SCROLL</span>
+          <span class="gi-hint-hand" aria-hidden="true"></span>
+          <span class="gi-hint-chev gi-hint-down" aria-hidden="true"></span>
+        </div>
+      </div>
+    </div>
 
 
     <div class="gallery-article" id="galleryArticle" role="dialog" aria-modal="true" aria-hidden="true" data-lenis-prevent></div>

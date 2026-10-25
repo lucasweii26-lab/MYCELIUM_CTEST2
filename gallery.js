@@ -74,15 +74,33 @@
     });
   }
 
+  // infinite strip: render 3 copies, start in the middle set
+  const LOOP_COPIES = 3;
+  function realCount() {
+    return Math.max(0, events.length);
+  }
+  function virtualCount() {
+    const n = realCount();
+    return n ? n * LOOP_COPIES : 0;
+  }
+  function realFromVirtual(v) {
+    const n = realCount();
+    if (!n) return 0;
+    return ((v % n) + n) % n;
+  }
+
   function renderImmersive() {
     if (!events.length) {
       list.innerHTML = `<li class="gi-item"><article class="gi-card"><div class="gi-frame"><div class="gi-meta"><h2 class="gi-title">No moments yet</h2></div></div></article></li>`;
       return;
     }
-    list.innerHTML = events.map((ev, i) => {
-      const label = pick(ev, "short") || pick(ev, "title");
-      const tag = pick(ev, "tag") || "";
-      return `<li class="gi-item" data-index="${i}">
+    const parts = [];
+    for (let copy = 0; copy < LOOP_COPIES; copy++) {
+      events.forEach((ev, i) => {
+        const vIdx = copy * events.length + i;
+        const label = pick(ev, "short") || pick(ev, "title");
+        const tag = pick(ev, "tag") || "";
+        parts.push(`<li class="gi-item" data-index="${vIdx}" data-real="${i}">
         <article class="gi-card" data-slug="${esc(ev.slug)}">
           <div class="gi-frame">
             <span class="gi-photo">${photo(ev.cover, label, ev.focus)}</span>
@@ -98,8 +116,10 @@
             <button type="button" class="gi-explore gi-text" data-slug="${esc(ev.slug)}">${esc(L().explore)} →</button>
           </div>
         </article>
-      </li>`;
-    }).join("");
+      </li>`);
+      });
+    }
+    list.innerHTML = parts.join("");
   }
 
   // ---- motion ----
@@ -161,24 +181,53 @@
       }
     });
 
-    // pad so first/last card centers in the viewport
+    // Optical center sits ABOVE geometric center so more of the *next* card
+    // peeks at the bottom (Siena-like preview). Shift ~10% of viewport up.
+    const centerBias = Math.round(vh * 0.10);
     const pad = Math.round((vh - itemH) / 2 + (itemH - cardH) / 2);
-    list.style.paddingTop = Math.max(0, pad) + "px";
-    list.style.paddingBottom = Math.max(0, pad) + "px";
+    list.style.paddingTop = Math.max(0, pad - centerBias) + "px";
+    list.style.paddingBottom = Math.max(0, pad + centerBias) + "px";
   }
 
   function maxIndex() {
-    return Math.max(0, events.length - 1);
+    // virtual max (last item of last copy)
+    return Math.max(0, virtualCount() - 1);
   }
   function clampIndex(i) {
-    return Math.max(0, Math.min(maxIndex(), i));
+    const max = maxIndex();
+    if (max <= 0) return 0;
+    // keep inside middle copy band when clamping hard targets; free scroll uses wrap
+    return Math.max(0, Math.min(max, i));
   }
   function yForIndex(i) {
-    return -clampIndex(i) * itemH;
+    return -i * itemH;
+  }
+  function nearestVirtualIndex() {
+    if (!itemH) return 0;
+    return Math.round(-y / itemH);
   }
   function nearestIndex() {
-    if (!itemH) return 0;
-    return clampIndex(Math.round(-y / itemH));
+    // real event index (0..n-1) for ticket / article
+    return realFromVirtual(nearestVirtualIndex());
+  }
+  function wrapInfinite() {
+    const n = realCount();
+    if (!n || !itemH || LOOP_COPIES < 2) return;
+    const total = n * itemH;
+    // keep y inside the middle copy: [n, 2n)
+    const midStart = n;
+    const midEnd = n * 2;
+    let vi = nearestVirtualIndex();
+    while (vi < midStart) {
+      y -= total;
+      targetY -= total;
+      vi += n;
+    }
+    while (vi >= midEnd) {
+      y += total;
+      targetY += total;
+      vi -= n;
+    }
   }
 
   function updateTicket() {
@@ -274,20 +323,15 @@
         velocity *= 0.92;
         y += velocity * (dt / 16);
         if (Math.abs(velocity) < 0.55) {
-          targetY = yForIndex(nearestIndex());
+          targetY = yForIndex(nearestVirtualIndex());
           springV = velocity;
           snapping = true;
         }
       }
     }
 
-    if (itemH && events.length) {
-      const min = yForIndex(maxIndex());
-      if (y > 24) { y = 24; velocity = 0; springV = 0; } // soft rubber-band top
-      if (y < min - 24) { y = min - 24; velocity = 0; springV = 0; }
-      // pull back if past soft bounds
-      if (!isDragging && y > 0) { targetY = 0; snapping = true; }
-      if (!isDragging && y < min) { targetY = min; snapping = true; }
+    if (itemH && events.length > 1) {
+      wrapInfinite();
     }
 
     list.style.transform = `translate3d(0, ${y}px, 0)`;
@@ -307,13 +351,23 @@
   }
 
   function goToIndex(i, openSlugAfter) {
-    const idx = clampIndex(i);
-    const prev = activeIndex;
-    scrollDir = idx > prev ? 1 : idx < prev ? -1 : scrollDir;
-    activeIndex = idx;
-    targetY = yForIndex(idx);
+    const n = realCount();
+    if (!n) return;
+    const curV = nearestVirtualIndex();
+    let vTarget;
+    // relative steps from keyboard / edge-click: nearestIndex()+1 style passes real-ish
+    // Prefer treating i as virtual if close to current virtual position
+    if (Math.abs(i - curV) <= n) {
+      vTarget = i;
+    } else {
+      // absolute real index → middle copy
+      vTarget = n + realFromVirtual(i);
+    }
+    const nextReal = realFromVirtual(vTarget);
+    scrollDir = vTarget > curV ? 1 : vTarget < curV ? -1 : scrollDir;
+    activeIndex = nextReal;
+    targetY = yForIndex(vTarget);
     snapping = true;
-    // seed spring with a bit of velocity for rebound feel
     springV = (targetY - y) * 0.08;
     velocity = springV;
     if (openSlugAfter) pendingOpenSlug = openSlugAfter;
@@ -321,31 +375,222 @@
 
   let pointerMoved = 0;
   let pointerStartY = 0;
-  const CLICK_THRESH = 10; // px — below this counts as click, not drag
+
+  /* Siena cursor + scrub gesture
+     Research-based composite gesture (pointerdown/move/up only):
+     - short down→up = light tap (trackpad taps often <100ms; mouse ~100–300ms)
+     - after a light tap, next press that is HELD (or dragged) = scrub
+     - setPointerCapture only after real drag / scrub (avoids trackpad 2nd-click loss)
+     Cursor shows only SCROLL text + chevrons (no hand). */
+  const ZONE_EDGE = 0.18;
+  let cursorMode = "scroll";
+  let scrubbing = false;
+  let cursorOverUI = false;
+  let edgeClickTimer = 0;
+  let pendingEdgeDir = 0;
+  let articleClickTimer = 0;
+  let pendingArticleSlug = null;
+  let pendingArticleVIdx = -1;
+
+  let tapReady = false;
+  let tapReadyAt = 0;
+  let pressStartedAt = 0;
+  let longPressTimer = 0;
+  let awaitingHold = false; // 2nd press in progress, waiting for hold
+  let didCapture = false;
+  let lastTapX = 0;
+  let lastTapY = 0;
+  const TAP_POS_SLOP = 120; // px — 2nd press can be offset from 1st tap
+
+  const TAP_WINDOW = 1400;   // longer window after light tap
+  const HOLD_MS = 110;       // faster hold → scrub
+  const TAP_MOVE_MAX = 72;   // allow bigger offset between the two presses
+  const SHORT_UP_MS = 360;   // light tap can be a bit slower (trackpad)
+  const SCRUB_SCALE = 2.5;
+  const CLICK_THRESH = 72;
+
+  function getRing() {
+    return hint ? hint.querySelector(".gi-hint-ring") : null;
+  }
+  function zoneFromY(clientY) {
+    const h = window.innerHeight || 1;
+    const t = clientY / h;
+    if (t < ZONE_EDGE) return "up";
+    if (t > 1 - ZONE_EDGE) return "down";
+    return "scroll";
+  }
+  function isOverChrome(el) {
+    if (!el || !el.closest) return false;
+    return !!(
+      el.closest(".gi-back") ||
+      el.closest(".gi-explore") ||
+      el.closest(".gi-ticket") ||
+      el.closest(".gi-top")
+    );
+  }
+  function setCursorMode(mode) {
+    if (cursorOverUI && mode !== "scrub") return;
+    const ring = getRing();
+    if (!ring) { cursorMode = mode; return; }
+    if (mode === "scrub" && cursorMode !== "scrub") {
+      ring.classList.remove("gi-scrub-in");
+      ring.setAttribute("data-mode", "scrub");
+      void ring.offsetWidth;
+      ring.classList.add("gi-scrub-in");
+    } else {
+      ring.setAttribute("data-mode", mode);
+      if (mode !== "scrub") ring.classList.remove("gi-scrub-in");
+    }
+    cursorMode = mode;
+  }
+  function setCursorHidden(hidden) {
+    cursorOverUI = hidden;
+    if (hint) hint.classList.toggle("is-over-ui", hidden);
+    if (immersive) immersive.classList.toggle("gi-show-system-cursor", hidden);
+  }
+  function updateCursorPos(x, yPos, targetEl) {
+    const ring = getRing();
+    if (!ring) return;
+    ring.style.left = x + "px";
+    ring.style.top = yPos + "px";
+    if (targetEl !== undefined) setCursorHidden(isOverChrome(targetEl));
+    if (scrubbing || awaitingHold) {
+      if (scrubbing) setCursorMode("scrub");
+      return;
+    }
+    if (!cursorOverUI) setCursorMode(zoneFromY(yPos));
+  }
+  function stepCard(dir) {
+    goToIndex(nearestVirtualIndex() + dir);
+  }
+  function clearHoldWatch() {
+    if (longPressTimer) {
+      clearTimeout(longPressTimer);
+      longPressTimer = 0;
+    }
+    awaitingHold = false;
+  }
+  function cancelPendingActions() {
+    clearTimeout(edgeClickTimer);
+    edgeClickTimer = 0;
+    pendingEdgeDir = 0;
+    clearTimeout(articleClickTimer);
+    articleClickTimer = 0;
+    pendingArticleSlug = null;
+    pendingArticleVIdx = -1;
+  }
+  function ensureCapture(e) {
+    if (didCapture || !e) return;
+    try {
+      viewport.setPointerCapture(e.pointerId);
+      didCapture = true;
+    } catch (err) { /* */ }
+  }
+  function releaseCapture(e) {
+    if (!didCapture) return;
+    try {
+      if (e) viewport.releasePointerCapture(e.pointerId);
+    } catch (err) { /* */ }
+    didCapture = false;
+  }
+  function enterScrub(e) {
+    clearHoldWatch();
+    cancelPendingActions();
+    tapReady = false;
+    scrubbing = true;
+    setCursorMode("scrub");
+    isDragging = true;
+    if (e) {
+      lastPointerY = e.clientY;
+      pointerStartY = e.clientY;
+      ensureCapture(e);
+    }
+    velocity = 0;
+    springV = 0;
+    snapping = false;
+    viewport.classList.add("is-dragging");
+  }
+  function exitScrub() {
+    if (!scrubbing) return;
+    scrubbing = false;
+    clearHoldWatch();
+    setCursorMode(zoneFromY(lastPointerY));
+    targetY = yForIndex(nearestVirtualIndex());
+    springV = 0;
+    velocity = 0;
+    snapping = true;
+  }
 
   function onPointerDown(e) {
     if (prefersReduced || !isOpen) return;
     if (e.pointerType === "mouse" && e.button !== 0) return;
     if (e.target.closest("button.gi-back")) return;
-    // don't start drag on explore button — let click open article
     if (e.target.closest("button.gi-explore")) return;
+    if (article && article.classList.contains("is-open")) return;
+    if (isOverChrome(e.target)) return;
+
+    updateCursorPos(e.clientX, e.clientY, e.target);
+    const now = performance.now();
+    pressStartedAt = now;
     isDragging = true;
     pointerMoved = 0;
     pointerStartY = e.clientY;
+    lastPointerY = e.clientY;
     snapping = false;
     springV = 0;
-    lastPointerY = e.clientY;
     velocity = 0;
+    didCapture = false;
     viewport.classList.add("is-dragging");
-    try { viewport.setPointerCapture(e.pointerId); } catch (err) { /* */ }
+
+    // after a light tap: this press is a hold-candidate → scrub if held
+    if (tapReady && now - tapReadyAt < TAP_WINDOW) {
+      awaitingHold = true;
+      cancelPendingActions();
+      // show dual-arrow intent early (still "holding")
+      setCursorMode("scrub");
+      clearHoldWatch();
+      awaitingHold = true;
+      longPressTimer = setTimeout(() => {
+        if (isDragging && awaitingHold) enterScrub(e);
+      }, HOLD_MS);
+      // also capture so trackpad keeps sending moves while held
+      ensureCapture(e);
+      return;
+    }
   }
 
   function onPointerMove(e) {
     if (!isDragging) return;
+    updateCursorPos(e.clientX, e.clientY, e.target);
+
     const dy = e.clientY - lastPointerY;
     lastPointerY = e.clientY;
     pointerMoved += Math.abs(dy);
-    // resistance: need longer drag to move same distance
+
+    // 2nd press: drag while holding → enter scrub immediately
+    if (awaitingHold && !scrubbing && pointerMoved > 4) {
+      enterScrub(e);
+    }
+
+    // real drag on normal press → capture so trackpad doesn't lose stream
+    if (!scrubbing && !awaitingHold && pointerMoved > TAP_MOVE_MAX) {
+      ensureCapture(e);
+      tapReady = false; // cancel tap memory once user is clearly dragging
+    }
+
+    if (scrubbing) {
+      const moved = dy * SCRUB_SCALE;
+      y += moved;
+      velocity = moved;
+      targetY = y;
+      springV = 0;
+      snapping = false;
+      if (moved < -0.4) scrollDir = 1;
+      if (moved > 0.4) scrollDir = -1;
+      activeIndex = nearestIndex();
+      return;
+    }
+
     const moved = dy * DRAG_SCALE;
     y += moved;
     velocity = moved;
@@ -357,31 +602,53 @@
     if (!isDragging) return;
     isDragging = false;
     viewport.classList.remove("is-dragging");
-    try { viewport.releasePointerCapture(e.pointerId); } catch (err) { /* */ }
+    releaseCapture(e);
 
-    // pure click (almost no movement) → open article on that card
-    if (pointerMoved < CLICK_THRESH) {
-      const card = e.target && e.target.closest ? e.target.closest(".gi-card") : null;
-      if (card) {
-        const slug = card.getAttribute("data-slug");
-        const item = card.closest(".gi-item");
-        const idx = item ? Number(item.getAttribute("data-index")) : -1;
-        if (slug && idx >= 0) {
-          // restore position (tiny jitter from micro-moves)
-          y = yForIndex(nearestIndex());
-          velocity = 0;
-          springV = 0;
-          if (idx === nearestIndex() || Math.abs(y - yForIndex(idx)) < itemH * 0.25) {
-            openArticleFromGallery(slug);
-          } else {
-            goToIndex(idx, slug);
-          }
-          return;
-        }
-      }
+    const heldFor = performance.now() - pressStartedAt;
+    const wasAwaiting = awaitingHold;
+    clearHoldWatch();
+
+    if (scrubbing) {
+      exitScrub();
+      return;
     }
 
-    targetY = yForIndex(nearestIndex());
+    // 2nd press released too fast (not a hold) → stay tap-ready, no step
+    if (wasAwaiting) {
+      // restore zone cursor
+      setCursorMode(zoneFromY(e.clientY));
+      return;
+    }
+
+    const zone = zoneFromY(e.clientY);
+    const isLightTap =
+      (pointerMoved < TAP_MOVE_MAX && heldFor < SHORT_UP_MS) ||
+      (pointerMoved < 24 && heldFor < 450);
+
+    if (isLightTap) {
+      tapReady = true;
+      tapReadyAt = performance.now();
+      lastTapX = e.clientX;
+      lastTapY = e.clientY;
+
+      if (zone === "up" || zone === "down") {
+        pendingEdgeDir = zone === "up" ? -1 : 1;
+        clearTimeout(edgeClickTimer);
+        edgeClickTimer = setTimeout(() => {
+          if (!scrubbing && !awaitingHold && pendingEdgeDir) stepCard(pendingEdgeDir);
+          pendingEdgeDir = 0;
+          edgeClickTimer = 0;
+        }, 320);
+        return;
+      }
+
+      // article open from photo click temporarily disabled
+      return;
+    }
+
+    // long single drag (not scrub)
+    tapReady = false;
+    targetY = yForIndex(nearestVirtualIndex());
     springV = velocity;
     snapping = true;
   }
@@ -421,31 +688,18 @@
     }
   }
 
+  // Photo / Explore → article temporarily disabled
   list.addEventListener("click", (e) => {
-    const card = e.target.closest(".gi-card");
-    if (!card) return;
-    const slug = card.getAttribute("data-slug");
-    if (!slug) return;
-    const item = card.closest(".gi-item");
-    const idx = item ? Number(item.getAttribute("data-index")) : -1;
-    if (idx < 0) return;
-    e.preventDefault();
-    e.stopPropagation();
-    // if pointer handler already opened / queued, skip double-fire
-    if (pointerMoved >= CLICK_THRESH) return;
-    if (idx === nearestIndex() || Math.abs(y - yForIndex(idx)) < itemH * 0.25) {
-      openArticleFromGallery(slug);
-    } else {
-      goToIndex(idx, slug);
+    if (e.target.closest(".gi-card") || e.target.closest("button.gi-explore")) {
+      e.preventDefault();
+      e.stopPropagation();
     }
   });
 
   function onMouseMove(e) {
     if (!isOpen || !hint) return;
-    const ring = hint.querySelector(".gi-hint-ring");
-    if (!ring) return;
-    ring.style.left = e.clientX + "px";
-    ring.style.top = e.clientY + "px";
+    updateCursorPos(e.clientX, e.clientY, e.target);
+    // scrub movement is handled in onPointerMove while button is held
   }
   window.addEventListener("mousemove", onMouseMove);
 
@@ -462,7 +716,9 @@
       renderImmersive();
       requestAnimationFrame(() => {
         measure();
-        y = yForIndex(activeIndex);
+        const n = realCount();
+        const startV = n ? n + realFromVirtual(activeIndex) : 0;
+        y = yForIndex(startV);
         targetY = y;
         springV = 0;
         list.style.transform = `translate3d(0, ${y}px, 0)`;
@@ -473,8 +729,9 @@
 
       if (hint) {
         hint.classList.add("is-visible");
+        hint.setAttribute("aria-hidden", "false");
         clearTimeout(hintTimer);
-        hintTimer = setTimeout(() => hint.classList.remove("is-visible"), 2800);
+        // stay visible for the whole immersive session (Siena)
       }
     } catch (err) {
       console.error("[gallery] openImmersive failed", err);
@@ -484,8 +741,13 @@
   function closeImmersive() {
     if (!isOpen) return;
     isOpen = false;
+    scrubbing = false;
     immersive.classList.remove("is-open");
     immersive.setAttribute("aria-hidden", "true");
+    if (hint) {
+      hint.classList.remove("is-visible");
+      hint.setAttribute("aria-hidden", "true");
+    }
     document.documentElement.classList.remove("gi-lock");
     if (!article.classList.contains("is-open") && window.MYCELIUM_LENIS) {
       window.MYCELIUM_LENIS.start();
@@ -520,24 +782,23 @@
     if (article.classList.contains("is-open")) return;
     if (e.key === "ArrowDown" || e.key === "PageDown" || e.key === "j") {
       e.preventDefault();
-      goToIndex(nearestIndex() + 1);
+      goToIndex(nearestVirtualIndex() + 1);
     }
     if (e.key === "ArrowUp" || e.key === "PageUp" || e.key === "k") {
       e.preventDefault();
-      goToIndex(nearestIndex() - 1);
+      goToIndex(nearestVirtualIndex() - 1);
     }
-    if (e.key === "Enter") {
-      e.preventDefault();
-      const ev = events[nearestIndex()];
-      if (ev) location.hash = `#gallery/${encodeURIComponent(ev.slug)}`;
-    }
+    // Enter → article temporarily disabled
+
   });
 
   window.addEventListener("resize", () => {
     if (!isOpen) return;
-    const idx = nearestIndex();
+    const real = nearestIndex();
     measure();
-    y = yForIndex(idx);
+    const n = realCount();
+    const v = n ? n + real : 0;
+    y = yForIndex(v);
     targetY = y;
     springV = 0;
     list.style.transform = `translate3d(0, ${y}px, 0)`;
@@ -626,8 +887,12 @@
     const wasOpen = article.classList.contains("is-open");
     if (!wasOpen) lastFocus = document.activeElement;
     activeIndex = i;
-    y = yForIndex(i);
-    targetY = y;
+    {
+      const n = realCount();
+      const v = n ? n + i : 0;
+      y = yForIndex(v);
+      targetY = y;
+    }
     springV = 0;
     renderArticle(i);
     article.scrollTop = 0;
@@ -691,8 +956,13 @@
       renderImmersive();
       requestAnimationFrame(() => {
         measure();
-        y = yForIndex(Math.min(activeIndex, maxIndex()));
-        targetY = y;
+        {
+          const n = realCount();
+          const real = Math.min(activeIndex, Math.max(0, n - 1));
+          const v = n ? n + real : 0;
+          y = yForIndex(v);
+          targetY = y;
+        }
         springV = 0;
         list.style.transform = `translate3d(0, ${y}px, 0)`;
         updateTicket();
