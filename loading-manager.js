@@ -134,6 +134,89 @@ function animateLogoDraw() {
   logoCycleTimeline.to({}, { duration: 0.5 });
 }
 
+// ---------------------------------------------------------------------------
+// Browser-tab feedback while loading: the favicon pulses (logo shrinks and grows inside a
+// progress ring) and the tab title shows the real percentage. Both are restored on reveal.
+// ---------------------------------------------------------------------------
+const faviconLink = document.querySelector('link[rel~="icon"]');
+const originalFaviconHref = faviconLink?.getAttribute('href') ?? '';
+const originalTitle = document.title;
+let faviconTimer = 0;
+
+function startTabLoader() {
+  if (!faviconLink || !originalFaviconHref || reducedMotion.matches) return;
+  const size = 64;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  const tint = document.createElement('canvas');
+  tint.width = tint.height = size;
+  const tintCtx = tint.getContext('2d');
+  const logo = new Image();
+  let logoReady = false;
+  logo.onload = () => {
+    // Recolour the dark line-art logo to paper white so it reads on the dark tile.
+    tintCtx.clearRect(0, 0, size, size);
+    tintCtx.drawImage(logo, 0, 0, size, size);
+    tintCtx.globalCompositeOperation = 'source-in';
+    tintCtx.fillStyle = '#f4f1e7';
+    tintCtx.fillRect(0, 0, size, size);
+    logoReady = true;
+  };
+  logo.src = new URL(originalFaviconHref, document.baseURI).href;
+
+  const link = document.createElement('link');
+  link.rel = 'icon';
+  link.type = 'image/png';
+  const t0 = performance.now();
+
+  const draw = () => {
+    const t = (performance.now() - t0) / 1000;
+    const breathe = 0.5 + 0.5 * Math.cos((t * Math.PI * 2) / 1.6);   // 1 -> 0 -> 1 every 1.6 s
+    const scale = 0.56 + 0.34 * breathe;
+    ctx.clearRect(0, 0, size, size);
+    ctx.fillStyle = '#21343e';
+    ctx.beginPath();
+    ctx.roundRect?.(0, 0, size, size, 16) ?? ctx.rect(0, 0, size, size);
+    ctx.fill();
+    if (logoReady) {
+      const d = size * scale;
+      ctx.drawImage(tint, (size - d) / 2, (size - d) / 2, d, d);
+    }
+    // progress ring (real loader progress)
+    ctx.lineWidth = 4;
+    ctx.strokeStyle = 'rgba(244,241,231,0.18)';
+    ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2 - 5, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = '#91a98a';
+    ctx.lineCap = 'round';
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, size / 2 - 5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.max(0.04, displayedProgress / 100)));
+    ctx.stroke();
+    link.href = canvas.toDataURL('image/png');
+    // Replacing the node is what makes Chrome/Firefox repaint the tab icon.
+    document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => { if (el !== link) el.remove(); });
+    document.head.appendChild(link);
+    document.title = `${displayedProgress}% · Mycelium`;
+  };
+  draw();
+  faviconTimer = window.setInterval(draw, 90);
+}
+
+function stopTabLoader() {
+  if (faviconTimer) window.clearInterval(faviconTimer);
+  faviconTimer = 0;
+  if (!originalFaviconHref) return;
+  document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => el.remove());
+  const restored = document.createElement('link');
+  restored.rel = 'icon';
+  restored.type = 'image/png';
+  restored.href = originalFaviconHref;
+  document.head.appendChild(restored);
+  document.title = originalTitle;
+}
+
+try { startTabLoader(); } catch (error) { console.warn('[loading-screen] Tab loader unavailable.', error); }
+
 function updateProgress(_url, loaded, total) {
   const measuredPercent = total ? Math.min(99, Math.round((loaded / total) * 100)) : 0;
   displayedProgress = Math.max(displayedProgress, measuredPercent);
@@ -203,54 +286,38 @@ async function triggerOutro() {
   if (progressBar) progressBar.style.width = '100%';
   if (progressText) progressText.textContent = '100%';
 
-  const mark = screen.querySelector('.logo-container')
-    || screen.querySelector('.loading-brand-mark-wrap')
-    || screen.querySelector('.loading-logo-wrap');
+  const mark = screen.querySelector('.loading-brand-mark-wrap');
   await prepareLogoForOutro(mark);
-  if (reducedMotion.matches) {
-    screen.classList.add('hidden');
-    return;
-  }
 
-  const counter = screen.querySelector('.counter-text, .loading-progress-value');
-  const mainSite = document.querySelector('#main-site, .hero-sequence');
   const gsap = window.gsap;
-  if (!gsap || !mark) {
-    screen.classList.add('hidden');
-    return;
-  }
-
+  const counter = screen.querySelector('.counter-text, .loading-progress-value');
   if (revealSound) {
     revealSound.currentTime = 0;
     revealSound.play().catch(() => {});
   }
 
-  const timeline = gsap.timeline({ onComplete: () => screen.classList.add('hidden') });
-  if (counter) {
-    timeline.to(counter, { y: -10, opacity: 0, duration: 0.16, ease: 'power2.in' });
+  // Keep a reliable fallback for reduced motion or environments without GSAP.
+  // In the normal path, loading-reveal.js turns the actual SVG logo silhouette
+  // into a transparent window and scales that window until the hero fills view.
+  const finish = () => {
+    screen.classList.add('hidden');
+    document.dispatchEvent(new CustomEvent('mycelium:loading-revealed'));
+  };
+  if (reducedMotion.matches || !gsap || !mark) {
+    finish();
+    return;
   }
-  // Give the fully drawn SVG one painted frame as a clear visual hold before
-  // the 50x expansion. This is synchronized to the actual inline path, not a timer.
-  timeline.to({}, { duration: 0.08 })
-    .to(mark, { scale: 0.9, duration: 0.13, ease: 'power3.in' })
-    .to(mark, { scale: 54, opacity: 0, duration: 0.5, ease: 'expo.in' })
-    // The expanding mark punches through as the screen is pulled upward.
-    .to(screen, {
-      clipPath: 'inset(0 0 100% 0)',
-      duration: 0.54,
-      ease: 'power4.in'
-    }, '<0.015');
 
-  if (mainSite) {
-    timeline.fromTo(mainSite,
-      { opacity: 0, scale: 1.045, y: 10 },
-      { opacity: 1, scale: 1, y: 0, duration: 0.54, ease: 'power3.out' },
-      '<0.08'
-    );
+  const timeline = gsap.timeline({ onComplete: finish });
+  if (counter) {
+    timeline.to(counter, { opacity: 0, y: -8, duration: 0.16, ease: 'power2.in' }, 0);
+  } else {
+    timeline.to({}, { duration: 0.16 });
   }
 }
 
 function revealSite() {
+  stopTabLoader();
   void triggerOutro().catch((error) => {
     console.warn('[loading-screen] Branded outro failed; revealing the page directly.', error);
     screen?.classList.add('hidden');

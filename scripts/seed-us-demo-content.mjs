@@ -1,4 +1,4 @@
-// Import fictional USA demo content into locations/US without overwriting existing data.
+// Import fictional USA demo content into countries/US/cities/PL without overwriting existing data.
 // Keep FIREBASE_SERVICE_ACCOUNT_PATH pointed at a JSON file outside this repository.
 import { readFile } from "node:fs/promises";
 import { cert, initializeApp } from "firebase-admin/app";
@@ -13,7 +13,7 @@ if (!credentialsPath) {
 const data = JSON.parse(await readFile(new URL("../data/us-demo-content.json", import.meta.url), "utf8"));
 const app = initializeApp({ credential: cert(JSON.parse(await readFile(credentialsPath, "utf8"))) });
 const db = getFirestore(app);
-const root = db.collection("locations").doc("US");
+const root = db.collection("countries").doc("US").collection("cities").doc("PL");
 function missingOnly(existing, desired) {
   const patch = {};
   for (const [key, value] of Object.entries(desired)) {
@@ -37,7 +37,7 @@ async function fillBlankFields(ref, desired) {
 // Firestore may already contain empty setup documents. Fill missing values but preserve edits.
 await fillBlankFields(root.collection("settings").doc("main"), data.settings);
 await fillBlankFields(root.collection("settings").doc("ai"), {
-  countryCode: "US",
+  countryCode: "US_PL",
   path: data.aiKnowledge.path,
   systemContext_en: data.aiKnowledge.systemContext_en,
   systemPrompt: data.aiKnowledge.systemContext_en,
@@ -54,10 +54,10 @@ const records = [
     woodlandTrail: { x: 81, y: 47 }, clubhouse: { x: 57, y: 51 }
   } }],
   ["settings/newsletter", data.newsletter],
-  ...data.facilities.map(({ id, ...item }) => [`facilities/${id}`, { ...item, countryCode: "US" }]),
-  ...data.announcements.map(({ id, ...item }) => [`announcements/${id}`, { ...item, countryCode: "US" }]),
-  ...data.events.map(({ id, ...item }) => [`events/${id}`, { ...item, countryCode: "US" }]),
-  ...data.faq.map((item, index) => [`faqs/${String(index + 1).padStart(2, "0")}`, { ...item, countryCode: "US" }]),
+  ...data.facilities.map(({ id, ...item }) => [`facilities/${id}`, { ...item, countryCode: "US_PL" }]),
+  ...data.announcements.map(({ id, ...item }) => [`announcements/${id}`, { ...item, countryCode: "US_PL" }]),
+  ...data.events.map(({ id, ...item }) => [`events/${id}`, { ...item, countryCode: "US_PL" }]),
+  ...data.faq.map((item, index) => [`faqs/${String(index + 1).padStart(2, "0")}`, { ...item, countryCode: "US_PL" }]),
 ];
 
 let created = 0;
@@ -79,7 +79,7 @@ for (const [path, value] of records) {
 
 // These eight US service cards are explicitly demo content; refresh only their known fields.
 for (const [index, item] of data.services.entries()) {
-  const service = { ...item, countryCode: "US" };
+  const service = { ...item, countryCode: "US_PL" };
   await root.collection("services").doc(String(index + 1).padStart(2, "0")).set(service, { merge: true });
   servicesUpdated += 1;
 }

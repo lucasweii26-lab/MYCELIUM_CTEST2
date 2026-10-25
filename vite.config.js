@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const classicScripts = ["app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js"];
+const classicScripts = ["region-paths.js", "app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js"];
 
 const copyClassicScripts = {
   name: "copy-classic-scripts-to-publish-directory",
@@ -27,6 +27,11 @@ const copyClassicScripts = {
     const galleryImages = path.resolve(projectRoot, "img/gallery");
     if (existsSync(galleryImages)) {
       cpSync(galleryImages, path.join(outputDirectory, "img/gallery"), { recursive: true });
+    }
+    // Facility photos are chosen at runtime (img/Facilities/<id>.jpg), so Vite cannot see them.
+    const facilityPhotos = path.resolve(projectRoot, "img/Facilities");
+    if (existsSync(facilityPhotos)) {
+      cpSync(facilityPhotos, path.join(outputDirectory, "img/Facilities"), { recursive: true });
     }
     cpSync(
       path.resolve(projectRoot, "hero-frames"),

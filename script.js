@@ -7,7 +7,7 @@ const chatbotCloseBtn = document.querySelector(".close-btn");
 const chatbotPanel = document.querySelector(".chatbot");
 let userMessage = "";
 const inputInitHeight = chatInput ? chatInput.scrollHeight : 54;
-let isChatHandling = false; // 提交互斥锁，彻底杜绝双发
+let isChatHandling = false; // 提交互斥锁
 
 const createChatLi = (message, className) => {
   const chatLi = document.createElement("li");
@@ -25,7 +25,7 @@ const createChatLi = (message, className) => {
   return chatLi;
 };
 
-// 普通本地关键词回复规则
+// 预置问答规则匹配
 const generateResponse = (incomingChatLi) => {
   const messageElement = incomingChatLi.querySelector("p");
   const msg = userMessage.toLowerCase();
@@ -69,7 +69,7 @@ const generateResponse = (incomingChatLi) => {
   chatbox.scrollTo(0, chatbox.scrollHeight);
 };
 
-// 发送消息主函数（防抖+锁）
+// 发送消息处理主逻辑
 const handleChat = async () => {
   if (isChatHandling) return;
   userMessage = chatInput.value.trim();
@@ -78,6 +78,13 @@ const handleChat = async () => {
   isChatHandling = true;
   chatInput.value = "";
   chatInput.style.height = `${inputInitHeight}px`;
+
+  // 发送后立即复原快捷图标显示
+  const chatPromptTrigger = document.getElementById("chatPromptTrigger");
+  if (chatPromptTrigger) {
+    chatPromptTrigger.classList.remove("is-hidden");
+  }
+
   if (sendChatBtn) sendChatBtn.disabled = true;
 
   chatbox.appendChild(createChatLi(userMessage, "outgoing"));
@@ -110,9 +117,24 @@ const setChatbotOpen = (isOpen) => {
 };
 
 if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && chatbotPanel) {
+  // 核心：监听输入，打字时自动隐形图标，清空时优雅浮现
   chatInput.addEventListener("input", () => {
     chatInput.style.height = `${inputInitHeight}px`;
     chatInput.style.height = `${Math.min(chatInput.scrollHeight, 180)}px`;
+
+    const chatPromptTrigger = document.getElementById("chatPromptTrigger");
+    const chatQuickMenu = document.getElementById("chatQuickMenu");
+    const hasText = chatInput.value.trim().length > 0;
+
+    if (chatPromptTrigger) {
+      chatPromptTrigger.classList.toggle("is-hidden", hasText);
+      // 打字时若快捷菜单开着则自动收起
+      if (hasText && chatQuickMenu) {
+        chatQuickMenu.classList.remove("active");
+        chatPromptTrigger.classList.remove("active");
+        chatQuickMenu.setAttribute("aria-hidden", "true");
+      }
+    }
   });
 
   chatInput.addEventListener("keydown", (event) => {
@@ -127,10 +149,60 @@ if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && 
   chatbotToggler.addEventListener("click", () => {
     setChatbotOpen(!document.body.classList.contains("show-chatbot"));
   });
+
+  // Chatbox 独立滚轮阻断：在对话框内滚动绝不窜出外部页面
+  chatbox.addEventListener("wheel", (e) => {
+    const atTop = chatbox.scrollTop === 0 && e.deltaY < 0;
+    const atBottom = chatbox.scrollTop + chatbox.clientHeight >= chatbox.scrollHeight - 1 && e.deltaY > 0;
+    if (!atTop && !atBottom) {
+      e.stopPropagation();
+    }
+  }, { passive: false });
+}
+
+// -------------------------------------------------------------
+// 输入框末尾快捷菜单触发与磨砂圆角形变交互
+// -------------------------------------------------------------
+const chatPromptTrigger = document.getElementById("chatPromptTrigger");
+const chatQuickMenu = document.getElementById("chatQuickMenu");
+
+if (chatPromptTrigger && chatQuickMenu) {
+  chatPromptTrigger.addEventListener("click", (e) => {
+    e.stopPropagation();
+    const isOpen = chatQuickMenu.classList.toggle("active");
+    chatPromptTrigger.classList.toggle("active", isOpen);
+    chatQuickMenu.setAttribute("aria-hidden", String(!isOpen));
+  });
+
+  // 点击外部收起磨砂菜单
+  document.addEventListener("click", (e) => {
+    if (!chatQuickMenu.contains(e.target) && e.target !== chatPromptTrigger) {
+      chatQuickMenu.classList.remove("active");
+      chatPromptTrigger.classList.remove("active");
+      chatQuickMenu.setAttribute("aria-hidden", "true");
+    }
+  });
+
+  // 点击选项：自动填入、平滑收起菜单并立即触发发送
+  const quickItems = chatQuickMenu.querySelectorAll(".chat-quick-item");
+  quickItems.forEach(item => {
+    item.addEventListener("click", (e) => {
+      e.stopPropagation();
+      const keyword = item.dataset.keyword;
+      if (!keyword || isChatHandling) return;
+      
+      chatQuickMenu.classList.remove("active");
+      chatPromptTrigger.classList.remove("active");
+      chatQuickMenu.setAttribute("aria-hidden", "true");
+
+      chatInput.value = keyword;
+      handleChat();
+    });
+  });
 }
 
 // --------------------------------------------------------------------------
-// 针对三大城市完全独立隔离的 AI 记忆库（方便后期单独拓展，不互相干扰）
+// 针对三大城市完全独立隔离的 AI 记忆库
 // --------------------------------------------------------------------------
 
 // 1. 槟城 Pulau Tikus 独立知识库
@@ -214,7 +286,6 @@ const knowledgeKeywords = [
   { keywords: ["mycelium", "community", "website", "contact", "management", "office"], key: "general" }
 ];
 
-// 获取当前准确的地点编码
 function getCurrentLocKey() {
   const current = (window.MYCELIUM_COUNTRY || "").toUpperCase();
   if (current === "US_PL" || current === "US") return "US_PL";
@@ -237,15 +308,26 @@ function getRelevantSiteContent(userMsg) {
   return (matchedContent || knowledge.general).trim();
 }
 
-async function callOpenRouter(prompt) {
-
+function collectChatHistory() {
+  const bubbles = [...chatbox.querySelectorAll("li.chat")].slice(0, -2); // drop the current question + "thinking" bubble
+  return bubbles
+    .map((li) => ({
+      role: li.classList.contains("outgoing") ? "user" : "assistant",
+      content: (li.querySelector("p")?.textContent || "").trim(),
+    }))
+    .filter((item) => item.content)
+    .slice(-6);
+}
+ 
+// The server holds the assistant's instructions and its live tools (weather, nearby places, web search).
+async function callAIAssistant({ question, siteContent, history }) {
   try {
     const response = await fetch("/.netlify/functions/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ prompt, locationCode: getCurrentLocKey() })
+      body: JSON.stringify({ question, siteContent, history, locationCode: getCurrentLocKey() })
     });
-
+ 
     const data = await response.json().catch(() => ({}));
     if (!response.ok) {
       return "The AI assistant is temporarily unavailable. Please try again shortly.";
@@ -257,42 +339,16 @@ async function callOpenRouter(prompt) {
     return "Connection error. Please try again shortly.";
   }
 }
-
+ 
 async function generateResponseAI(incomingChatLi, userMsg) {
   const messageElement = incomingChatLi.querySelector("p");
   const siteContent = getRelevantSiteContent(userMsg);
-  const loc = getCurrentLocKey();
-  const locationLabel = loc === "US_PL" ? "Portland, Oregon, USA" : (loc === "MY_JB" ? "Johor Bahru, Johor, Malaysia" : "Pulau Tikus, Penang, Malaysia");
-
-  const prompt = `
-    You are the official community assistant for MYCELIUM Residences in ${locationLabel}.
-    Answer strictly using the following verified local data:
-    ${siteContent}
-    If information is not present, guide the resident to the local management office.
-    Keep answers friendly, clear and concise.
-    User question: ${userMsg}
-  `;
-  const reply = await callOpenRouter(prompt);
+  const history = collectChatHistory();
+  const reply = await callAIAssistant({ question: userMsg, siteContent, history });
   messageElement.textContent = reply;
   chatbox.scrollTo(0, chatbox.scrollHeight);
 }
-
-// 唯一绑定快捷回复（只在 script.js 中注册，app.js 中的需删除，双发彻底解决）
-const quickReplyBtns = document.querySelectorAll(".quick-reply-btn");
-if (quickReplyBtns.length > 0 && chatbox && chatInput) {
-  quickReplyBtns.forEach(btn => {
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      const keyword = btn.dataset.keyword;
-      if (!keyword || isChatHandling) return;
-      chatInput.value = keyword;
-      handleChat();
-    });
-  });
-}
-
-// 切换 AI 模式
+// 模式切换
 const aiModeBtn = document.getElementById("aiModeBtn");
 let isAIMode = false;
 if (aiModeBtn) {
@@ -300,5 +356,105 @@ if (aiModeBtn) {
     isAIMode = !isAIMode;
     aiModeBtn.classList.toggle("active", isAIMode);
     aiModeBtn.setAttribute("aria-pressed", String(isAIMode));
+  });
+}
+
+// -------------------------------------------------------------
+// 反馈表单提交：彻底告别 alert("Google says...")
+// -------------------------------------------------------------
+const reportBtn = document.querySelector(".report-btn");
+const reportModal = document.getElementById("reportModal");
+const reportCloseBtn = document.querySelector(".report-close-btn");
+const reportForm = document.getElementById("reportForm");
+
+function openReportForm() {
+  if (!reportModal) return;
+  reportModal.classList.add("active");
+  reportModal.setAttribute("aria-hidden", "false");
+}
+
+function closeReportForm() {
+  if (!reportModal || !reportForm) return;
+  reportModal.classList.remove("active");
+  reportModal.setAttribute("aria-hidden", "true");
+  reportForm.reset();
+}
+
+if (reportBtn) reportBtn.addEventListener("click", openReportForm);
+if (reportCloseBtn) reportCloseBtn.addEventListener("click", closeReportForm);
+if (reportModal) {
+  reportModal.addEventListener("click", (e) => {
+    if (e.target === reportModal) closeReportForm();
+  });
+}
+
+if (reportForm && chatbox) {
+  reportForm.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const submitBtn = reportForm.querySelector(".report-submit-btn");
+    const originalBtnText = submitBtn ? submitBtn.textContent : "Submit";
+
+    const formData = new FormData(reportForm);
+    const reportData = {
+      countryCode: window.MYCELIUM_COUNTRY || "MY_PP",
+      firstName: formData.get("firstName") || "",
+      lastName: formData.get("lastName") || "",
+      contactNumber: formData.get("contactNumber") || "",
+      email: formData.get("email") || "",
+      address: formData.get("address") || "",
+      message: formData.get("message") || "",
+      subscribeUpdates: formData.get("subscribeUpdates") === "on",
+      source: "chatbot_report",
+      createdAt: null
+    };
+
+    if (submitBtn) {
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting...";
+    }
+
+    try {
+      if (typeof db !== "undefined" && db.collection) {
+        const docData = { ...reportData };
+        if (typeof firebase !== "undefined" && firebase.firestore && firebase.firestore.FieldValue) {
+          docData.createdAt = firebase.firestore.FieldValue.serverTimestamp();
+        }
+        const countryCode = String(window.MYCELIUM_COUNTRY || "MY_PP").toUpperCase();
+        const reports = window.MYCELIUM_REGION_PATHS.ref(db, countryCode, "reports");
+        await reports.add(docData);
+      }
+
+      closeReportForm();
+      const successMsg = t("report.successAlert");
+      
+      // 优雅居中品牌弹窗
+      if (typeof window.showMyceliumNotice === "function") {
+        window.showMyceliumNotice(successMsg, "Thank You");
+      }
+
+      const thankYouText = t("chatbot.thankFeedback");
+      const replyLi = createChatLi(thankYouText, "incoming");
+      chatbox.appendChild(replyLi);
+      chatbox.scrollTo(0, chatbox.scrollHeight);
+    } catch (error) {
+      console.error("Error submitting report:", error);
+      const errorMsg = t("report.errorAlert");
+      
+      if (typeof window.showMyceliumNotice === "function") {
+        window.showMyceliumNotice(errorMsg, "Notice");
+      }
+      
+      const replyLi = createChatLi(errorMsg, "incoming");
+      const p = replyLi.querySelector("p");
+      if (p) p.classList.add("error");
+      chatbox.appendChild(replyLi);
+      chatbox.scrollTo(0, chatbox.scrollHeight);
+    } finally {
+      if (submitBtn) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = originalBtnText;
+      }
+    }
   });
 }

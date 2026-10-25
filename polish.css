@@ -328,7 +328,99 @@
 }
 .loading-screen.is-revealing::before,
 .loading-screen.is-revealing::after { opacity: 0; transition: opacity 0.35s ease; }
-.loading-screen.is-revealing .loading-inner { opacity: 0; transition: opacity 0.4s ease; }
+.loading-screen.is-revealing .loading-inner { opacity: 1; transition: none; }
+.loading-screen.is-revealing .loading-inner > :not(.loading-brand-mark-wrap) { opacity: 0; transition: opacity 0.4s ease; }
+.loading-screen.is-revealing .loading-brand-mark-wrap { transform-origin: center center; }
 .loading-screen.is-revealed { display: none !important; }
 .loading-reveal { position: absolute; inset: 0; z-index: 0; pointer-events: none; }
 .loading-reveal svg { display: block; width: 100%; height: 100%; }
+
+/* 7 · Condensed navigation (scrolled) ---------------------------------------------------------
+   Desktop >=1200px: once the nav shrinks it becomes ONE thin solid bar:
+   logo | ANNOUNCEMENT ... FAQ | current city | search.
+   The city button turns into a read-only label; clicking it scrolls back up (see app.js)
+   until the full nav, with the real "choose location" button, is restored. */
+@media (min-width: 1200px) {
+  nav#nav.is-shrunk { display: flex; align-items: center; gap: 28px; padding: 6px 42px; }
+  nav#nav.is-shrunk .navTop { display: contents; }
+  nav#nav.is-shrunk .navItem { order: 1; }
+  nav#nav.is-shrunk .navBottom { order: 2; flex: 1 1 auto; justify-content: center; flex-wrap: nowrap; padding: 0; gap: 4px; }
+  nav#nav.is-shrunk .nav-tools { order: 3; gap: 10px; }
+  nav#nav.is-shrunk .menuItem { white-space: nowrap; }
+}
+nav#nav.is-shrunk .country-switcher { background: transparent; border-color: transparent; padding: 4px 8px; }
+nav#nav.is-shrunk .country-switcher:hover { background: rgba(244, 241, 231, 0.08); }
+nav#nav.is-shrunk .country-switcher-chevron { display: none; }
+nav#nav.is-shrunk .country-switcher-value { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+nav#nav.is-shrunk .country-switcher-value::before {
+  content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--copper-soft, #91a98a);
+}
+
+/* 8 · Loading screen slogan (bottom, heavy type) ----------------------------------------------- */
+.loading-slogan {
+  position: absolute;
+  left: 0; right: 0;
+  bottom: clamp(18px, 4.5vh, 48px);
+  z-index: 1;
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  gap: 0.28em;
+  font-family: "DM Sans", system-ui, sans-serif;
+  font-weight: 900;
+  font-size: clamp(1rem, 1vw, 1rem);
+  line-height: 0.86;
+  letter-spacing: -0.035em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--paper, #f4f1e7);
+  opacity: 0.94;
+  pointer-events: none;
+  user-select: none;
+}
+.loading-slogan span { display: inline-block; overflow: hidden; padding-bottom: 0.04em; }
+
+.loading-slogan span { animation: sloganRise 0.9s var(--ease, cubic-bezier(0.22, 1, 0.36, 1)) both; }
+.loading-slogan span:nth-child(2) { animation-delay: 0.12s; }
+.loading-slogan span:nth-child(3) { animation-delay: 0.25s; }
+.loading-slogan span:nth-child(4) { animation-delay: 0.38s; }
+.loading-slogan span:nth-child(5) { animation-delay: 0.50s; }
+@keyframes sloganRise {
+  from { transform: translateY(105%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+.loading-screen.is-revealing .loading-slogan { opacity: 0; transition: opacity 0.35s ease; }
+@media (prefers-reduced-motion: reduce) { .loading-slogan span { animation: none; } }
+
+/* 9 · Modal cards: rounded corners, no visible scrollbar (they still scroll) ---------------------- */
+:is(.volunteerForm, .announcement-modal-card, .doc-modal-card) { border-radius: var(--radius-lg); }
+:is(.volunteerInput, .volunteerTextarea) { border-radius: var(--radius-sm); }
+:is(.volunteerForm, .report-form-card, .feature-modal-card, .announcement-modal-card, .doc-modal-card, .doc-modal-content, .chatbox) {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+:is(.volunteerForm, .report-form-card, .feature-modal-card, .announcement-modal-card, .doc-modal-card, .doc-modal-content, .chatbox)::-webkit-scrollbar {
+  display: none;
+}
+
+/* 10 · Facility photo slot inside the map info card ------------------------------------------ */
+.map-info-photo {
+  position: relative;
+  aspect-ratio: 16 / 9;
+  max-height: 260px;
+  width: 100%;
+  margin: 0 0 16px;
+  overflow: hidden;
+  border-radius: var(--radius-md);
+  background:
+    repeating-linear-gradient(135deg, rgba(24, 61, 50, 0.05) 0 12px, transparent 12px 24px),
+    var(--paper-2, #ece7d6);
+  border: 1px dashed rgba(24, 61, 50, 0.22);
+  display: grid;
+  place-items: center;
+}
+.map-info-photo img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity 0.35s ease; }
+.map-info-photo-hint { color: var(--ink-soft, #526258); font-size: 0.74rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 600; }
+.map-info-photo.has-photo { border-style: solid; border-color: transparent; }
+.map-info-photo.has-photo img { opacity: 1; }
+.map-info-photo.has-photo .map-info-photo-hint { display: none; }

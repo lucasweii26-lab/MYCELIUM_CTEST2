@@ -14,55 +14,18 @@
   const D = (markPath.getAttribute("d") || "").trim();
   if (!D) return;
 
-  const BOX = 182;                          // viewBox size of the mark
-  const FALLBACK = { x: 120, y: 118, r: 20 }; // measured offline for the current mark; used if measuring fails
+  const BOX = 182;                          // SVG viewBox is the square 0 0 182 182
+  // Manual zoom anchor: 15 SVG units left and 15 down from square centre (91, 91).
+  // Adjust ANCHOR_X / ANCHOR_Y here if you want to fine-tune the focal point.
+  const ANCHOR_X = BOX / 2 - 6.5;             // 76: move centre left by 15 SVG units
+  const ANCHOR_Y = BOX / 2 + 9;             // 106: move centre down by 15 SVG units
   const DELAY_MS = 220;                     // lets the loading text fade first
-  const DURATION_MS = 1500;
-  const MAX_ZOOM = 700;                     // px per mark unit; the final fade covers anything beyond this
-  let focus = null;
+  const DURATION_MS = 650;
+  const ZOOM_MULTIPLIER = 27;              // increase reveal reach; previous value was 1.35 (~6.5x larger)
+  const MAX_ZOOM = 700;                     // safety cap in px per SVG unit
+  const GREEN_SHIFT_START = 0;             // start changing colour at 50% reveal progress
+  const LOADING_GREEN = "#132f26";          // MYCELIUM website deep green (style.css)
   let started = false;
-
-  // Largest circle that fits inside the filled part of the mark (centre x/y and radius in mark units).
-  // `isInside(x, y)` answers whether a point is filled; coarse 2-unit grid is plenty and takes ~10 ms.
-  function measureFocus(isInside) {
-    const step = 2;
-    const n = Math.round(BOX / step);
-    const filled = new Uint8Array((n + 1) * (n + 1));
-    const outside = [];
-    for (let j = 0; j <= n; j += 1) {
-      for (let i = 0; i <= n; i += 1) {
-        const inside = isInside(i * step, j * step);
-        filled[j * (n + 1) + i] = inside ? 1 : 0;
-        if (!inside) outside.push(i, j);
-      }
-    }
-    let best = { d2: -1, i: 0, j: 0 };
-    for (let j = 0; j <= n; j += 1) {
-      for (let i = 0; i <= n; i += 1) {
-        if (!filled[j * (n + 1) + i]) continue;
-        let nearest = Infinity;
-        for (let k = 0; k < outside.length; k += 2) {
-          const dx = outside[k] - i;
-          const dy = outside[k + 1] - j;
-          const d2 = dx * dx + dy * dy;
-          if (d2 < nearest) nearest = d2;
-          if (nearest <= best.d2) break; // cannot beat the current best
-        }
-        if (nearest > best.d2) best = { d2: nearest, i, j };
-      }
-    }
-    if (best.d2 < 0) return null;
-    return { x: best.i * step, y: best.j * step, r: Math.max(0, Math.sqrt(best.d2) * step - step) };
-  }
-
-  function measureWithCanvas() {
-    const context = document.createElement("canvas").getContext("2d");
-    const path = new Path2D(D);
-    return measureFocus((x, y) => context.isPointInPath(path, x, y));
-  }
-
-  const idle = window.requestIdleCallback || ((callback) => setTimeout(callback, 300));
-  idle(() => { try { focus = measureWithCanvas(); } catch { focus = null; } });
 
   const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
 
@@ -70,20 +33,19 @@
     const box = mark.getBoundingClientRect();
     const vw = window.innerWidth;
     const vh = window.innerHeight;
+    const initialLoadingColor = getComputedStyle(screen).backgroundColor;
     if (!box.width || !box.height || !vw || !vh) return false;
 
-    let g = focus;
-    if (!g) { try { g = measureWithCanvas(); } catch { g = null; } }
-    g = g && g.r >= 1 ? g : FALLBACK;
-
-    // Where the mark sits on screen right now (it may be mid-animation, so measure, don't assume)
+    // The zoom anchor is manually offset from the square centre: 15 units left,
+    // 15 units down. That exact source point stays fixed at the viewport centre
+    // throughout the transition on every viewport size.
     const s0 = Math.min(box.width, box.height) / BOX;
     const left = box.left + (box.width - BOX * s0) / 2;
     const top = box.top + (box.height - BOX * s0) / 2;
-    const from = { x: left + s0 * g.x, y: top + s0 * g.y };
+    const from = { x: left + s0 * ANCHOR_X, y: top + s0 * ANCHOR_Y };
     const to = { x: vw / 2, y: vh / 2 };
-    const needed = Math.hypot(vw, vh) / 2 * 1.04;
-    const zoom = Math.min(needed / Math.max(g.r, 1.5), MAX_ZOOM);
+    // Scale the logo silhouette past the viewport bounds around the adjusted anchor.
+    const zoom = Math.min((Math.max(vw, vh) / BOX) * ZOOM_MULTIPLIER, MAX_ZOOM);
 
     const NS = "http://www.w3.org/2000/svg";
     const wrap = document.createElement("div");
@@ -92,17 +54,95 @@
     const svg = document.createElementNS(NS, "svg");
     svg.setAttribute("viewBox", `0 0 ${vw} ${vh}`);
     svg.setAttribute("preserveAspectRatio", "none");
-    const shape = document.createElementNS(NS, "path");
-    // One path = big rectangle + the mark; even-odd turns the mark into a hole. The mark's own inner
-    // shapes wind the opposite way, so even-odd and the original non-zero fill look identical.
-    shape.setAttribute("fill-rule", "evenodd");
-    shape.setAttribute("fill", getComputedStyle(screen).backgroundColor || "#21343e");
-    shape.setAttribute("d", `M-12000 -12000H12000V12000H-12000Z ${D.replace(/^m/, "M")}`);
-    const place = (s, px, py) => shape.setAttribute("transform", `matrix(${s} 0 0 ${s} ${px - s * g.x} ${py - s * g.y})`);
-    place(s0, from.x, from.y); // starts exactly where the mark is, so nothing jumps
+
+    // Use an actual SVG mask rather than an even-odd compound path. The latter
+    // can invert extra islands/overlap regions in this complex multi-subpath logo.
+    // White keeps the loading background; black cuts out only the logo's own
+    // non-zero-filled silhouette, using the same fill rule as the source SVG.
+    const defs = document.createElementNS(NS, "defs");
+    const mask = document.createElementNS(NS, "mask");
+    const maskId = `loading-logo-mask-${Math.random().toString(36).slice(2)}`;
+    const patternId = `loading-logo-grid-${Math.random().toString(36).slice(2)}`;
+    const clipId = `loading-logo-grid-clip-${Math.random().toString(36).slice(2)}`;
+    mask.setAttribute("id", maskId);
+    mask.setAttribute("maskUnits", "userSpaceOnUse");
+    mask.setAttribute("maskContentUnits", "userSpaceOnUse");
+    mask.setAttribute("x", "-12000");
+    mask.setAttribute("y", "-12000");
+    mask.setAttribute("width", "24000");
+    mask.setAttribute("height", "24000");
+    const maskBg = document.createElementNS(NS, "rect");
+    maskBg.setAttribute("x", "-12000");
+    maskBg.setAttribute("y", "-12000");
+    maskBg.setAttribute("width", "24000");
+    maskBg.setAttribute("height", "24000");
+    maskBg.setAttribute("fill", "white");
+    const hole = document.createElementNS(NS, "path");
+    hole.setAttribute("d", D);
+    hole.setAttribute("fill", "black");
+    hole.setAttribute("fill-rule", "nonzero");
+    const place = (s, px, py) => hole.setAttribute("transform", `matrix(${s} 0 0 ${s} ${px - s * ANCHOR_X} ${py - s * ANCHOR_Y})`);
+    place(s0, from.x, from.y); // starts aligned to the adjusted zoom anchor
+    mask.append(maskBg, hole);
+
+    // Subtle technical grid, clipped to the same moving logo silhouette.
+    // Define every referenced SVG resource before painting the grid; missing
+    // pattern/clip IDs would throw and cancel the entire reveal animation.
+    const pattern = document.createElementNS(NS, "pattern");
+    pattern.setAttribute("id", patternId);
+    pattern.setAttribute("width", "34");
+    pattern.setAttribute("height", "34");
+    pattern.setAttribute("patternUnits", "userSpaceOnUse");
+    const gridPath = document.createElementNS(NS, "path");
+    gridPath.setAttribute("d", "M 34 0 L 0 0 0 34");
+    gridPath.setAttribute("fill", "none");
+    gridPath.setAttribute("stroke", "#b9e4d0");
+    gridPath.setAttribute("stroke-width", "0.7");
+    pattern.append(gridPath);
+
+    const clipPath = document.createElementNS(NS, "clipPath");
+    clipPath.setAttribute("id", clipId);
+    clipPath.setAttribute("clipPathUnits", "userSpaceOnUse");
+    const clipShape = document.createElementNS(NS, "path");
+    clipShape.setAttribute("d", D);
+    clipShape.setAttribute("fill-rule", "nonzero");
+    clipShape.setAttribute("transform", hole.getAttribute("transform"));
+    clipPath.append(clipShape);
+    defs.append(mask, pattern, clipPath);
+    svg.append(defs);
+    const shape = document.createElementNS(NS, "rect");
+    shape.setAttribute("x", "0");
+    shape.setAttribute("y", "0");
+    shape.setAttribute("width", String(vw));
+    shape.setAttribute("height", String(vh));
+    shape.setAttribute("fill", initialLoadingColor && initialLoadingColor !== "rgba(0, 0, 0, 0)" ? initialLoadingColor : "#21343e");
+    shape.setAttribute("mask", `url(#${maskId})`);
+    // Critical: append the masked background rectangle to the SVG. Without this,
+    // the mask and animated path exist in the DOM but nothing is painted, so the
+    // logo-zoom reveal appears to vanish completely.
     svg.append(shape);
+    const grid = document.createElementNS(NS, "rect");
+    grid.setAttribute("x", "0");
+    grid.setAttribute("y", "0");
+    grid.setAttribute("width", String(vw));
+    grid.setAttribute("height", String(vh));
+    grid.setAttribute("fill", `url(#${patternId})`);
+    grid.setAttribute("clip-path", `url(#${clipId})`);
+    grid.setAttribute("opacity", "0.16");
+    svg.append(grid);
     wrap.append(svg);
     screen.prepend(wrap);
+
+    // Brief logo pulse at the moment the cut begins: 1 -> 1.05 -> 1, then fade.
+    const logoElement = screen.querySelector(".loading-brand-mark-wrap");
+    if (logoElement?.animate) {
+      logoElement.animate([
+        { transform: "scale(1)", opacity: 1, offset: 0 },
+        { transform: "scale(1.05)", opacity: 1, offset: 0.35 },
+        { transform: "scale(1)", opacity: 0.92, offset: 0.68 },
+        { transform: "scale(1)", opacity: 0, offset: 1 }
+      ], { duration: 430, easing: "cubic-bezier(0.22, 0.8, 0.25, 1)", fill: "forwards" });
+    }
     screen.classList.add("is-revealing");
 
     let done = false;
@@ -117,6 +157,18 @@
     setTimeout(finish, DELAY_MS + DURATION_MS + 2500); // hard stop, whatever happens
 
     const startedAt = performance.now();
+    const parseColor = (value) => {
+      const match = value.match(/^rgba?\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)/i);
+      if (match) return [Number(match[1]), Number(match[2]), Number(match[3])];
+      const hex = value.trim().match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i);
+      if (hex) {
+        const raw = hex[1].length === 3 ? hex[1].split("").map((c) => c + c).join("") : hex[1];
+        return [parseInt(raw.slice(0, 2), 16), parseInt(raw.slice(2, 4), 16), parseInt(raw.slice(4, 6), 16)];
+      }
+      return [33, 52, 62];
+    };
+    const fromColor = parseColor(initialLoadingColor || "#21343e");
+    const toColor = parseColor(LOADING_GREEN);
     const frame = (now) => {
       if (done) return;
       if (!screen.isConnected || document.hidden) { finish(); return; }
@@ -124,7 +176,16 @@
       const e = easeInOut(t);
       const s = s0 * Math.pow(zoom / s0, e);        // exponential zoom feels like a constant-speed dive
       const k = Math.min(1, e * 1.6);                // glide toward the centre a little ahead of the zoom
-      place(s, from.x + (to.x - from.x) * k, from.y + (to.y - from.y) * k);
+      const px = from.x + (to.x - from.x) * k;
+      const py = from.y + (to.y - from.y) * k;
+      place(s, px, py);
+      clipShape.setAttribute("transform", `matrix(${s} 0 0 ${s} ${px - s * ANCHOR_X} ${py - s * ANCHOR_Y})`);
+      // The grid follows the cut direction, then quietly disappears near the end.
+      grid.setAttribute("opacity", String(0.16 * Math.max(0, 1 - Math.max(0, (t - 0.72) / 0.2))));
+      // From 50% progress onward, smoothly transition the remaining loading layer to MYCELIUM green.
+      const colorT = Math.max(0, Math.min(1, (t - GREEN_SHIFT_START) / (1 - GREEN_SHIFT_START)));
+      const rgb = fromColor.map((start, i) => Math.round(start + (toColor[i] - start) * colorT));
+      shape.setAttribute("fill", `rgb(${rgb[0]}, ${rgb[1]}, ${rgb[2]})`);
       wrap.style.opacity = t > 0.9 ? String(1 - (t - 0.9) / 0.1) : "";
       if (t < 1) requestAnimationFrame(frame);
       else finish();

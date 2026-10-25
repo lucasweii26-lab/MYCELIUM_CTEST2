@@ -558,34 +558,110 @@
   }
 
   addEventListener('scroll', schedule, { passive: true });
+/* ------------------------------ 布局变化与 F11 全屏视线锚定 ------------------------------ */
   let layoutRefreshRaf = 0;
+  let layoutTimer = 0;
+  let anchorTimer = 0;
+  let layoutLock = false;      // resize 期间冻结锚点
+  let lastAnchor = null;
+
+  // 1. 抓取当前视口正中央对准的 DOM 锚点
+  function captureVisualAnchor() {
+    const heroSeq = document.getElementById('heroSequence');
+    const heroRect = heroSeq?.getBoundingClientRect();
+    const inHero = heroRect && heroRect.top <= 0 && heroRect.bottom > window.innerHeight;
+    
+    // 如果用户当前在首屏卷轴里，记录在卷轴内的进度 (0.0 ~ 1.0)
+    if (inHero) {
+      const heroTop = heroRect.top + window.scrollY;
+      const progress = (window.scrollY - heroTop) / Math.max(1, heroRect.height - window.innerHeight);
+      return { type: 'hero', progress };
+    }
+
+    // 否则锁定当前视口上方的最近模块（slider, features, gallery, footer 等）
+    const candidates = document.querySelectorAll('#hero, nav#nav, .features, #gallery, .service-section, .faq-section, .volunteer, .footer');
+    let bestEl = null;
+    let minDiff = Infinity;
+    candidates.forEach(el => {
+      const rect = el.getBoundingClientRect();
+      const diff = Math.abs(rect.top - 50);
+      if (diff < minDiff) {
+        minDiff = diff;
+        bestEl = el;
+      }
+    });
+
+    if (bestEl) {
+      return {
+        type: 'element',
+        element: bestEl,
+        offset: bestEl.getBoundingClientRect().top
+      };
+    }
+
+    return null;
+  }
+
+  // 2. 在尺寸变动后重置 scrollY，让视野元素纹丝不动
+  function restoreVisualAnchor(anchor) {
+    if (!anchor) return;
+    if (anchor.type === 'hero') {
+      const heroSeq = document.getElementById('heroSequence');
+      if (heroSeq) {
+        const newTargetY = heroSeq.offsetTop + anchor.progress * Math.max(1, heroSeq.offsetHeight - window.innerHeight);
+        if (window.MYCELIUM_LENIS) {
+          window.MYCELIUM_LENIS.scrollTo(newTargetY, { immediate: true, force: true });
+        } else {
+          window.scrollTo(0, newTargetY);
+        }
+        return;
+      }
+    } else if (anchor.type === 'element' && anchor.element) {
+      const newTop = anchor.element.getBoundingClientRect().top + window.scrollY;
+      const newScrollY = Math.max(0, newTop - anchor.offset);
+      if (window.MYCELIUM_LENIS) {
+        window.MYCELIUM_LENIS.scrollTo(newScrollY, { immediate: true, force: true });
+      } else {
+        window.scrollTo(0, newScrollY);
+      }
+    }
+  }
+
+  // 滚动停稳后记录锚点（此时几何尺寸还是旧的、与 scrollY 一致）
+  addEventListener('scroll', () => {
+    if (layoutLock) return;
+    clearTimeout(anchorTimer);
+    anchorTimer = setTimeout(() => { if (!layoutLock) lastAnchor = captureVisualAnchor(); }, 80);
+  }, { passive: true });
+  addEventListener('load', () => { lastAnchor = captureVisualAnchor(); }, { once: true });
+
+  const applyLayoutAnchor = () => {
+    applyScrollBudget();
+    refreshMetrics();
+    restoreVisualAnchor(lastAnchor);
+    targetPos = scrollPosition = readScrollPosition();
+    schedule();
+  };
+
   const onLayoutChange = () => {
+    if (!lastAnchor) lastAnchor = captureVisualAnchor();   // 兜底
+    layoutLock = true;                                      // 冻结锚点，不让新尺寸污染它
+    clearTimeout(layoutTimer);
+    layoutTimer = setTimeout(() => {                        // 尺寸稳定后再校准一次（F11 有过渡）
+      layoutLock = false;
+      applyLayoutAnchor();
+      lastAnchor = captureVisualAnchor();
+    }, 200);
     if (layoutRefreshRaf) return;
     layoutRefreshRaf = requestAnimationFrame(() => {
       layoutRefreshRaf = 0;
-      refreshMetrics();
-      // Re-sample scroll after viewport height/track geometry changes, including F11.
-      targetPos = readScrollPosition();
-      scrollPosition = targetPos;
-      schedule();
+      applyLayoutAnchor();
     });
   };
   addEventListener('resize', onLayoutChange, { passive: true });
   addEventListener('orientationchange', onLayoutChange, { passive: true });
-  if ('ResizeObserver' in window) {
-    const heroResizeObserver = new ResizeObserver(onLayoutChange);
-    heroResizeObserver.observe(heroSequence);
-    heroResizeObserver.observe(introHero);
-  }
-  if (window.visualViewport) window.visualViewport.addEventListener('resize', onLayoutChange, { passive: true });
-  document.addEventListener('visibilitychange', () => { lastTs = 0; if (!document.hidden) schedule(); });
-  // Snap (no easing) once layout and scroll restoration have settled.
-  addEventListener('load', () => {
-    refreshMetrics();
-    if (!reduced) scrollPosition = targetPos = readScrollPosition();
-    schedule();
-  });
-
+  document.addEventListener('fullscreenchange', onLayoutChange, { passive: true });
+  document.addEventListener('webkitfullscreenchange', onLayoutChange, { passive: true });
   const onReducedChange = event => {
     reduced = event.matches;
     if (reduced) resetStage(); else { refreshMetrics(); scrollPosition = targetPos = readScrollPosition(); }

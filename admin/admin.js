@@ -27,23 +27,38 @@ const routeTitles = {
   "/admin/events": "Events calendar",
   "/admin/gallery": "Gallery"
 };
+const REGION_PATHS = window.MYCELIUM_REGION_PATHS;
+const SITES = REGION_PATHS.SITES;                       // MY_PP, MY_JB, US_PL
 const initialRegion = new URLSearchParams(location.search).get("region");
 const rememberedRegion = localStorage.getItem("myceliumCountry");
-const cookieRegion = document.cookie.match(/(?:^|;\s*)myceliumCountry=([A-Z]{2})(?:;|$)/i)?.[1];
-const hintedRegion = document.cookie.match(/(?:^|;\s*)myceliumCountryHint=([A-Z]{2})(?:;|$)/i)?.[1];
+const cookieRegion = document.cookie.match(/(?:^|;\s*)myceliumCountry=([A-Z_]{2,5})(?:;|$)/i)?.[1];
+const hintedRegion = document.cookie.match(/(?:^|;\s*)myceliumCountryHint=([A-Z_]{2,5})(?:;|$)/i)?.[1];
 const rememberedAdminRegion = localStorage.getItem("myceliumAdminRegion");
-let adminCountryCode = [initialRegion, rememberedAdminRegion, rememberedRegion, cookieRegion, hintedRegion].find((code) => code === "MY" || code === "US") || "MY";
-let adminCountryScopes = ["MY"];
+// adminCountryCode is now a SITE code (MY_PP / MY_JB / US_PL); old values "MY" / "US" are mapped.
+let adminCountryCode = [initialRegion, rememberedAdminRegion, rememberedRegion, cookieRegion, hintedRegion]
+  .map((code) => REGION_PATHS.normalize(code)).find(Boolean) || "MY_PP";
+let adminCountryScopes = ["MY_PP"];
 
-// MY stays on the legacy collections; other regions read only their own namespace.
+// Every region lives at countries/{CC}/cities/{CITY}/{collection}.
 function adminCollection(name) {
-  return adminCountryCode === "MY"
-    ? db.collection(name)
-    : db.collection("locations").doc(adminCountryCode).collection(name);
+  return REGION_PATHS.ref(db, adminCountryCode, name);
 }
 
 function collectionPath(name) {
-  return adminCountryCode === "MY" ? name : `locations/${adminCountryCode}/${name}`;
+  return REGION_PATHS.path(adminCountryCode, name);
+}
+
+// Turn the token's admin scopes into the list of sites this administrator may manage.
+// A country scope ("MY", "US") covers every city in that country; a site scope ("MY_JB") covers one city.
+function sitesForClaims(claims) {
+  const scopes = new Set((Array.isArray(claims.adminLocations) ? claims.adminLocations : []).map((code) => String(code).toUpperCase()));
+  if (claims.myAdmin === true) scopes.add("MY");
+  if (claims.usAdmin === true) scopes.add("US");
+  if (!scopes.size && claims.admin === true) scopes.add("MY");
+  return Object.entries(SITES)
+    .filter(([code, site]) => scopes.has(code) || scopes.has(site.country))
+    .filter(([, site]) => site.country !== "US" || claims.email_verified === true)
+    .map(([code]) => code);
 }
 
 // Force-refresh the ID token before private reads so newly assigned admin claims
@@ -144,11 +159,7 @@ function renderLogin(message = "") {
 async function ensureAdmin(user, forceRefresh = false) {
   if (!user) return false;
   const token = await user.getIdTokenResult(forceRefresh);
-  const scopes = new Set(Array.isArray(token.claims.adminLocations) ? token.claims.adminLocations : []);
-  if (token.claims.myAdmin === true) scopes.add("MY");
-  if (token.claims.usAdmin === true && token.claims.email_verified === true) scopes.add("US");
-  if (!scopes.size && token.claims.admin === true) scopes.add("MY");
-  adminCountryScopes = [...scopes].filter((code) => code === "MY" || code === "US");
+  adminCountryScopes = sitesForClaims(token.claims);
   if (!adminCountryScopes.includes(adminCountryCode)) adminCountryCode = adminCountryScopes[0] || "";
   if (adminCountryCode) localStorage.setItem("myceliumAdminRegion", adminCountryCode);
   return (token.claims.admin === true || token.claims.myAdmin === true || token.claims.usAdmin === true)
@@ -166,9 +177,9 @@ function shell(content, active, user) {
     ["/admin/volunteer", "Volunteers"]
   ];
   app.innerHTML = `<div class="shell">
-    <aside class="sidebar"><div class="sidebar-top"><div><span class="eyebrow">MYCELIUM RESIDENCES</span><p class="side-brand">Admin desk</p><label class="region-switch">Data region<select id="adminRegionSelect" aria-label="Choose admin data region">${adminCountryScopes.map((code) => `<option value="${code}" ${code === adminCountryCode ? "selected" : ""}>${code === "MY" ? "Malaysia" : "United States"}</option>`).join("")}</select></label></div></div>
+    <aside class="sidebar"><div class="sidebar-top"><div><span class="eyebrow">MYCELIUM RESIDENCES</span><p class="side-brand">Admin desk</p><label class="region-switch">Data region (country · city)<select id="adminRegionSelect" aria-label="Choose admin data region">${adminCountryScopes.map((code) => `<option value="${code}" ${code === adminCountryCode ? "selected" : ""}>${SITES[code].label}</option>`).join("")}</select></label></div></div>
       <nav class="nav" aria-label="Admin navigation">${links.map(([href, text]) => `<a href="${href}" data-route="${href}" ${active === href ? 'aria-current="page"' : ""}>${text}</a>`).join("")}</nav>
-      <div class="sidebar-bottom"><a class="site-return" href="${adminCountryCode === "US" ? "/us/" : "/my/"}">← Return to ${adminCountryCode === "US" ? "US" : "Malaysia"} site</a><span class="user-email">${escapeHtml(user.email)}</span><button class="button secondary" id="signOut">Sign out</button></div>
+      <div class="sidebar-bottom"><a class="site-return" href="${SITES[adminCountryCode]?.home || "/"}">← Return to ${SITES[adminCountryCode]?.label || "community"} site</a><span class="user-email">${escapeHtml(user.email)}</span><button class="button secondary" id="signOut">Sign out</button></div>
     </aside><section class="main"><header class="topbar"><div><span class="eyebrow">COMMUNITY MANAGEMENT</span><h1>${escapeHtml(routeTitles[active])}</h1></div><span class="user-email">Signed in as administrator</span></header>${content}</section>
   </div>`;
   app.querySelectorAll("[data-route]").forEach((link) => link.addEventListener("click", (event) => {
@@ -749,11 +760,10 @@ function toIsoDate(value) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-// Legacy MY collections may hold records without countryCode; they belong to MY.
+// Records in a city path belong to that city; old records may carry only "MY"/"US" or nothing.
 function inAdminRegion(record) {
-  return record.countryCode
-    ? String(record.countryCode).toUpperCase() === adminCountryCode
-    : adminCountryCode === "MY";
+  const code = REGION_PATHS.normalize(record.countryCode);
+  return code ? code === adminCountryCode : adminCountryCode === "MY_PP";
 }
 
 async function loadCurrentEvents() {

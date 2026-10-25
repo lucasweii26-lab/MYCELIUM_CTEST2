@@ -7,8 +7,8 @@ import { getAuth } from "firebase-admin/auth";
 const [email, location = "US", operation = "grant"] = process.argv.slice(2);
 const credentialsPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
-if (!email || !["MY", "US"].includes(location) || !["grant", "revoke"].includes(operation) || !credentialsPath) {
-  console.error("Usage: FIREBASE_SERVICE_ACCOUNT_PATH=<outside-repo-json> node scripts/set-admin-claim.mjs <email> <MY|US> [grant|revoke]");
+if (!email || !["MY", "US", "MY_PP", "MY_JB", "US_PL"].includes(location) || !["grant", "revoke"].includes(operation) || !credentialsPath) {
+  console.error("Usage: FIREBASE_SERVICE_ACCOUNT_PATH=<outside-repo-json> node scripts/set-admin-claim.mjs <email> <MY|US|MY_PP|MY_JB|US_PL> [grant|revoke]");
   process.exit(1);
 }
 
@@ -23,10 +23,10 @@ if (operation === "grant") {
   locations.add(location);
   claims.admin = true;
   claims.adminLocations = [...locations];
-  claims[location === "MY" ? "myAdmin" : "usAdmin"] = true;
+  if (location === "MY" || location === "US") claims[location === "MY" ? "myAdmin" : "usAdmin"] = true; // country-wide compatibility flag
 } else {
   locations.delete(location);
-  delete claims[location === "MY" ? "myAdmin" : "usAdmin"];
+  if (location === "MY" || location === "US") delete claims[location === "MY" ? "myAdmin" : "usAdmin"];
   if (locations.size) claims.adminLocations = [...locations];
   else {
     delete claims.adminLocations;

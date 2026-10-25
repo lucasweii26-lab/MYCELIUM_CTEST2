@@ -829,6 +829,40 @@ function isDefaultMalaysia(code) {
   return c === "MY" || c === "MY_PP";
 }
 
+// ---- Facility photos shown in the map info card -------------------------------------------
+// Files live in img/Facilities/ (see the README there). The extension is probed: .jpg, .webp, .png.
+const FACILITY_PIN_PHOTOS = {
+  basketball: "basketball-court", tennis: "tennis-court", gym: "gym", pool: "swimming-pool",
+  playground: "playground", clubhouse: "clubhouse", park: "community-park", parking: "guest-parking",
+  recycle1: "recycling-point", recycle2: "recycling-point", pond: "pond",
+};
+let facilityPhotoToken = 0;
+function facilityPhotoBase(pin) {
+  if (!pin) return "";
+  if (pin.dataset.photo) return pin.dataset.photo;
+  const file = FACILITY_PIN_PHOTOS[pin.dataset.pinId];
+  return file ? `./img/Facilities/${file}` : "";
+}
+function showFacilityPhoto(base, label) {
+  const wrap = document.getElementById("mapInfoPhoto");
+  const img = wrap?.querySelector("img");
+  if (!wrap || !img) return;
+  const token = ++facilityPhotoToken;
+  wrap.classList.remove("has-photo");
+  img.removeAttribute("src");
+  img.alt = label || "";
+  if (!base) return;
+  const extensions = /\.(jpe?g|png|webp|avif)(\?.*)?$/i.test(base) ? [""] : [".jpg", ".webp", ".png"];
+  let attempt = 0;
+  const tryNext = () => {
+    if (token !== facilityPhotoToken || attempt >= extensions.length) return;
+    img.onload = () => { if (token === facilityPhotoToken) wrap.classList.add("has-photo"); };
+    img.onerror = () => { attempt += 1; tryNext(); };
+    img.src = base + extensions[attempt];
+  };
+  tryNext();
+}
+
 function updateMapPinsLanguage() {
   if (window.MYCELIUM_COUNTRY_CONFIG?.mapPins) return;
   const pins = document.querySelectorAll("#mapOverlay .pin");
@@ -931,12 +965,15 @@ function initApp() {
   let regionFacilities = [];
   let regionEvents = [];
 
-  // 导航栏滚动变薄、变实，地名胶囊化与展开交互
+// =========================================================================
+  // 导航栏滚动收缩（Shrink on Scroll）核心监听
+  // =========================================================================
   const navEl = document.getElementById("nav");
   const navToggle = document.getElementById("navToggle");
-  const countrySwitcher = document.getElementById("countrySwitcher");
+  const sliderEl = document.querySelector(".slider");
 
   if (navEl) {
+    // 移动端汉堡菜单切换
     if (navToggle) {
       navToggle.addEventListener("click", () => {
         const open = !navEl.classList.contains("nav-open");
@@ -945,31 +982,47 @@ function initApp() {
       });
     }
 
-    if (countrySwitcher) {
-      countrySwitcher.addEventListener("click", (e) => {
-        if (navEl.classList.contains("is-scrolled") && !navEl.classList.contains("nav-user-expanded")) {
-          e.preventDefault();
-          e.stopPropagation();
-          navEl.classList.add("nav-user-expanded");
-        }
-      });
-    }
-
-    document.addEventListener("click", (e) => {
-      if (!navEl.contains(e.target) && navEl.classList.contains("nav-user-expanded")) {
-        navEl.classList.remove("nav-user-expanded");
+    // 滚动收缩阈值计算函数
+    const handleNavShrinkOnScroll = () => {
+      if (!sliderEl) {
+        navEl.classList.toggle("is-shrunk", window.scrollY > 100);
+        return;
       }
-    });
 
-    window.addEventListener("scroll", () => {
-      const isScrolled = window.scrollY > 15;
-      navEl.classList.toggle("is-scrolled", isScrolled);
-      if (!isScrolled) {
-        navEl.classList.remove("nav-user-expanded");
-      }
-    }, { passive: true });
+      // 获取 slider（menuitem屏）顶部相对于视口的距离
+      const sliderRect = sliderEl.getBoundingClientRect();
+      
+      // 当 slider 的上半部分已经被向上滚出视口（用户深入下方内容）时触发收缩
+      // 当用户滚回 slider 时，自动恢复完整尺寸
+      const shouldShrink = sliderRect.top < -80;
+      navEl.classList.toggle("is-shrunk", shouldShrink);
+      syncLocationButtonMode();
+    };
+
+    // While the nav is condensed, the city button is only an information label.
+    const locationSwitcher = document.getElementById("countrySwitcher");
+    const syncLocationButtonMode = () => {
+      if (!locationSwitcher) return;
+      const condensed = navEl.classList.contains("is-shrunk");
+      locationSwitcher.setAttribute("aria-disabled", String(condensed));
+      if (condensed) locationSwitcher.title = "Scroll up to change location";
+      else locationSwitcher.removeAttribute("title");
+    };
+    // Capture phase: runs before country-selector.js opens the picker. In the condensed state a click
+    // only scrolls back up until the full nav (with the real "choose location" button) is restored.
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest && event.target.closest("#countrySwitcher");
+      if (!trigger || !navEl.classList.contains("is-shrunk")) return;
+      event.preventDefault();
+      event.stopPropagation();
+      if (typeof window.scrollToNav === "function") window.scrollToNav();
+    }, true);
+
+    window.addEventListener("scroll", handleNavShrinkOnScroll, { passive: true });
+    window.addEventListener("resize", handleNavShrinkOnScroll, { passive: true });
+    // 初始化执行一次，防止刷新在页面中段
+    handleNavShrinkOnScroll();
   }
-
   // 苹果风格平滑展开搜索栏交互
   const searchContainer = document.getElementById("navSearchContainer");
   const searchTriggerBtn = document.getElementById("searchTriggerBtn");
@@ -1083,21 +1136,25 @@ function initApp() {
 
   let announcementData = [];
 
+  // Data lives at countries/{CC}/cities/{CITY}/{collection} (see region-paths.js).
+  const REGION = window.MYCELIUM_REGION_PATHS;
+  const isMalaysiaSite = String(activeCountryCode).toUpperCase().startsWith("MY");
   function locationCollection(collectionName) {
-    return isDefaultMalaysia(activeCountryCode)
-      ? db.collection(collectionName)
-      : db.collection("locations").doc(activeCountryCode).collection(collectionName);
+    return REGION.ref(window.db, activeCountryCode, collectionName);
   }
 
   async function loadRegionalDirectoryContent() {
     if (isDefaultMalaysia(activeCountryCode)) return;
+    // Pins come from the site config, so they appear even if the database is empty or unreachable.
+    applyRegionalMapFacilities([]);
     try {
+      const database = window.db;
       const [serviceSnapshot, faqSnapshot, facilitySnapshot, eventSnapshot, communityRulesDoc] = await Promise.all([
-        locationCollection("services").get(),
-        locationCollection("faqs").get(),
-        locationCollection("facilities").get(),
-        locationCollection("events").get(),
-        locationCollection("rules").doc("community").get(),
+        REGION.readCollection(database, activeCountryCode, "services"),
+        REGION.readCollection(database, activeCountryCode, "faqs"),
+        REGION.readCollection(database, activeCountryCode, "facilities"),
+        REGION.readCollection(database, activeCountryCode, "events"),
+        REGION.readDoc(database, activeCountryCode, "rules", "community"),
       ]);
       regionServices = serviceSnapshot.docs.map(doc => doc.data());
       regionFaqs = faqSnapshot.docs.map(doc => doc.data());
@@ -1114,9 +1171,21 @@ function initApp() {
     }
   }
 
+  // Built-in labels so every Portland pin works even before its Firestore document exists.
+  const REGIONAL_PIN_FALLBACK = {
+    "community-garden": { name_en: "Community Garden", description_en: "Raised beds, shared tools and a seasonal planting calendar." },
+    "fitness-center": { name_en: "Fitness Center", description_en: "Cardio, free weights and a stretching area." },
+    "coworking-lounge": { name_en: "Co-working Lounge", description_en: "Quiet desks, fast Wi-Fi and two bookable meeting rooms." },
+    "bike-hub": { name_en: "Bike Hub", description_en: "Secure bike storage, a repair stand and an air pump." },
+    "ev-charging": { name_en: "EV Charging Stations", description_en: "Level 2 chargers in the visitor and resident parking areas." },
+    "recycling-compost": { name_en: "Recycling & Compost Center", description_en: "Sorted bins for recycling, food scraps and glass." },
+    "walking-trail": { name_en: "Woodland Walking Trail", description_en: "A loop through native plantings with benches along the way." },
+    clubhouse: { name_en: "Clubhouse", description_en: "Shared kitchen, lounge and event hall for resident gatherings." },
+  };
+
   function applyRegionalMapFacilities(facilities) {
     const positions = window.MYCELIUM_COUNTRY_CONFIG?.mapPins;
-    // 如果没有自定义 site plan 打点，直接展示 11 个默认点位，绝不隐藏
+    // Sites without a custom site plan (e.g. Johor Bahru) use the default pins.
     if (!positions) {
       document.querySelectorAll("#mapOverlay .pin").forEach((pin) => {
         pin.hidden = false;
@@ -1136,19 +1205,21 @@ function initApp() {
       "walking-trail": ["park", "walkingTrail"],
       clubhouse: ["clubhouse", "clubhouse"],
     };
+    const byId = new Map((facilities || []).map((facility) => [facility.id, facility]));
     const visibleIds = new Set();
-    facilities.forEach((facility) => {
-      const assignment = assignments[facility.id];
-      const position = assignment && positions[assignment[1]];
-      const pin = assignment && document.querySelector(`#mapOverlay .pin[data-pin-id="${assignment[0]}"]`);
+    Object.entries(assignments).forEach(([facilityId, [pinId, positionKey]]) => {
+      const position = positions[positionKey];
+      const pin = document.querySelector(`#mapOverlay .pin[data-pin-id="${pinId}"]`);
       if (!pin || !position) return;
-      visibleIds.add(assignment[0]);
+      const facility = { ...(REGIONAL_PIN_FALLBACK[facilityId] || {}), ...(byId.get(facilityId) || {}) };
+      visibleIds.add(pinId);
       pin.hidden = false;
       pin.style.display = "";
       pin.style.left = `${position.x}%`;
       pin.style.top = `${position.y}%`;
-      pin.dataset.name = facility[`name_${currentLang}`] || facility.name_en || facility.id;
+      pin.dataset.name = facility[`name_${currentLang}`] || facility.name_en || facilityId;
       pin.dataset.desc = facility[`description_${currentLang}`] || facility.description_en || "";
+      pin.dataset.photo = facility.photoUrl || `./img/Facilities/${facilityId}`;
       pin.setAttribute("aria-label", pin.dataset.name);
     });
     document.querySelectorAll("#mapOverlay .pin").forEach((pin) => {
@@ -1200,14 +1271,13 @@ function initApp() {
 
   async function loadAnnouncementsFromFirebase() {
     try {
-      const snapshot = await locationCollection("announcements").get();
+      const snapshot = await REGION.readCollection(window.db, activeCountryCode, "announcements");
       announcementData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(item => {
+          // The city path already scopes the records. Only the OLD shared root collection needs filtering.
+          if (!snapshot.legacy || !isDefaultMalaysia(activeCountryCode)) return true;
           const itemCode = String(item.countryCode || "").toUpperCase();
-          if (isDefaultMalaysia(activeCountryCode)) {
-            return !itemCode || itemCode === "MY" || itemCode === "MY_PP";
-          }
-          return itemCode === activeCountryCode;
+          return !itemCode || itemCode === "MY" || itemCode === "MY_PP";
         })
         .filter(item => item.isPublished !== false)
         .sort((a, b) => (new Date(b.date || 0).getTime() || 0) - (new Date(a.date || 0).getTime() || 0));
@@ -1358,14 +1428,12 @@ function initApp() {
 
   async function loadEventsFromFirebase() {
     try {
-      const snapshot = await locationCollection("events").get();
+      const snapshot = await REGION.readCollection(window.db, activeCountryCode, "events");
       events = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
         .filter(item => {
+          if (!snapshot.legacy || !isDefaultMalaysia(activeCountryCode)) return true;
           const itemCode = String(item.countryCode || "").toUpperCase();
-          if (isDefaultMalaysia(activeCountryCode)) {
-            return !itemCode || itemCode === "MY" || itemCode === "MY_PP";
-          }
-          return itemCode === activeCountryCode;
+          return !itemCode || itemCode === "MY" || itemCode === "MY_PP";
         });
       buildCalendar();
     } catch (err) {
@@ -1532,6 +1600,7 @@ function initApp() {
       pin.setAttribute("aria-pressed", "true");
       if (mapInfoTitle) mapInfoTitle.textContent = pin.dataset.name || "";
       if (mapInfoDesc) mapInfoDesc.textContent = pin.dataset.desc || "";
+      showFacilityPhoto(facilityPhotoBase(pin), pin.dataset.name);
       
       if (mapInfoBox) {
         mapInfoBox.classList.remove("is-visible");
@@ -1596,7 +1665,7 @@ function initApp() {
     const track = document.getElementById("serviceTrack");
     if (!track) return;
 
-    const data = isDefaultMalaysia(activeCountryCode)
+    const data = (isDefaultMalaysia(activeCountryCode) || (isMalaysiaSite && !(regionServices || []).length))
       ? (SERVICE_DATA[currentLang] || SERVICE_DATA.en)
       : (regionServices || []).map((service) => ({
         role: service[`category_${currentLang}`] || service.category_en || "Community service",
@@ -1781,7 +1850,7 @@ function initApp() {
   function renderFAQItems() {
     const body = document.getElementById("faqBody");
     if (!body) return;
-    const data = isDefaultMalaysia(activeCountryCode)
+    const data = (isDefaultMalaysia(activeCountryCode) || (isMalaysiaSite && !(regionFaqs || []).length))
       ? (FAQ_DATA[currentLang] || FAQ_DATA.en)
       : (regionFaqs || []).map((faq) => ({
         q: faq[`q_${currentLang}`] || faq.q_en || "",
@@ -2154,6 +2223,7 @@ function initApp() {
               if (mapInfoTitle && mapInfoDesc && mapInfoBox && pinData) {
                 mapInfoTitle.textContent = pinData.name;
                 mapInfoDesc.textContent = pinData.desc;
+                showFacilityPhoto(facilityPhotoBase(pinEl), pinData.name);
                 mapInfoBox.classList.add("is-visible");
               }
             }
@@ -2253,7 +2323,7 @@ function initApp() {
     const docData = i18n[currentLang].legalDocs[docKey];
     if (docData) {
       legalModalTitle.textContent = docData.title;
-      if (window.MYCELIUM_COUNTRY === "US" && docKey === "rules") {
+      if (!isDefaultMalaysia(window.MYCELIUM_COUNTRY) && docKey === "rules") {
         const rules = window.MYCELIUM_REGION_RULES;
         const items = rules?.[`items_${currentLang}`] || rules?.items_en;
         if (Array.isArray(items) && items.length) {

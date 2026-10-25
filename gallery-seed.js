@@ -186,6 +186,8 @@ export const GALLERY_SEED = [
     only: "MY",
     date: "2025-09-06",
     cover: IMG + "garden-feast.webp",
+    // 构图焦点：水平居中，垂直偏下约 20%（50%+20%=70%）
+    focus: "50% 60%",
     photos: [
       IMG + "garden-feast.webp"
     ],
