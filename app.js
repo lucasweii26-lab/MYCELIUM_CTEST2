@@ -1968,37 +1968,27 @@ function initApp() {
   const volunteerOverlay = document.getElementById("volunteer");
   const openVolunteerBtn = document.getElementById("openVolunteerBtn");
 
-  const setVolunteerOpen = (isOpen) => {
+const setVolunteerOpen = (isOpen) => {
     document.body.classList.toggle("show-volunteer", isOpen);
     if (volunteerOverlay) volunteerOverlay.setAttribute("aria-hidden", String(!isOpen));
+
     if (isOpen) {
+      if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.open === "function") {
+        window.MYCELIUM_VOLUNTEER_STRIP.open();
+      }
+      // 展开后平滑顺畅滑入当前板块
       requestAnimationFrame(() => {
         if (volunteerOverlay) {
           scrollPageToElement(volunteerOverlay, { behavior: "smooth", block: "start" });
         }
-        // delay strip activate so page scroll finishes first
-        setTimeout(() => {
-          if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.open === "function") {
-            window.MYCELIUM_VOLUNTEER_STRIP.open();
-          } else if (window.MYCELIUM_VOLUNTEER_STRIP && window.MYCELIUM_VOLUNTEER_STRIP.refresh) {
-            window.MYCELIUM_VOLUNTEER_STRIP.refresh();
-          }
-        }, 400);
       });
     } else {
-      // always restore page scroll when closing
-      document.documentElement.classList.remove("vi-lock");
-      document.body.classList.remove("vi-lock");
       if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.close === "function") {
         window.MYCELIUM_VOLUNTEER_STRIP.close();
       }
-      if (window.MYCELIUM_LENIS && typeof window.MYCELIUM_LENIS.start === "function") {
-        try { window.MYCELIUM_LENIS.start(); } catch (e) {}
-      }
     }
   };
-
-  if (openVolunteerBtn && volunteerOverlay) {
+    if (openVolunteerBtn && volunteerOverlay) {
     openVolunteerBtn.addEventListener("click", () => {
       setMapOpen(false);
       setAnnouncementOpen(false);
