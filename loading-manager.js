@@ -149,59 +149,40 @@ function startTabLoader() {
   const canvas = document.createElement('canvas');
   canvas.width = canvas.height = size;
   const ctx = canvas.getContext('2d');
-  const tint = document.createElement('canvas');
-  tint.width = tint.height = size;
-  const tintCtx = tint.getContext('2d');
   const logo = new Image();
   let logoReady = false;
-  logo.onload = () => {
-    // Recolour the dark line-art logo to paper white so it reads on the dark tile.
-    tintCtx.clearRect(0, 0, size, size);
-    tintCtx.drawImage(logo, 0, 0, size, size);
-    tintCtx.globalCompositeOperation = 'source-in';
-    tintCtx.fillStyle = '#f4f1e7';
-    tintCtx.fillRect(0, 0, size, size);
-    logoReady = true;
-  };
+  logo.onload = () => { logoReady = true; };
   logo.src = new URL(originalFaviconHref, document.baseURI).href;
 
   const link = document.createElement('link');
   link.rel = 'icon';
   link.type = 'image/png';
-  const t0 = performance.now();
+  const started = performance.now();
 
+  // Minimal browser-tab indicator: keep the original brand mark static and animate
+  // only a small neutral spinner arc. Do not change the tab title or page loader.
   const draw = () => {
-    const t = (performance.now() - t0) / 1000;
-    const breathe = 0.5 + 0.5 * Math.cos((t * Math.PI * 2) / 1.6);   // 1 -> 0 -> 1 every 1.6 s
-    const scale = 0.56 + 0.34 * breathe;
+    const elapsed = (performance.now() - started) / 1000;
     ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = '#21343e';
-    ctx.beginPath();
-    ctx.roundRect?.(0, 0, size, size, 16) ?? ctx.rect(0, 0, size, size);
-    ctx.fill();
-    if (logoReady) {
-      const d = size * scale;
-      ctx.drawImage(tint, (size - d) / 2, (size - d) / 2, d, d);
-    }
-    // progress ring (real loader progress)
-    ctx.lineWidth = 4;
-    ctx.strokeStyle = 'rgba(244,241,231,0.18)';
-    ctx.beginPath(); ctx.arc(size / 2, size / 2, size / 2 - 5, 0, Math.PI * 2); ctx.stroke();
-    ctx.strokeStyle = '#91a98a';
+    if (logoReady) ctx.drawImage(logo, 13, 13, 38, 38);
+    ctx.lineWidth = 3;
     ctx.lineCap = 'round';
+    ctx.strokeStyle = 'rgba(24,61,50,0.16)';
     ctx.beginPath();
-    ctx.arc(size / 2, size / 2, size / 2 - 5, -Math.PI / 2, -Math.PI / 2 + (Math.PI * 2 * Math.max(0.04, displayedProgress / 100)));
+    ctx.arc(size / 2, size / 2, 29, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = '#315b4a';
+    ctx.beginPath();
+    const angle = (elapsed * Math.PI * 1.5) - Math.PI / 2;
+    ctx.arc(size / 2, size / 2, 29, angle, angle + Math.PI * 0.72);
     ctx.stroke();
     link.href = canvas.toDataURL('image/png');
-    // Replacing the node is what makes Chrome/Firefox repaint the tab icon.
     document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => { if (el !== link) el.remove(); });
     document.head.appendChild(link);
-    document.title = `${displayedProgress}% · Mycelium`;
   };
   draw();
-  faviconTimer = window.setInterval(draw, 90);
+  faviconTimer = window.setInterval(draw, 120);
 }
-
 function stopTabLoader() {
   if (faviconTimer) window.clearInterval(faviconTimer);
   faviconTimer = 0;

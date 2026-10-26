@@ -169,16 +169,16 @@ async function ensureAdmin(user, forceRefresh = false) {
 // Shared authenticated frame, route navigation and sign-out control.
 function shell(content, active, user) {
   const links = [
-    ["/admin/dashboard", "Overview"],
-    ["/admin/announcements", "Announcements"],
-    ["/admin/events", "Events"],
-    ["/admin/gallery", "Gallery"],
-    ["/admin/newsletter", "Newsletter"],
-    ["/admin/volunteer", "Volunteers"]
+    ["/admin/dashboard", "Overview", "▦"],
+    ["/admin/announcements", "Announcements", "◉"],
+    ["/admin/events", "Events", "▣"],
+    ["/admin/gallery", "Gallery", "▧"],
+    ["/admin/newsletter", "Newsletter", "✉"],
+    ["/admin/volunteer", "Volunteers", "♧"]
   ];
   app.innerHTML = `<div class="shell">
     <aside class="sidebar"><div class="sidebar-top"><div><span class="eyebrow">MYCELIUM RESIDENCES</span><p class="side-brand">Admin desk</p><label class="region-switch">Data region (country · city)<select id="adminRegionSelect" aria-label="Choose admin data region">${adminCountryScopes.map((code) => `<option value="${code}" ${code === adminCountryCode ? "selected" : ""}>${SITES[code].label}</option>`).join("")}</select></label></div></div>
-      <nav class="nav" aria-label="Admin navigation">${links.map(([href, text]) => `<a href="${href}" data-route="${href}" ${active === href ? 'aria-current="page"' : ""}>${text}</a>`).join("")}</nav>
+      <nav class="nav" aria-label="Admin navigation">${links.map(([href, text, icon]) => `<a href="${href}" data-route="${href}" ${active === href ? 'aria-current="page"' : ""}><span class="nav-icon" aria-hidden="true">${icon}</span><span>${text}</span></a>`).join("")}</nav>
       <div class="sidebar-bottom"><a class="site-return" href="${SITES[adminCountryCode]?.home || "/"}">← Return to ${SITES[adminCountryCode]?.label || "community"} site</a><span class="user-email">${escapeHtml(user.email)}</span><button class="button secondary" id="signOut">Sign out</button></div>
     </aside><section class="main"><header class="topbar"><div><span class="eyebrow">COMMUNITY MANAGEMENT</span><h1>${escapeHtml(routeTitles[active])}</h1></div><span class="user-email">Signed in as administrator</span></header>${content}</section>
   </div>`;

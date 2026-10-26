@@ -64,6 +64,8 @@ const generateResponse = (incomingChatLi) => {
     isError = true;
   }
 
+  incomingChatLi.classList.remove("chat-thinking");
+  messageElement.removeAttribute("aria-label");
   messageElement.textContent = response;
   messageElement.classList.toggle("error", isError);
   chatbox.scrollTo(0, chatbox.scrollHeight);
@@ -90,7 +92,12 @@ const handleChat = async () => {
   chatbox.appendChild(createChatLi(userMessage, "outgoing"));
   chatbox.scrollTo(0, chatbox.scrollHeight);
 
-  const incomingChatLi = createChatLi(t("chatbot.thinking"), "incoming");
+  const incomingChatLi = createChatLi("", "incoming");
+  incomingChatLi.classList.add("chat-thinking");
+  const thinkingMessage = incomingChatLi.querySelector("p");
+  thinkingMessage.setAttribute("role", "status");
+  thinkingMessage.setAttribute("aria-label", t("chatbot.thinking"));
+  thinkingMessage.innerHTML = '<span class="chat-thinking-dots" aria-hidden="true"><i></i><i></i><i></i></span>';
   chatbox.appendChild(incomingChatLi);
   chatbox.scrollTo(0, chatbox.scrollHeight);
 
@@ -133,6 +140,7 @@ if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && 
         chatQuickMenu.classList.remove("active");
         chatPromptTrigger.classList.remove("active");
         chatQuickMenu.setAttribute("aria-hidden", "true");
+        chatPromptTrigger.setAttribute("aria-expanded", "false");
       }
     }
   });
@@ -172,6 +180,7 @@ if (chatPromptTrigger && chatQuickMenu) {
     const isOpen = chatQuickMenu.classList.toggle("active");
     chatPromptTrigger.classList.toggle("active", isOpen);
     chatQuickMenu.setAttribute("aria-hidden", String(!isOpen));
+    chatPromptTrigger.setAttribute("aria-expanded", String(isOpen));
   });
 
   // 点击外部收起磨砂菜单
@@ -180,6 +189,7 @@ if (chatPromptTrigger && chatQuickMenu) {
       chatQuickMenu.classList.remove("active");
       chatPromptTrigger.classList.remove("active");
       chatQuickMenu.setAttribute("aria-hidden", "true");
+      chatPromptTrigger.setAttribute("aria-expanded", "false");
     }
   });
 
@@ -194,6 +204,7 @@ if (chatPromptTrigger && chatQuickMenu) {
       chatQuickMenu.classList.remove("active");
       chatPromptTrigger.classList.remove("active");
       chatQuickMenu.setAttribute("aria-hidden", "true");
+      chatPromptTrigger.setAttribute("aria-expanded", "false");
 
       chatInput.value = keyword;
       handleChat();
@@ -345,6 +356,8 @@ async function generateResponseAI(incomingChatLi, userMsg) {
   const siteContent = getRelevantSiteContent(userMsg);
   const history = collectChatHistory();
   const reply = await callAIAssistant({ question: userMsg, siteContent, history });
+  incomingChatLi.classList.remove("chat-thinking");
+  messageElement.removeAttribute("aria-label");
   messageElement.textContent = reply;
   chatbox.scrollTo(0, chatbox.scrollHeight);
 }

@@ -840,8 +840,9 @@ let facilityPhotoToken = 0;
 function facilityPhotoBase(pin) {
   if (!pin) return "";
   if (pin.dataset.photo) return pin.dataset.photo;
+
   const file = FACILITY_PIN_PHOTOS[pin.dataset.pinId];
-  return file ? `./img/Facilities/${file}` : "";
+  return file ? `/img/Facilities/${file}` : "";
 }
 function showFacilityPhoto(base, label) {
   const wrap = document.getElementById("mapInfoPhoto");
@@ -852,7 +853,7 @@ function showFacilityPhoto(base, label) {
   img.removeAttribute("src");
   img.alt = label || "";
   if (!base) return;
-  const extensions = /\.(jpe?g|png|webp|avif)(\?.*)?$/i.test(base) ? [""] : [".jpg", ".webp", ".png"];
+  const extensions = /\.(jpe?g|png|webp|avif)(\?.*)?$/i.test(base) ? [""] : [".jpg", ".jpeg", ".webp", ".png", ".avif"];
   let attempt = 0;
   const tryNext = () => {
     if (token !== facilityPhotoToken || attempt >= extensions.length) return;
@@ -1970,8 +1971,30 @@ function initApp() {
   const setVolunteerOpen = (isOpen) => {
     document.body.classList.toggle("show-volunteer", isOpen);
     if (volunteerOverlay) volunteerOverlay.setAttribute("aria-hidden", String(!isOpen));
-    if (isOpen && volunteerOverlay) {
-      scrollPageToElement(volunteerOverlay, { behavior: "smooth", block: "start" });
+    if (isOpen) {
+      requestAnimationFrame(() => {
+        if (volunteerOverlay) {
+          scrollPageToElement(volunteerOverlay, { behavior: "smooth", block: "start" });
+        }
+        // delay strip activate so page scroll finishes first
+        setTimeout(() => {
+          if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.open === "function") {
+            window.MYCELIUM_VOLUNTEER_STRIP.open();
+          } else if (window.MYCELIUM_VOLUNTEER_STRIP && window.MYCELIUM_VOLUNTEER_STRIP.refresh) {
+            window.MYCELIUM_VOLUNTEER_STRIP.refresh();
+          }
+        }, 400);
+      });
+    } else {
+      // always restore page scroll when closing
+      document.documentElement.classList.remove("vi-lock");
+      document.body.classList.remove("vi-lock");
+      if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.close === "function") {
+        window.MYCELIUM_VOLUNTEER_STRIP.close();
+      }
+      if (window.MYCELIUM_LENIS && typeof window.MYCELIUM_LENIS.start === "function") {
+        try { window.MYCELIUM_LENIS.start(); } catch (e) {}
+      }
     }
   };
 
@@ -1984,6 +2007,11 @@ function initApp() {
       setFAQOpen(false);
       setVolunteerOpen(true);
     });
+  }
+
+  const volunteerCloseBtn = document.getElementById("volunteerCloseBtn");
+  if (volunteerCloseBtn) {
+    volunteerCloseBtn.addEventListener("click", () => setVolunteerOpen(false));
   }
 
   document

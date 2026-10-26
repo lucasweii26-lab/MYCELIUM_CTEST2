@@ -311,47 +311,83 @@
         <div class="faq-section-body" id="faqBody"></div>
     </div>
 
+    <!-- Volunteer expand: 3 gallery-like cards; desc+register on right of photo -->
     <div class="volunteer" id="volunteer" aria-hidden="true">
+        <div class="vi-bg-dim" id="viBgDim" aria-hidden="true"></div>
         <div class="volunteerHeader">
             <p class="section-kicker" data-i18n="volunteer.kicker">Participate</p>
             <h1 class="volunteerTitle" data-i18n="volunteer.title">Volunteer Registration</h1>
             <p class="volunteerSubtitle" data-i18n="volunteer.subtitle">Join our volunteer team and make a positive impact in the community</p>
+            <button type="button" class="volunteerCloseBtn" id="volunteerCloseBtn" data-i18n="volunteer.close">Close</button>
         </div>
-        <div class="volunteerGrid">
-            <div class="volunteerCard">
-                <img src="./img/volunteer/tree.gif" alt="Tree Planting Day" class="volunteerImg" loading="lazy" decoding="async">
-                <div class="volunteerCardBody">
-                    <h2 class="volunteerCardTitle" data-i18n="volunteer.card1.title">Tree Planting Day</h2>
-                    <p class="volunteerCardDate" data-i18n="volunteer.card1.date">1 August 2026 · 8:00 AM · Community Park</p>
-                    <p class="volunteerCardDesc" data-i18n="volunteer.card1.desc">Help beautify our neighbourhood and promote environmental awareness by planting trees around the community.</p>
-                    <p class="volunteerCardBring" data-i18n="volunteer.card1.bring"><strong>What to bring:</strong> Gardening gloves, a small shovel, a reusable water bottle</p>
-                    <button class="volunteerRegisterBtn" type="button" data-activity="Tree Planting Day" data-i18n="volunteer.card1.btn">Register Now</button>
+
+        <div class="vi-track" id="volunteerTrack">
+            <article class="vi-item volunteerCard" data-real="0">
+                <div class="vi-card">
+                    <div class="vi-frame">
+                        <img src="./img/volunteer/tree.gif" alt="Tree Planting Day" class="volunteerImg" loading="lazy" decoding="async">
+                        <div class="vi-shade"></div>
+                        <div class="vi-meta">
+                            <div class="vi-meta-left">
+                                <p class="vi-tag vi-text">Volunteer</p>
+                                <h2 class="vi-title vi-text volunteerCardTitle" data-i18n="volunteer.card1.title">Tree Planting Day</h2>
+                                <p class="vi-facts vi-text volunteerCardDate" data-i18n="volunteer.card1.date">1 August 2026 · 8:00 AM · Community Park</p>
+                            </div>
+                            <div class="vi-meta-right">
+                                <p class="vi-desc vi-text volunteerCardDesc" data-i18n="volunteer.card1.desc">Help beautify our neighbourhood and promote environmental awareness by planting trees around the community.</p>
+                                <p class="vi-bring vi-text volunteerCardBring" data-i18n="volunteer.card1.bring"><strong>What to bring:</strong> Gardening gloves, a small shovel, a reusable water bottle</p>
+                                <button type="button" class="vi-register volunteerRegisterBtn vi-text" data-activity="Tree Planting Day" data-i18n="volunteer.card1.btn">Register Now</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="volunteerCard">
-                <img src="./img/volunteer/clean.gif" alt="Neighborhood Cleanup Day" class="volunteerImg" loading="lazy" decoding="async">
-                <div class="volunteerCardBody">
-                    <h2 class="volunteerCardTitle" data-i18n="volunteer.card2.title">Neighborhood Cleanup Day</h2>
-                    <p class="volunteerCardDate" data-i18n="volunteer.card2.date">9 August 2026 · 9:00 AM · Guest Parking Lot</p>
-                    <p class="volunteerCardDesc" data-i18n="volunteer.card2.desc">Join a walk-and-clean around the pond and park to help keep our community tidy and green.</p>
-                    <p class="volunteerCardBring" data-i18n="volunteer.card2.bring"><strong>What to bring:</strong> Gloves, face mask, tongs (garbage bags provided)</p>
-                    <button class="volunteerRegisterBtn" type="button" data-activity="Neighborhood Cleanup Day" data-i18n="volunteer.card2.btn">Register Now</button>
+            </article>
+
+            <article class="vi-item volunteerCard" data-real="1">
+                <div class="vi-card">
+                    <div class="vi-frame">
+                        <img src="./img/volunteer/clean.gif" alt="Neighborhood Cleanup Day" class="volunteerImg" loading="lazy" decoding="async">
+                        <div class="vi-shade"></div>
+                        <div class="vi-meta">
+                            <div class="vi-meta-left">
+                                <p class="vi-tag vi-text">Volunteer</p>
+                                <h2 class="vi-title vi-text volunteerCardTitle" data-i18n="volunteer.card2.title">Neighborhood Cleanup Day</h2>
+                                <p class="vi-facts vi-text volunteerCardDate" data-i18n="volunteer.card2.date">9 August 2026 · 9:00 AM · Guest Parking Lot</p>
+                            </div>
+                            <div class="vi-meta-right">
+                                <p class="vi-desc vi-text volunteerCardDesc" data-i18n="volunteer.card2.desc">Join a walk-and-clean around the pond and park to help keep our community tidy and green.</p>
+                                <p class="vi-bring vi-text volunteerCardBring" data-i18n="volunteer.card2.bring"><strong>What to bring:</strong> Gloves, face mask, tongs (garbage bags provided)</p>
+                                <button type="button" class="vi-register volunteerRegisterBtn vi-text" data-activity="Neighborhood Cleanup Day" data-i18n="volunteer.card2.btn">Register Now</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="volunteerCard">
-                <img src="./img/volunteer/run.gif" alt="Fun Run Marshal" class="volunteerImg" loading="lazy" decoding="async">
-                <div class="volunteerCardBody">
-                    <h2 class="volunteerCardTitle" data-i18n="volunteer.card3.title">Fun Run Marshal</h2>
-                    <p class="volunteerCardDate" data-i18n="volunteer.card3.date">22 August 2026 · 7:00 AM · Community Park</p>
-                    <p class="volunteerCardDesc" data-i18n="volunteer.card3.desc">Support runners along the route as a marshal, guiding directions and handing out refreshments.</p>
-                    <p class="volunteerCardBring" data-i18n="volunteer.card3.bring"><strong>What to bring:</strong> Comfortable shoes, cap, reusable water bottle</p>
-                    <button class="volunteerRegisterBtn" type="button" data-activity="Fun Run Marshal" data-i18n="volunteer.card3.btn">Register Now</button>
+            </article>
+
+            <article class="vi-item volunteerCard" data-real="2">
+                <div class="vi-card">
+                    <div class="vi-frame">
+                        <img src="./img/volunteer/run.gif" alt="Fun Run Marshal" class="volunteerImg" loading="lazy" decoding="async">
+                        <div class="vi-shade"></div>
+                        <div class="vi-meta">
+                            <div class="vi-meta-left">
+                                <p class="vi-tag vi-text">Volunteer</p>
+                                <h2 class="vi-title vi-text volunteerCardTitle" data-i18n="volunteer.card3.title">Fun Run Marshal</h2>
+                                <p class="vi-facts vi-text volunteerCardDate" data-i18n="volunteer.card3.date">22 August 2026 · 7:00 AM · Community Park</p>
+                            </div>
+                            <div class="vi-meta-right">
+                                <p class="vi-desc vi-text volunteerCardDesc" data-i18n="volunteer.card3.desc">Support runners along the route as a marshal, guiding directions and handing out refreshments.</p>
+                                <p class="vi-bring vi-text volunteerCardBring" data-i18n="volunteer.card3.bring"><strong>What to bring:</strong> Comfortable shoes, cap, reusable water bottle</p>
+                                <button type="button" class="vi-register volunteerRegisterBtn vi-text" data-activity="Fun Run Marshal" data-i18n="volunteer.card3.btn">Register Now</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </article>
         </div>
     </div>
 
-        <section class="features" aria-label="Community pillars">
+<section class="features" aria-label="Community pillars">
             <header class="features-intro">
               <p class="section-kicker">The neighbourhood</p>
               <h2 class="section-title">Four quiet promises of daily life</h2>
@@ -473,21 +509,20 @@
             </li>
         </ul>
 
-        <!-- 浮动磨砂圆角形变菜单 -->
-        <div class="chat-quick-menu" id="chatQuickMenu" aria-hidden="true">
-            <button class="chat-quick-item" type="button" data-keyword="announcement" data-i18n="chatbot.quickReply.announcement">Announcements</button>
-            <button class="chat-quick-item" type="button" data-keyword="facilities" data-i18n="chatbot.quickReply.facilities">Facilities</button>
-            <button class="chat-quick-item" type="button" data-keyword="service" data-i18n="chatbot.quickReply.services">Services</button>
-            <button class="chat-quick-item" type="button" data-keyword="event" data-i18n="chatbot.quickReply.events">Events</button>
-            <button class="chat-quick-item" type="button" data-keyword="volunteer" data-i18n="chatbot.quickReply.volunteer">Volunteer</button>
-            <button class="chat-quick-item" type="button" data-keyword="faq" data-i18n="chatbot.quickReply.faq">FAQ</button>
-        </div>
-
         <div class="chat-input">
+            <!-- Floating frosted quick-prompt menu is anchored to the input area. -->
+            <div class="chat-quick-menu" id="chatQuickMenu" aria-hidden="true">
+                <button class="chat-quick-item" type="button" data-keyword="announcement" data-i18n="chatbot.quickReply.announcement">Announcements</button>
+                <button class="chat-quick-item" type="button" data-keyword="facilities" data-i18n="chatbot.quickReply.facilities">Facilities</button>
+                <button class="chat-quick-item" type="button" data-keyword="service" data-i18n="chatbot.quickReply.services">Services</button>
+                <button class="chat-quick-item" type="button" data-keyword="event" data-i18n="chatbot.quickReply.events">Events</button>
+                <button class="chat-quick-item" type="button" data-keyword="volunteer" data-i18n="chatbot.quickReply.volunteer">Volunteer</button>
+                <button class="chat-quick-item" type="button" data-keyword="faq" data-i18n="chatbot.quickReply.faq">FAQ</button>
+            </div>
             <div class="chat-input-wrapper">
                 <textarea data-i18n-placeholder="chatbot.placeholder" placeholder="Enter a message..." aria-label="Chat message" required></textarea>
                 <!-- 输入框末尾灵动图标 -->
-                <button class="chat-prompt-trigger" id="chatPromptTrigger" type="button" aria-label="Quick Prompts" title="Quick Prompts">✦</button>
+                <button class="chat-prompt-trigger" id="chatPromptTrigger" type="button" aria-label="Quick Prompts" title="Quick Prompts" aria-expanded="false" aria-controls="chatQuickMenu">✦</button>
             </div>
             <button class="ai-mode-btn" id="aiModeBtn" type="button" aria-label="Toggle AI mode">AI MODE</button>
             <button class="send-chat-btn" type="button" aria-label="Send message" data-i18n="chatbot.send">Send</button>
@@ -814,13 +849,13 @@
     <script src ="./hero-sequence.js" defer></script>
     <script src="./scroll-story.js" defer></script>
     <script src="./gallery.js" defer></script>
+    <script src="./volunteer-strip.js" defer></script>
     <script src="./live-news.js" defer></script>
     <script src="./air-quality.js" defer></script>
     <script src="./swipe-nav.js" defer></script>
     <script src="./footer-actions.js" defer></script>
     <script src="./feature-details.js" defer></script>
-    <script src="./scroll-indicator.js" defer></script>
-    <script src="./text-protection.js" defer></script>
+<script src="./text-protection.js" defer></script>
     <script type="module" src="./country-selector.js"></script>
     <script src="./loading-reveal.js" defer></script>
     <script type="module" src="./loading-manager.js"></script>

@@ -8,6 +8,7 @@ export const GALLERY_SEED = [
     date: "2026-09-06",
     // 1. 封面图：卡片封面与 Article 顶部巨幅海报
     cover: IMG + "meditation.png",
+    focus: "50% 55%",
     // 2. 正文插图：进入 Article 后正文中间的双栏图（可填 1~2 张特写）
     photos: [
       IMG + "meditation.png"
@@ -79,6 +80,7 @@ export const GALLERY_SEED = [
     slug: "farmers-market-2026",
     date: "2026-05-17",
     cover: IMG + "market.png",
+    focus: "50% 65%",
     photos: [
       IMG + "market.png"
     ],

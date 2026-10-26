@@ -688,12 +688,16 @@
     }
   }
 
-  // Photo / Explore → article temporarily disabled
+  // Only the explicit Explore button opens an article. Clicking the rest of a card
+  // must not navigate or open the article. Cards are rendered dynamically, so delegate.
   list.addEventListener("click", (e) => {
-    if (e.target.closest(".gi-card") || e.target.closest("button.gi-explore")) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
+    const explore = e.target.closest("button.gi-explore");
+    if (!explore || !list.contains(explore)) return;
+    const slug = explore.dataset.slug || explore.closest(".gi-card")?.dataset.slug;
+    if (!slug) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openArticleFromGallery(slug);
   });
 
   function onMouseMove(e) {
