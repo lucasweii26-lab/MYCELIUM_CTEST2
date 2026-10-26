@@ -426,30 +426,26 @@ nav#nav.is-shrunk .country-switcher-value::before {
 .map-info-photo.has-photo .map-info-photo-hint { display: none; }
 
 /* ==========================================================================
-   Volunteer In-Page Seamless Section Styles (Tighter Gap & Taller Cards)
+   Volunteer Unified In-Page Section (Bulletproof Grid Overlay)
    ========================================================================== */
-
 .volunteer {
   display: none;
   position: relative;
   width: 100%;
   max-width: 100%;
   margin: 0;
-  /* 整体上下内边距收窄 */
-  padding: clamp(32px, 4.5vh, 60px) 0 clamp(48px, 6.5vh, 80px);
+  padding: clamp(36px, 5vh, 64px) 0 clamp(48px, 7vh, 80px);
   background: var(--paper, #f4f1e7);
   border-top: 1px solid var(--line, rgba(24, 61, 50, 0.18));
   box-sizing: border-box;
 }
 
-body.show-volunteer .volunteer {
-  display: block;
-}
+body.show-volunteer .volunteer { display: block; }
 
 .volunteerHeader {
   position: relative;
   max-width: 1280px;
-  margin: 0 auto clamp(16px, 2vh, 24px);
+  margin: 0 auto clamp(16px, 2.5vh, 28px);
   padding: 0 clamp(20px, 5vw, 64px);
   display: flex;
   align-items: flex-end;
@@ -494,84 +490,88 @@ body.show-volunteer .volunteer {
   border-color: var(--pine, #183d32);
 }
 
-/* 垂直序列：间距大幅收窄至 16px ~ 32px，告别大空隙 */
 .vi-track {
   position: relative;
   width: 100%;
   margin: 0;
-  padding: 0;
+  padding: 4vh 0;
   list-style: none;
   display: flex;
   flex-direction: column;
-  gap: clamp(16px, 3vh, 32px);
+  gap: clamp(24px, 4vh, 48px); 
 }
 
 .vi-item.volunteerCard {
   width: 100%;
+  min-height: auto !important; 
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
   padding: 0 clamp(16px, 4vw, 48px);
-  cursor: grab;
-}
-
-.vi-item.volunteerCard:active {
-  cursor: grabbing;
 }
 
 .vi-card {
-  width: min(1240px, 94vw);
+  width: min(1180px, 94vw);
   margin: 0 auto;
   will-change: transform, opacity, filter;
   transform-origin: center center;
-}
-
-.vi-frame {
-  position: relative;
-  width: 100%;
-  /* 高度增加：提升到 78vh，最大 820px，饱满大气 */
-  height: clamp(520px, 78vh, 820px);
   border-radius: 20px;
-  overflow: hidden;
-  background: #111;
   box-shadow: 0 16px 40px rgba(24, 61, 50, 0.12);
 }
 
+/* 核心修复：彻底改用 Grid 布局！完美控制前后图层与上下位置 */
+.vi-frame {
+  display: grid !important;
+  grid-template-columns: 1fr !important;
+  grid-template-rows: 1fr auto !important; /* 第一行留白，第二行高度由文字决定 */
+  width: 100%;
+  height: clamp(520px, 75vh, 800px);
+  border-radius: 20px;
+  overflow: hidden;
+  background: #111;
+}
+
+/* 视频/图片占满整个 Grid (从第1行跨越到最后) */
 .vi-frame img,
 .vi-frame video,
 .volunteerImg,
 .volunteerVideo {
-  position: absolute;
-  inset: -2px;
-  width: calc(100% + 4px);
-  height: calc(100% + 4px);
-  object-fit: cover;
+  grid-row: 1 / -1 !important;
+  grid-column: 1 !important;
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
   will-change: transform;
   transform: scale(1.15);
-  pointer-events: none; /* 关键：让鼠标拖拽与点击手势穿透到卡片容器 */
-}
-
-.vi-shade {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(to top, rgba(10, 20, 16, 0.88) 0%, rgba(10, 20, 16, 0.18) 50%, transparent 80%);
   pointer-events: none;
+  z-index: 0 !important;
 }
 
+/* 遮罩层占满整个 Grid */
+.vi-shade {
+  grid-row: 1 / -1 !important;
+  grid-column: 1 !important;
+  background: linear-gradient(to top, rgba(10, 20, 16, 0.95) 0%, rgba(10, 20, 16, 0.5) 45%, transparent 85%) !important;
+  pointer-events: none;
+  z-index: 1 !important;
+  display: block;
+}
+
+/* 文字块：强制安置在 Grid 的第 2 行（绝对底端） */
 .vi-meta {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  padding: clamp(20px, 3.2vw, 38px);
-  color: #fff;
-  z-index: 2;
+  grid-row: 2 !important; 
+  grid-column: 1 !important;
+  position: relative !important;
+  padding: clamp(24px, 4vw, 40px) clamp(28px, 4vw, 48px);
+  background: transparent;
+  color: #ffffff;
+  z-index: 5 !important;
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 20px;
-  pointer-events: none;
+  gap: 32px;
+  pointer-events: none; 
 }
 
 .vi-meta-left {
@@ -586,7 +586,7 @@ body.show-volunteer .volunteer {
   flex-direction: column;
   align-items: flex-start;
   gap: 10px;
-  pointer-events: auto;
+  pointer-events: auto; /* 让按钮可以点击 */
 }
 
 .vi-tag {
@@ -599,11 +599,11 @@ body.show-volunteer .volunteer {
 }
 
 .vi-title {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   font-family: var(--serif, Georgia, serif);
-  font-size: clamp(1.8rem, 3.2vw, 2.8rem);
+  font-size: clamp(1.6rem, 3.2vw, 2.8rem);
   font-weight: 500;
-  line-height: 1.1;
+  line-height: 1.15;
   color: #ffffff;
 }
 
@@ -617,8 +617,8 @@ body.show-volunteer .volunteer {
 
 .vi-desc {
   margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  line-height: 1.55;
   color: rgba(244, 241, 231, 0.92);
 }
 
@@ -629,201 +629,57 @@ body.show-volunteer .volunteer {
 }
 
 .vi-register {
-  margin-top: 4px;
-  padding: 11px 22px;
-  border: 1px solid #ffffff;
+  margin-top: 8px;
+  padding: 12px 24px;
+  border: 1px solid rgba(255,255,255,0.75);
   border-radius: var(--radius-pill, 999px);
-  background: #ffffff;
-  color: var(--pine, #183d32);
+  background: rgba(255,255,255,0.15);
+  color: #ffffff;
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   transition: all 0.25s ease;
 }
 
 .vi-register:hover {
-  background: transparent;
-  color: #ffffff;
+  background: rgba(255,255,255,0.3);
 }
 
-/* ==========================================================================
-   全局顶级吸附光标环（SCROLL / 向上箭头 / 向下箭头 / 双箭头 Scrub）
-   ========================================================================== */
-.vi-hint {
-  position: fixed !important;
-  left: 0 !important;
-  top: 0 !important;
-  width: 0 !important;
-  height: 0 !important;
-  pointer-events: none !important;
-  opacity: 0;
-  z-index: 10040 !important;
-  transition: opacity 0.2s ease;
-}
-
-.vi-hint.is-visible {
-  opacity: 1;
-}
-
-.vi-hint.is-over-ui {
-  opacity: 0 !important;
-}
-
-.vi-cursor-on .volunteerCard,
-.vi-cursor-on .volunteerCard * {
-  cursor: none !important;
-}
-
-.vi-show-system-cursor .volunteerCard,
-.vi-show-system-cursor .volunteerCard * {
-  cursor: auto !important;
-}
-
-.vi-hint-ring {
-  position: fixed !important;
-  left: 50%;
-  top: 50%;
-  width: 78px;
-  height: 78px;
-  transform: translate(-50%, -50%) !important;
-  border-radius: 50%;
-  border: 1.5px solid rgba(255, 255, 255, 0.92);
-  background: rgba(14, 24, 20, 0.38);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
-  pointer-events: none;
-  color: #fff;
-  transition:
-    width 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    height 0.25s cubic-bezier(0.22, 1, 0.36, 1),
-    background 0.2s ease,
-    border-color 0.2s ease;
-}
-
-.vi-hint-label {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font: 600 0.58rem/1 var(--sans, sans-serif);
-  letter-spacing: 0.22em;
-  text-indent: 0.22em;
-  text-transform: uppercase;
-  color: #fff;
-  opacity: 1;
-  transition: opacity 0.18s ease, transform 0.25s ease;
-  pointer-events: none;
-}
-
-.vi-hint-chev {
-  position: absolute;
-  left: 50%;
-  width: 16px;
-  height: 10px;
-  margin-left: -8px;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.vi-hint-chev::before {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 8px;
-  height: 8px;
-  box-sizing: border-box;
-}
-
-.vi-hint-up {
-  top: 50%;
-  transform: translateY(-50%);
-}
-.vi-hint-up::before {
-  border-left: 1.8px solid #fff;
-  border-top: 1.8px solid #fff;
-  transform: translate(-50%, -35%) rotate(45deg);
-}
-
-.vi-hint-down {
-  top: auto;
-  bottom: 50%;
-  transform: translateY(50%);
-}
-.vi-hint-down::before {
-  border-right: 1.8px solid #fff;
-  border-bottom: 1.8px solid #fff;
-  transform: translate(-50%, -65%) rotate(45deg);
-}
-
-/* 模式 1：中间 SCROLL */
-.vi-hint-ring[data-mode="scroll"] {
-  width: 78px;
-  height: 78px;
-}
-.vi-hint-ring[data-mode="scroll"] .vi-hint-label { opacity: 1; transform: scale(1); }
-.vi-hint-ring[data-mode="scroll"] .vi-hint-chev { opacity: 0; }
-
-/* 模式 2：向上切卡箭头 (UP) */
-.vi-hint-ring[data-mode="up"] {
-  width: 44px;
-  height: 44px;
-}
-.vi-hint-ring[data-mode="up"] .vi-hint-label { opacity: 0; transform: scale(0.7); }
-.vi-hint-ring[data-mode="up"] .vi-hint-up {
-  opacity: 1;
-  top: -2px;
-  transform: translateY(-100%);
-}
-.vi-hint-ring[data-mode="up"] .vi-hint-down { opacity: 0; }
-
-/* 模式 3：向下切卡箭头 (DOWN) */
-.vi-hint-ring[data-mode="down"] {
-  width: 44px;
-  height: 44px;
-}
-.vi-hint-ring[data-mode="down"] .vi-hint-label { opacity: 0; transform: scale(0.7); }
-.vi-hint-ring[data-mode="down"] .vi-hint-down {
-  opacity: 1;
-  bottom: -2px;
-  top: auto;
-  transform: translateY(100%);
-}
-.vi-hint-ring[data-mode="down"] .vi-hint-up { opacity: 0; }
-
-/* 模式 4：双箭头连续拖动 Scrub 态 */
-.vi-hint-ring[data-mode="scrub"] {
-  width: 48px;
-  height: 48px;
-  border-color: rgba(255, 255, 255, 0.95);
-  background: rgba(14, 24, 20, 0.45);
-}
-.vi-hint-ring[data-mode="scrub"] .vi-hint-label { opacity: 0 !important; }
-.vi-hint-ring[data-mode="scrub"] .vi-hint-up,
-.vi-hint-ring[data-mode="scrub"] .vi-hint-down { opacity: 1; }
-
-.vi-hint-ring[data-mode="scrub"].vi-scrub-in .vi-hint-up {
-  animation: viChevOutUp 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-.vi-hint-ring[data-mode="scrub"].vi-scrub-in .vi-hint-down {
-  animation: viChevOutDown 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
-}
-
-@keyframes viChevOutUp {
-  0%   { top: 50%; opacity: 0; transform: translateY(-50%) scale(0.4); }
-  100% { top: -2px; opacity: 1; transform: translateY(-100%) scale(1); }
-}
-@keyframes viChevOutDown {
-  0%   { bottom: 50%; opacity: 0; transform: translateY(50%) scale(0.4); }
-  100% { bottom: -2px; opacity: 1; transform: translateY(100%) scale(1); }
-}
-
-@media (max-width: 820px) {
-  .vi-meta { flex-direction: column; align-items: flex-start; gap: 12px; }
-  .vi-meta-left, .vi-meta-right { max-width: 100%; }
-  .vi-frame { height: 520px; }
+/* 手机端极限适配 */
+@media (max-width: 768px) {
+  .volunteer { padding: clamp(28px, 4vh, 48px) 0 clamp(40px, 6vh, 60px); }
+  .volunteerHeader { padding: 0 20px; margin-bottom: 20px; }
+  .volunteerTitle { font-size: 1.8rem; }
+  
+  .vi-track { gap: 24px; padding: 2vh 0; }
+  .vi-item.volunteerCard { padding: 0 16px; }
+  
+  .vi-frame {
+    height: clamp(520px, 72vh, 680px); /* 保持画面高度足够 */
+    border-radius: 16px;
+  }
+  
+  .vi-meta {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 24px 20px !important;
+  }
+  .vi-meta-left, .vi-meta-right { max-width: 100%; width: 100%; }
+  .vi-title { font-size: 1.65rem; margin: 0 0 6px; }
+  .vi-desc { font-size: 0.92rem; line-height: 1.45; margin-bottom: 4px; }
+  .vi-bring { display: none; }
+  .vi-register {
+    width: 100%;
+    text-align: center;
+    justify-content: center;
+    min-height: 48px;
+    margin-top: 6px;
+  }
 }
 /* ==========================================================================
    Minimalist 35mm Filmstrip Gallery Entry Portal
@@ -1021,15 +877,6 @@ body.show-volunteer .volunteer {
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.08em;
   color: var(--ink-soft, #526258);
-}
-
-/* 悬停态：按钮微浮，最新第一帧（最左边）轻微放大提亮 */
-.gallery-film-portal:hover .gfp-frame:first-child .gfp-photo-box {
-  transform: translateY(-3px) scale(1.02);
-  border-color: var(--copper, #75503d);
-}
-.gallery-film-portal:hover .gfp-frame:first-child img {
-  opacity: 0.9;
 }
 
 /* 中止机制提示文本 */
@@ -1247,25 +1094,29 @@ body.show-volunteer .volunteer {
    【核心防御 2】：精准高权重独立单卡高亮
    只有鼠标光标真正停在某张卡片正上方时，那张卡片才被允许上浮
    ========================================================================== */
+/* ==========================================================================
+   【精准独立单卡高亮】：彻底移除父级连动，独立触发
+   只有鼠标光标真正停在某张卡片正上方时，该卡片才被允许上浮
+   ========================================================================== */
 .gallery-film-portal .gfp-frames .gfp-frame:hover {
-  transform: translateY(-4px) !important;
+  transform: translateY(-4px);
 }
 
 .gallery-film-portal .gfp-frames .gfp-frame:hover .gfp-photo-box {
-  border-color: var(--copper, #75503d) !important;
-  box-shadow: 0 12px 28px rgba(24, 61, 50, 0.18) !important;
+  border-color: var(--copper, #75503d);
+  box-shadow: 0 12px 28px rgba(24, 61, 50, 0.18);
 }
 
 .gallery-film-portal .gfp-frames .gfp-frame:hover img {
-  transform: scale(1.05) !important;
-  opacity: 1 !important;
-  filter: none !important; /* 悬停时绝对保持 100% 真实原色 */
+  transform: scale(1.05);
+  opacity: 1;
+  filter: none;
 }
 
 .gallery-film-portal .gfp-frames .gfp-frame:hover .gfp-date {
-  color: var(--pine, #183d32) !important;
-  opacity: 1 !important;
-  font-weight: 600 !important;
+  color: var(--pine, #183d32);
+  opacity: 1;
+  font-weight: 600;
 }
 
 /* 日期轻量小字 */
@@ -1295,7 +1146,6 @@ body.show-volunteer .volunteer {
   visibility: visible;
   opacity: 1;
 }
-
 /* 移动端响应式适配 */
 @media (max-width: 900px) {
   .gfp-inner {

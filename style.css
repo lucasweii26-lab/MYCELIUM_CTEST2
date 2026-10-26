@@ -1806,10 +1806,15 @@ nav#nav.is-shrunk .menuItem::after {
   transition: opacity 0.22s var(--ease), visibility 0.22s, transform 0.22s var(--ease), background-color 0.2s ease, color 0.2s ease;
   z-index: 5;
 }
-.chat-prompt-trigger:hover,
-.chat-prompt-trigger.active {
+/* 基础悬停：平时鼠标放上去只变色和微放大，【绝对不旋转】 */
+.chat-prompt-trigger:hover {
   background: var(--pine, #183d32);
   color: var(--paper, #f4f1e7);
+  transform: translateY(-50%) rotate(0deg) scale(1.08);
+}
+
+/* 状态 2：菜单处于开启状态时的悬停，维持 45 度（× 形状） */
+.chat-prompt-trigger.active:hover {
   transform: translateY(-50%) rotate(45deg) scale(1.08);
 }
 .chat-prompt-trigger.is-hidden {
@@ -2579,7 +2584,8 @@ html.gi-lock { overflow: hidden; }
   z-index: 5;
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end; /* 将内容全推到右侧 */
+  gap: 12px; /* 退回按钮和简介之间的完美间距 */
   padding: 18px 22px;
   pointer-events: none;
 }

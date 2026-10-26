@@ -120,7 +120,20 @@ const setChatbotOpen = (isOpen) => {
   document.body.classList.toggle("show-chatbot", isOpen);
   chatbotToggler.setAttribute("aria-expanded", String(isOpen));
   chatbotPanel.setAttribute("aria-hidden", String(!isOpen));
-  if (isOpen) chatInput.focus();
+  if (isOpen) {
+    chatInput.focus();
+  } else {
+    // 关闭聊天机器人时，确保快捷菜单也一并复原
+    const chatQuickMenu = document.getElementById("chatQuickMenu");
+    const chatPromptTrigger = document.getElementById("chatPromptTrigger");
+    if (chatQuickMenu && chatPromptTrigger) {
+      chatQuickMenu.classList.remove("active");
+      chatPromptTrigger.classList.remove("active");
+      chatQuickMenu.setAttribute("aria-hidden", "true");
+      chatPromptTrigger.setAttribute("aria-expanded", "false");
+      chatPromptTrigger.style.transform = "";
+    }
+  }
 };
 
 if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && chatbotPanel) {
@@ -141,6 +154,7 @@ if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && 
         chatPromptTrigger.classList.remove("active");
         chatQuickMenu.setAttribute("aria-hidden", "true");
         chatPromptTrigger.setAttribute("aria-expanded", "false");
+        chatPromptTrigger.style.transform = ""; 
       }
     }
   });
@@ -181,6 +195,18 @@ if (chatPromptTrigger && chatQuickMenu) {
     chatPromptTrigger.classList.toggle("active", isOpen);
     chatQuickMenu.setAttribute("aria-hidden", String(!isOpen));
     chatPromptTrigger.setAttribute("aria-expanded", String(isOpen));
+    
+    // 【核心修复】：点击关闭时，强制覆写 CSS 的 :hover 旋转，让它立刻回正
+    if (!isOpen) {
+      chatPromptTrigger.style.transform = "translateY(-50%) rotate(0deg) scale(1)";
+    } else {
+      chatPromptTrigger.style.transform = "";
+    }
+  });
+
+  // 鼠标移开时，清除内联样式，交还给 CSS 接管
+  chatPromptTrigger.addEventListener("mouseleave", () => {
+    chatPromptTrigger.style.transform = "";
   });
 
   // 点击外部收起磨砂菜单
@@ -190,6 +216,7 @@ if (chatPromptTrigger && chatQuickMenu) {
       chatPromptTrigger.classList.remove("active");
       chatQuickMenu.setAttribute("aria-hidden", "true");
       chatPromptTrigger.setAttribute("aria-expanded", "false");
+      chatPromptTrigger.style.transform = "";
     }
   });
 
@@ -205,6 +232,7 @@ if (chatPromptTrigger && chatQuickMenu) {
       chatPromptTrigger.classList.remove("active");
       chatQuickMenu.setAttribute("aria-hidden", "true");
       chatPromptTrigger.setAttribute("aria-expanded", "false");
+      chatPromptTrigger.style.transform = "";
 
       chatInput.value = keyword;
       handleChat();
@@ -361,6 +389,7 @@ async function generateResponseAI(incomingChatLi, userMsg) {
   messageElement.textContent = reply;
   chatbox.scrollTo(0, chatbox.scrollHeight);
 }
+
 // 模式切换
 const aiModeBtn = document.getElementById("aiModeBtn");
 let isAIMode = false;

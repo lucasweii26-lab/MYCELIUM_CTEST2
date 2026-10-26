@@ -134,70 +134,6 @@ function animateLogoDraw() {
   logoCycleTimeline.to({}, { duration: 0.5 });
 }
 
-// ---------------------------------------------------------------------------
-// Browser-tab feedback while loading: the favicon pulses (logo shrinks and grows inside a
-// progress ring) and the tab title shows the real percentage. Both are restored on reveal.
-// ---------------------------------------------------------------------------
-const faviconLink = document.querySelector('link[rel~="icon"]');
-const originalFaviconHref = faviconLink?.getAttribute('href') ?? '';
-const originalTitle = document.title;
-let faviconTimer = 0;
-
-function startTabLoader() {
-  if (!faviconLink || !originalFaviconHref || reducedMotion.matches) return;
-  const size = 64;
-  const canvas = document.createElement('canvas');
-  canvas.width = canvas.height = size;
-  const ctx = canvas.getContext('2d');
-  const logo = new Image();
-  let logoReady = false;
-  logo.onload = () => { logoReady = true; };
-  logo.src = new URL(originalFaviconHref, document.baseURI).href;
-
-  const link = document.createElement('link');
-  link.rel = 'icon';
-  link.type = 'image/png';
-  const started = performance.now();
-
-  // Minimal browser-tab indicator: keep the original brand mark static and animate
-  // only a small neutral spinner arc. Do not change the tab title or page loader.
-  const draw = () => {
-    const elapsed = (performance.now() - started) / 1000;
-    ctx.clearRect(0, 0, size, size);
-    if (logoReady) ctx.drawImage(logo, 13, 13, 38, 38);
-    ctx.lineWidth = 3;
-    ctx.lineCap = 'round';
-    ctx.strokeStyle = 'rgba(24,61,50,0.16)';
-    ctx.beginPath();
-    ctx.arc(size / 2, size / 2, 29, 0, Math.PI * 2);
-    ctx.stroke();
-    ctx.strokeStyle = '#315b4a';
-    ctx.beginPath();
-    const angle = (elapsed * Math.PI * 1.5) - Math.PI / 2;
-    ctx.arc(size / 2, size / 2, 29, angle, angle + Math.PI * 0.72);
-    ctx.stroke();
-    link.href = canvas.toDataURL('image/png');
-    document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => { if (el !== link) el.remove(); });
-    document.head.appendChild(link);
-  };
-  draw();
-  faviconTimer = window.setInterval(draw, 120);
-}
-function stopTabLoader() {
-  if (faviconTimer) window.clearInterval(faviconTimer);
-  faviconTimer = 0;
-  if (!originalFaviconHref) return;
-  document.head.querySelectorAll('link[rel~="icon"]').forEach((el) => el.remove());
-  const restored = document.createElement('link');
-  restored.rel = 'icon';
-  restored.type = 'image/png';
-  restored.href = originalFaviconHref;
-  document.head.appendChild(restored);
-  document.title = originalTitle;
-}
-
-try { startTabLoader(); } catch (error) { console.warn('[loading-screen] Tab loader unavailable.', error); }
-
 function updateProgress(_url, loaded, total) {
   const measuredPercent = total ? Math.min(99, Math.round((loaded / total) * 100)) : 0;
   displayedProgress = Math.max(displayedProgress, measuredPercent);
@@ -298,7 +234,6 @@ async function triggerOutro() {
 }
 
 function revealSite() {
-  stopTabLoader();
   void triggerOutro().catch((error) => {
     console.warn('[loading-screen] Branded outro failed; revealing the page directly.', error);
     screen?.classList.add('hidden');

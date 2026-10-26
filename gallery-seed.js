@@ -7,11 +7,11 @@ export const GALLERY_SEED = [
     slug: "sunrise-meditation-2026",
     date: "2026-09-06",
     // 1. 封面图：卡片封面与 Article 顶部巨幅海报
-    cover: IMG + "meditation.png",
+    cover: IMG + "meditation.webp",
     focus: "50% 55%",
     // 2. 正文插图：进入 Article 后正文中间的双栏图（可填 1~2 张特写）
     photos: [
-      IMG + "meditation.png"
+      IMG + "meditation.webp"
     ],
     tag_en: "Wellness",
     tag_zh_CN: "身心健康",
@@ -44,9 +44,9 @@ export const GALLERY_SEED = [
   {
     slug: "botanical-crafts-2026",
     date: "2026-07-12",
-    cover: IMG + "botanic.png",
+    cover: IMG + "botanic.webp",
     photos: [
-      IMG + "botanic.png"
+      IMG + "botanic.webp"
     ],
     tag_en: "Family",
     tag_zh_CN: "亲子工坊",
@@ -79,10 +79,10 @@ export const GALLERY_SEED = [
   {
     slug: "farmers-market-2026",
     date: "2026-05-17",
-    cover: IMG + "market.png",
+    cover: IMG + "market.webp",
     focus: "50% 65%",
     photos: [
-      IMG + "market.png"
+      IMG + "market.webp"
     ],
     tag_en: "Community",
     tag_zh_CN: "邻里集市",
@@ -115,9 +115,9 @@ export const GALLERY_SEED = [
   {
     slug: "tree-planting-2026",
     date: "2026-03-22",
-    cover: IMG + "planting.png",
+    cover: IMG + "planting.webp",
     photos: [
-      IMG + "planting.png"
+      IMG + "planting.webp"
     ],
     tag_en: "Green Living",
     tag_zh_CN: "绿色共建",
@@ -150,9 +150,9 @@ export const GALLERY_SEED = [
   {
     slug: "garden-morning-2026",
     date: "2026-01-18",
-    cover: IMG + "garden.png",
+    cover: IMG + "garden.webp",
     photos: [
-      IMG + "garden.png"
+      IMG + "garden.webp"
     ],
     tag_en: "Garden",
     tag_zh_CN: "种植养护",

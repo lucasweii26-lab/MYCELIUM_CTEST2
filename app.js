@@ -853,7 +853,7 @@ function showFacilityPhoto(base, label) {
   img.removeAttribute("src");
   img.alt = label || "";
   if (!base) return;
-  const extensions = /\.(jpe?g|png|webp|avif)(\?.*)?$/i.test(base) ? [""] : [".jpg", ".jpeg", ".webp", ".png", ".avif"];
+const extensions = /\.(jpe?g|png|webp|avif)(\?.*)?$/i.test(base) ? [""] : [".webp", ".jpg", ".jpeg", ".png", ".avif"];
   let attempt = 0;
   const tryNext = () => {
     if (token !== facilityPhotoToken || attempt >= extensions.length) return;
