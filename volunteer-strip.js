@@ -1,4 +1,4 @@
-// volunteer-strip.js — In-page Seamless Volunteer Section with Lenis Spring-Snap & Dynamic Cursor
+// volunteer-strip.js — In-Page Seamless Volunteer Section (High-Response Scrub & Assistive Snap)
 (() => {
   "use strict";
 
@@ -7,7 +7,7 @@
   const closeBtn = document.getElementById("volunteerCloseBtn");
   if (!section || !track) return;
 
-  // 1. 光标挂载到 document.body 顶层，彻底解决随滚动滑出屏幕的问题
+  // 1. 光标挂载到 document.body 顶层
   let hint = document.getElementById("viGlobalHint");
   if (!hint) {
     hint = document.createElement("div");
@@ -27,14 +27,18 @@
   let rafVisualId = 0;
   let activeIndex = 0;
 
-  // 2. 纠偏与防抖状态锁（绝对 0 打架）
+  // 2. 弹簧吸附状态锁（绝对 0 打架）
   let idleSnapTimer = 0;
-  let isSnapping = false; // 当正在吸附纠正时加锁，避免重复调用
+  let isSnapping = false;
 
-  // 3. 拖拽与双箭头 Scrub 状态
+  // 3. 拖拽与高灵敏度 Scrub 状态
   let isDragging = false;
   let isScrubbing = false;
+  let dragStartCardIdx = 0;
+  let totalDragDeltaY = 0;   // 单次拖拽累计位移
   let lastPointerY = 0;
+  let lastPointerTime = 0;
+  let pointerVelocityY = 0;  // 实时拖拽滑动速度 (px/ms)
   let pointerMoved = 0;
   let tapReady = false;
   let tapReadyAt = 0;
@@ -49,14 +53,15 @@
     return Array.from(track.querySelectorAll(".volunteerCard"));
   }
 
+  // 区块在当前视口内可见性判定
   function isSectionInView() {
     if (!isSectionActive) return false;
     const rect = section.getBoundingClientRect();
     const vh = window.innerHeight || 1;
-    return rect.bottom > 60 && rect.top < vh - 60;
+    return rect.bottom > 40 && rect.top < vh - 40;
   }
 
-  // 获取最靠近视口中心的卡片索引
+  // 获取离视口中线最近的卡片索引
   function getNearestIndex() {
     const cards = getCards();
     if (!cards.length) return 0;
@@ -76,7 +81,47 @@
     return nearest;
   }
 
-  // 单向被动渲染视差（缩放、模糊与透明度）
+  // 视频自动播放控制（靠近屏幕中央自动播放，离开归零第 1 帧）
+  function updateVideos() {
+    const cards = getCards();
+    if (!cards.length) return;
+    const vCenter = window.innerHeight / 2;
+    const nearestIdx = getNearestIndex();
+
+    cards.forEach((card, i) => {
+      const video = card.querySelector("video");
+      if (!video) return;
+
+      video.muted = true;
+      video.defaultMuted = true;
+      video.playsInline = true;
+
+      const r = card.getBoundingClientRect();
+      const cardCenter = r.top + r.height / 2;
+      const diff = Math.abs(cardCenter - vCenter);
+
+      // 卡片占据视野中央大半时平滑播放
+      const isCentered = isSectionActive && (i === nearestIdx) && (diff < window.innerHeight * 0.48);
+
+      if (isCentered) {
+        if (video.paused) {
+          const playPromise = video.play();
+          if (playPromise !== undefined) {
+            playPromise.catch(() => {});
+          }
+        }
+      } else {
+        if (!video.paused) {
+          video.pause();
+        }
+        if (video.currentTime > 0) {
+          try { video.currentTime = 0; } catch (e) {}
+        }
+      }
+    });
+  }
+
+  // 纯被动视差渲染（缩放、模糊、透明度、内部视频反向微位移）
   function renderVisuals() {
     rafVisualId = 0;
     if (!isSectionInView()) return;
@@ -104,10 +149,10 @@
         card.style.filter = blur > 0.08 ? `blur(${blur.toFixed(2)}px)` : "none";
       }
 
-      const img = item.querySelector(".vi-frame img, .volunteerImg");
-      if (img) {
+      const media = item.querySelector(".vi-frame img, .vi-frame video, .volunteerImg, .volunteerVideo");
+      if (media) {
         const parallaxY = signed * -12;
-        img.style.transform = `translate3d(0, ${parallaxY.toFixed(2)}%, 0) scale(1.15)`;
+        media.style.transform = `translate3d(0, ${parallaxY.toFixed(2)}%, 0) scale(1.15)`;
       }
 
       const texts = item.querySelectorAll(".vi-text");
@@ -121,46 +166,52 @@
     activeIndex = getNearestIndex();
   }
 
-  // 纯正弹簧阻尼过冲函数 (Gallery 同款 Spring Overshoot & Settle)
+  // 弹簧阻尼过冲回弹曲线
   function springSettleEasing(t) {
-    return 1 - Math.pow(Math.E, -5.5 * t) * Math.cos(3.5 * t);
+    return 1 - Math.pow(Math.E, -6 * t) * Math.cos(3.8 * t);
   }
 
-  // 4. 精准弹簧纠偏吸附执行器（对齐到屏幕正中心）
+  // 平滑弹簧对齐居中
   function snapToCard(targetIndex) {
     const cards = getCards();
     const targetCard = cards[targetIndex];
     if (!targetCard) return;
 
     isSnapping = true;
-
-    // 让卡片在视口正中居中对齐
     const offset = -(window.innerHeight - targetCard.offsetHeight) / 2;
 
     if (window.MYCELIUM_LENIS && typeof window.MYCELIUM_LENIS.scrollTo === "function") {
       window.MYCELIUM_LENIS.scrollTo(targetCard, {
         offset: offset,
-        duration: 0.85,
+        duration: 0.65, // 更加干脆敏捷
         easing: springSettleEasing,
         onComplete: () => {
-          setTimeout(() => { isSnapping = false; }, 60);
+          setTimeout(() => {
+            isSnapping = false;
+            updateVideos();
+          }, 60);
         }
       });
     } else {
       targetCard.scrollIntoView({ behavior: "smooth", block: "center" });
-      setTimeout(() => { isSnapping = false; }, 850);
+      setTimeout(() => {
+        isSnapping = false;
+        updateVideos();
+      }, 700);
     }
   }
 
-  // 5. 防抖停稳吸附检测（仅当完全停手 180ms 且人在看 Volunteer 时吸附）
+  // 调度被动刷新与防抖停稳纠偏
   function scheduleVisualUpdate() {
     if (!rafVisualId && isSectionActive) {
-      rafVisualId = requestAnimationFrame(renderVisuals);
+      rafVisualId = requestAnimationFrame(() => {
+        renderVisuals();
+        updateVideos();
+      });
     }
 
     if (!isSectionActive || isDragging || isSnapping) return;
 
-    // 只有视口处于 Volunteer 核心区域时才进行自动对齐吸附
     if (isSectionInView()) {
       clearTimeout(idleSnapTimer);
       idleSnapTimer = setTimeout(() => {
@@ -175,23 +226,21 @@
         const cardCenter = r.top + r.height / 2;
         const diff = Math.abs(cardCenter - vCenter);
 
-        // 如果偏移大于 16px，触发纯正弹簧居中纠偏
-        if (diff > 16) {
+        // 偏离中线大于 24px 时平稳纠偏
+        if (diff > 24 && diff < window.innerHeight * 0.45) {
           snapToCard(nearestIdx);
         }
-      }, 100);
+      }, 190);
     }
   }
 
-  // 用户重新滚轮滑动时，立即瞬间让渡控制权，打断任何吸附，绝不粘手
+  // 滚轮介入打断吸附
   window.addEventListener("wheel", () => {
     clearTimeout(idleSnapTimer);
-    if (isSnapping) {
-      isSnapping = false;
-    }
+    if (isSnapping) isSnapping = false;
   }, { passive: true });
 
-  // 6. 光标指示更新
+  // 光标动态感知
   function updateCursor(clientX, clientY, targetEl) {
     const ring = hint.querySelector(".vi-hint-ring");
     if (!ring) return;
@@ -218,18 +267,25 @@
 
     if (!isInteractive) {
       const cards = getCards();
-      const currentCard = cards[activeIndex] || cards[0];
-      if (currentCard) {
-        const rect = currentCard.getBoundingClientRect();
+      const hoveredCard = targetEl?.closest(".volunteerCard") || cards.find(card => {
+        const r = card.getBoundingClientRect();
+        return clientY >= r.top && clientY <= r.bottom && clientX >= r.left && clientX <= r.right;
+      });
+
+      if (hoveredCard) {
+        const cardIndex = cards.indexOf(hoveredCard);
+        const rect = hoveredCard.getBoundingClientRect();
         const relY = (clientY - rect.top) / rect.height;
-        // 上半部 24% 提示向上，下半部 24% 提示向下
-        if (relY < 0.24 && activeIndex > 0) {
+
+        if (relY < 0.22 && cardIndex > 0) {
           setCursorMode("up");
-        } else if (relY > 0.76 && activeIndex < cards.length - 1) {
+        } else if (relY > 0.78 && cardIndex < cards.length - 1) {
           setCursorMode("down");
         } else {
           setCursorMode("scroll");
         }
+      } else {
+        setCursorMode("scroll");
       }
     }
   }
@@ -252,14 +308,20 @@
     cursorMode = mode;
   }
 
-  // 7. 拖拽与双箭头手势
+  // =========================================================================
+  // 核心优化：高响应度双箭头 Scrub 拖拽与意图助推切卡
+  // =========================================================================
   function onPointerDown(e) {
     if (!isSectionActive || e.button !== 0 || cursorOverInteractive) return;
     const cardEl = e.target.closest(".volunteerCard");
     if (!cardEl) return;
 
     isDragging = true;
+    dragStartCardIdx = getNearestIndex(); // 记录起始卡片
+    totalDragDeltaY = 0;
+    pointerVelocityY = 0;
     lastPointerY = e.clientY;
+    lastPointerTime = performance.now();
     pointerMoved = 0;
 
     const now = performance.now();
@@ -284,16 +346,25 @@
 
     const currentY = e.clientY;
     const dy = currentY - lastPointerY;
-    lastPointerY = currentY;
-    pointerMoved += Math.abs(dy);
+    const now = performance.now();
+    const dt = Math.max(1, now - lastPointerTime);
 
+    // 计算瞬时甩动速度 (px/ms)
+    pointerVelocityY = -dy / dt;
+    lastPointerY = currentY;
+    lastPointerTime = now;
+    pointerMoved += Math.abs(dy);
+    totalDragDeltaY += dy;
+
+    // 只要移动超过 6px 立即激活双箭头 Scrub 状态
     if (pointerMoved > 6 && !isScrubbing) {
       isScrubbing = true;
       setCursorMode("scrub");
     }
 
-    // 手指/鼠标拖拽平滑推动页面
-    window.scrollBy(0, -dy * 1.2);
+    // 核心提速：在 Scrub 状态下使用 2.5 倍高灵敏度响应，轻移即可大范围推移卡片
+    const scrubGain = isScrubbing ? 2.5 : 1.3;
+    window.scrollBy(0, -dy * scrubGain);
     scheduleVisualUpdate();
   }
 
@@ -304,19 +375,25 @@
 
     const wasScrub = isScrubbing;
     isScrubbing = false;
+    const cards = getCards();
 
-    // 单击边缘箭头跳转
+    // 1. 如果只是单纯轻击边缘箭头
     if (pointerMoved < 15 && !wasScrub) {
-      const cards = getCards();
-      const currentCard = cards[activeIndex];
-      if (currentCard) {
-        const rect = currentCard.getBoundingClientRect();
+      const hoveredCard = e.target.closest(".volunteerCard") || cards.find(card => {
+        const r = card.getBoundingClientRect();
+        return e.clientY >= r.top && e.clientY <= r.bottom;
+      });
+
+      if (hoveredCard) {
+        const cardIndex = cards.indexOf(hoveredCard);
+        const rect = hoveredCard.getBoundingClientRect();
         const relY = (e.clientY - rect.top) / rect.height;
-        if (relY < 0.24 && activeIndex > 0) {
-          snapToCard(activeIndex - 1);
+
+        if (relY < 0.22 && cardIndex > 0) {
+          snapToCard(cardIndex - 1);
           return;
-        } else if (relY > 0.76 && activeIndex < cards.length - 1) {
-          snapToCard(activeIndex + 1);
+        } else if (relY > 0.78 && cardIndex < cards.length - 1) {
+          snapToCard(cardIndex + 1);
           return;
         }
       }
@@ -327,8 +404,23 @@
 
     tapReady = false;
 
-    // 拖拽松开：对齐居中
-    snapToCard(getNearestIndex());
+    // 2. 核心助推判定：解决“容易弹回原地、难滑过去”的问题
+    let targetIndex = getNearestIndex();
+
+    // 如果当前计算出的最近卡片仍然是“起始卡片”（即处于过渡中段），感知用户的位移倾向或手势轻甩速度
+    if (targetIndex === dragStartCardIdx) {
+      // 向上拖动（鼠标上推 dy < 0，对应 totalDragDeltaY < 0，代表想要看下一张卡片）
+      if ((totalDragDeltaY < -42 || pointerVelocityY > 0.3) && dragStartCardIdx < cards.length - 1) {
+        targetIndex = dragStartCardIdx + 1;
+      }
+      // 向下拖动（鼠标下拉 dy > 0，对应 totalDragDeltaY > 0，代表想要看上一张卡片）
+      else if ((totalDragDeltaY > 42 || pointerVelocityY < -0.3) && dragStartCardIdx > 0) {
+        targetIndex = dragStartCardIdx - 1;
+      }
+    }
+
+    // 带着意图顺势吸附到目标卡片
+    snapToCard(targetIndex);
   }
 
   function onMouseMove(e) {
@@ -347,15 +439,16 @@
   function onKeyDown(e) {
     if (!isSectionActive || !isSectionInView()) return;
     const cards = getCards();
+    const nearest = getNearestIndex();
     if (e.key === "ArrowDown" || e.key === "PageDown") {
-      if (activeIndex < cards.length - 1) {
+      if (nearest < cards.length - 1) {
         e.preventDefault();
-        snapToCard(activeIndex + 1);
+        snapToCard(nearest + 1);
       }
     } else if (e.key === "ArrowUp" || e.key === "PageUp") {
-      if (activeIndex > 0) {
+      if (nearest > 0) {
         e.preventDefault();
-        snapToCard(activeIndex - 1);
+        snapToCard(nearest - 1);
       }
     }
   }
@@ -363,7 +456,16 @@
   function activate() {
     isSectionActive = true;
     section.setAttribute("aria-hidden", "false");
+
+    const videos = section.querySelectorAll("video");
+    videos.forEach(v => {
+      v.muted = true;
+      v.defaultMuted = true;
+      v.playsInline = true;
+    });
+
     scheduleVisualUpdate();
+    setTimeout(scheduleVisualUpdate, 250);
   }
 
   function deactivate() {
@@ -375,6 +477,12 @@
     section.classList.remove("vi-cursor-on");
 
     getCards().forEach((item) => {
+      const video = item.querySelector("video");
+      if (video) {
+        video.pause();
+        try { video.currentTime = 0; } catch (e) {}
+      }
+
       const card = item.querySelector(".vi-card");
       if (card) {
         card.style.transform = "";
@@ -384,7 +492,7 @@
     });
   }
 
-  // 绑定全局事件
+  // 事件监听
   window.addEventListener("scroll", scheduleVisualUpdate, { passive: true });
   window.addEventListener("resize", scheduleVisualUpdate, { passive: true });
   window.addEventListener("mousemove", onMouseMove, { passive: true });
@@ -393,6 +501,9 @@
   window.addEventListener("pointerup", onPointerUp);
   window.addEventListener("pointercancel", onPointerUp);
   window.addEventListener("keydown", onKeyDown);
+
+  window.addEventListener("click", () => { if (isSectionActive) updateVideos(); }, { passive: true });
+  window.addEventListener("touchstart", () => { if (isSectionActive) updateVideos(); }, { passive: true });
 
   function hookLenis() {
     if (window.MYCELIUM_LENIS && typeof window.MYCELIUM_LENIS.on === "function") {

@@ -204,7 +204,7 @@
         </div>
         <div class="map-body">
           <div class="map-image-wrap">
-            <img src="./img/Slide/facility_map.jpg" alt="Community site plan" class="map-image" loading="lazy" decoding="async">
+            <img src="./img/Slide/facility_map.webp" alt="Community site plan" class="map-image" loading="lazy" decoding="async">
 
             <button class="pin" type="button" aria-pressed="false" aria-label="Tennis court" data-pin-id="tennis" data-name="Tennis court" data-desc="A tennis court near the front entrance, beside the row of front-facing homes." style="left: 8%; top: 16%;">
   <svg viewBox="0 0 24 36" xmlns="http://www.w3.org/2000/svg"><path d="M12 0C5.4 0 0 5.4 0 12c0 9 12 24 12 24s12-15 12-24c0-6.6-5.4-12-12-12z" fill="#8C4A32"/><circle cx="12" cy="12" r="5" fill="#F3EEE6"/></svg>
@@ -325,7 +325,7 @@
             <article class="vi-item volunteerCard" data-real="0">
                 <div class="vi-card">
                     <div class="vi-frame">
-                        <img src="./img/volunteer/tree.gif" alt="Tree Planting Day" class="volunteerImg" loading="lazy" decoding="async">
+                        <video class="volunteerVideo volunteerImg" src="./img/volunteer/tree.mp4" muted loop playsinline preload="auto"></video>
                         <div class="vi-shade"></div>
                         <div class="vi-meta">
                             <div class="vi-meta-left">
@@ -346,7 +346,7 @@
             <article class="vi-item volunteerCard" data-real="1">
                 <div class="vi-card">
                     <div class="vi-frame">
-                        <img src="./img/volunteer/clean.gif" alt="Neighborhood Cleanup Day" class="volunteerImg" loading="lazy" decoding="async">
+                        <video class="volunteerVideo volunteerImg" src="./img/volunteer/clean.mp4" muted loop playsinline preload="auto"></video>
                         <div class="vi-shade"></div>
                         <div class="vi-meta">
                             <div class="vi-meta-left">
@@ -367,7 +367,7 @@
             <article class="vi-item volunteerCard" data-real="2">
                 <div class="vi-card">
                     <div class="vi-frame">
-                        <img src="./img/volunteer/run.gif" alt="Fun Run Marshal" class="volunteerImg" loading="lazy" decoding="async">
+                        <video class="volunteerVideo volunteerImg" src="./img/volunteer/run.mp4" muted loop playsinline preload="auto"></video> 
                         <div class="vi-shade"></div>
                         <div class="vi-meta">
                             <div class="vi-meta-left">
@@ -736,11 +736,50 @@
     </div>
 </div>
 
-<div class="announcement-modal-overlay" id="announcementDetailModal" aria-hidden="true">
-    <div class="announcement-modal-card">
-        <button class="announcement-modal-close" type="button" aria-label="Close">&times;</button>
-        <h3 class="announcement-modal-title" id="announcementModalTitle"></h3>
-        <div class="announcement-modal-content" id="announcementModalContent"></div>
+<!-- 公告详情弹窗 · 极简编辑杂志风 -->
+<div class="announcement-modal-overlay" id="announcementDetailModal" role="dialog" aria-modal="true" aria-labelledby="announcementModalTitle" aria-hidden="true">
+    <div class="announcement-modal-card" id="announcementModalCard">
+        <!-- 右上角极简轻量关闭图标（视觉权重压到最低） -->
+        <button class="announcement-modal-close" type="button" aria-label="Close announcement">
+            <svg viewBox="0 0 16 16" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <line x1="3" y1="3" x2="13" y2="13"></line>
+                <line x1="13" y1="3" x2="3" y2="13"></line>
+            </svg>
+        </button>
+
+        <!-- 1. 顶部信息栏 -->
+        <header class="amc-header">
+            <div class="amc-badge">
+                <span class="amc-badge-icon" id="amcBadgeIcon" aria-hidden="true"></span>
+                <span class="amc-badge-text" id="amcCategoryLabel">COMMUNITY</span>
+            </div>
+            <time class="amc-publish-date" id="amcPublishDate"></time>
+        </header>
+
+        <!-- 2. 中间独立滚动阅读区（长内容在此内部滚动，顶底两端始终固定可见） -->
+        <div class="amc-body" id="announcementModalBody">
+            <!-- 标题区 -->
+            <div class="amc-title-wrap">
+                <span class="amc-title-anchor" aria-hidden="true"></span>
+                <h3 class="announcement-modal-title" id="announcementModalTitle"></h3>
+            </div>
+
+            <!-- 3. 关键信息核心扫读块 -->
+            <dl class="amc-key-facts" id="amcKeyFacts"></dl>
+
+            <!-- 4. 正文信函排版区 -->
+            <div class="amc-letter-content">
+                <p class="amc-salutation" id="amcSalutation">Dear Residents,</p>
+                <div class="announcement-modal-content" id="announcementModalContent"></div>
+                <p class="amc-signoff" id="amcSignoff">Management Team</p>
+            </div>
+        </div>
+
+        <!-- 5. 底部操作区 -->
+        <footer class="amc-footer">
+            <div class="amc-actions-left" id="amcActionsLeft"></div>
+            <button type="button" class="amc-close-btn" id="amcMainCloseBtn">CLOSE</button>
+        </footer>
     </div>
 </div>
 

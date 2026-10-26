@@ -1,6 +1,6 @@
 // country-config.js
-const facilityMapUrl = new URL("./img/Slide/facility_map.jpg", import.meta.url).href;
-const portlandFacilityMapUrl = new URL("./img/Slide/PORTLANDfacility.png", import.meta.url).href;
+const facilityMapUrl = new URL("./img/Slide/facility_map.webp", import.meta.url).href;
+const portlandFacilityMapUrl = new URL("./img/Slide/PORTLANDfacility.webp", import.meta.url).href;
 
 // 默认定位到槟城 Pulau Tikus
 export const DEFAULT_COUNTRY_CODE = "MY_PP";

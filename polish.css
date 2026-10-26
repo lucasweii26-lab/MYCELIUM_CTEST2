@@ -539,7 +539,9 @@ body.show-volunteer .volunteer {
 }
 
 .vi-frame img,
-.volunteerImg {
+.vi-frame video,
+.volunteerImg,
+.volunteerVideo {
   position: absolute;
   inset: -2px;
   width: calc(100% + 4px);
@@ -547,6 +549,7 @@ body.show-volunteer .volunteer {
   object-fit: cover;
   will-change: transform;
   transform: scale(1.15);
+  pointer-events: none; /* 关键：让鼠标拖拽与点击手势穿透到卡片容器 */
 }
 
 .vi-shade {
@@ -1312,5 +1315,755 @@ body.show-volunteer .volunteer {
   }
   .gfp-frame:nth-child(n+3) {
     display: none;
+  }
+}
+/* ==========================================================================
+   Announcement Modal — Editorial Magazine Style
+   ========================================================================== */
+
+/* 背景蒙板：深墨绿 35% 透明度 + 4px 高斯模糊 */
+.announcement-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10020 !important;
+  background: rgba(15, 51, 41, 0.35);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 0.3s ease-out, visibility 0.3s ease-out;
+}
+
+.announcement-modal-overlay.active {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+}
+
+/* 弹窗整体容器：540px 单栏杂志宽度，米白纸张底色，深绿柔光软阴影 */
+.announcement-modal-card {
+  position: relative;
+  width: 100%;
+  max-width: 540px;
+  max-height: 80vh;
+  margin: 0 auto;
+  padding: 48px 40px;
+  box-sizing: border-box;
+  background: #faf7f1 !important;
+  border-radius: 12px !important;
+  border: 1px solid rgba(24, 61, 50, 0.12);
+  box-shadow: 0 20px 60px -20px rgba(15, 51, 41, 0.15) !important;
+  color: #0f3329;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transform: scale(0.98);
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease-out;
+  overscroll-behavior: contain;
+}
+
+.announcement-modal-overlay.active .announcement-modal-card {
+  transform: scale(1);
+}
+
+/* 4 类公告主题色变量注入 */
+.announcement-modal-card[data-category="community"] {
+  --amc-accent: #0f3329;
+  --amc-line-alpha: 0.15;
+  --amc-title-weight: 500;
+}
+.announcement-modal-card[data-category="emergency"] {
+  --amc-accent: #8b2a2a;
+  --amc-line-alpha: 0.40;
+  --amc-title-weight: 600;
+}
+.announcement-modal-card[data-category="maintenance"] {
+  --amc-accent: #4a4a4a;
+  --amc-line-alpha: 0.15;
+  --amc-title-weight: 500;
+}
+.announcement-modal-card[data-category="events"] {
+  --amc-accent: #8b6b3d;
+  --amc-line-alpha: 0.18;
+  --amc-title-weight: 500;
+}
+
+/* 右上角极简 × 关闭图标（浅灰色，视觉权重压到最低） */
+.announcement-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 20px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: #9ca3af;
+  cursor: pointer;
+  z-index: 10;
+  transition: color 0.2s ease;
+}
+.announcement-modal-close:hover {
+  color: #0f3329;
+}
+
+/* ---------------- 1. 顶部信息栏 ---------------- */
+.amc-header {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(15, 51, 41, var(--amc-line-alpha, 0.15));
+}
+
+.amc-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--amc-accent, #0f3329);
+}
+
+.amc-badge-icon {
+  display: flex;
+  align-items: center;
+  line-height: 1;
+}
+.amc-badge-icon svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  fill: none;
+}
+
+.amc-badge-text {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.amc-publish-date {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.68rem;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #8f9b94;
+}
+
+/* ---------------- 中间独立阅读区 ---------------- */
+.amc-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 24px 0 20px;
+  scrollbar-width: none; /* 隐去滚动条，保持纯纸质感 */
+  -ms-overflow-style: none;
+}
+.amc-body::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---------------- 2. 标题区 ---------------- */
+.amc-title-wrap {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+/* 2px 分类色竖线视觉锚点 */
+.amc-title-anchor {
+  display: block;
+  flex: 0 0 2px;
+  width: 2px;
+  height: 1.25em;
+  margin-top: 0.08em;
+  background: var(--amc-accent, #0f3329);
+  border-radius: 1px;
+}
+
+.announcement-modal-title {
+  margin: 0;
+  font-family: var(--serif, "Playfair Display", Georgia, serif);
+  font-size: 28px !important;
+  font-weight: var(--amc-title-weight, 500) !important;
+  line-height: 1.3 !important;
+  color: #0f3329;
+  letter-spacing: -0.015em;
+}
+
+/* ---------------- 3. 关键信息块（核心优化点） ---------------- */
+.amc-key-facts {
+  margin: 8px 0 24px 8px; /* 左侧内缩 8px，与标题竖线呼应 */
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.amc-key-facts[hidden] {
+  display: none;
+}
+
+.amc-fact-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+/* 3px 分类色实心圆点前缀 */
+.amc-fact-dot {
+  width: 3px;
+  height: 3px;
+  border-radius: 50%;
+  background: var(--amc-accent, #0f3329);
+  flex: 0 0 3px;
+  transform: translateY(-2px);
+}
+
+.amc-fact-label {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #5c756c;
+  min-width: 5.5em;
+}
+
+.amc-fact-val {
+  margin: 0;
+  font-family: var(--sans, sans-serif);
+  font-weight: 500;
+  color: #0f3329;
+}
+
+/* ---------------- 4. 正文区（信函排版） ---------------- */
+.amc-letter-content {
+  color: #244238;
+}
+
+.amc-salutation {
+  margin: 0 0 16px;
+  font-family: var(--serif, "Playfair Display", Georgia, serif);
+  font-style: italic;
+  font-size: 1.05rem;
+  color: #0f3329;
+}
+
+.announcement-modal-content {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.92rem;
+  font-weight: 400;
+  line-height: 1.75;
+  color: #244238;
+}
+
+.announcement-modal-content p {
+  margin: 0 0 16px;
+}
+.announcement-modal-content p:last-child {
+  margin-bottom: 0;
+}
+
+/* 重点信息仅用中等字重，绝对不用高亮底色 */
+.announcement-modal-content strong,
+.announcement-modal-content b {
+  font-weight: 600;
+  color: #0f3329;
+}
+
+.amc-signoff {
+  margin: 24px 0 0;
+  text-align: right;
+  font-family: var(--serif, "Playfair Display", Georgia, serif);
+  font-size: 0.98rem;
+  color: #0f3329;
+}
+
+/* ---------------- 5. 底部操作区 ---------------- */
+.amc-footer {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 18px;
+  border-top: 1px solid rgba(15, 51, 41, var(--amc-line-alpha, 0.15));
+}
+
+.amc-actions-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* 主关闭按钮 CLOSE：全大写纤细无边框，悬停同色下划线 */
+.amc-close-btn,
+.amc-calendar-btn {
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  font-family: var(--sans, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #0f3329;
+  cursor: pointer;
+  position: relative;
+  text-decoration: none;
+  transition: opacity 0.2s ease;
+}
+
+.amc-close-btn::after,
+.amc-calendar-btn::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.amc-close-btn:hover::after,
+.amc-calendar-btn:hover::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.amc-calendar-btn {
+  color: #5c756c;
+}
+.amc-calendar-btn:hover {
+  color: #0f3329;
+}
+
+/* 错峰淡入呼吸感动效 */
+.announcement-modal-overlay.active .amc-title-wrap {
+  animation: amcElementIn 0.35s ease-out 0.05s both;
+}
+.announcement-modal-overlay.active .amc-key-facts {
+  animation: amcElementIn 0.35s ease-out 0.10s both;
+}
+.announcement-modal-overlay.active .amc-letter-content {
+  animation: amcElementIn 0.35s ease-out 0.15s both;
+}
+
+@keyframes amcElementIn {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ---------------- 响应式适配（移动端） ---------------- */
+@media (max-width: 600px) {
+  .announcement-modal-overlay {
+    padding: 16px;
+  }
+  .announcement-modal-card {
+    padding: 32px 24px 28px;
+    max-height: 85vh;
+  }
+  .announcement-modal-title {
+    font-size: 23px !important;
+  }
+  .amc-footer {
+    flex-direction: column-reverse;
+    gap: 12px;
+    align-items: stretch;
+  }
+  .amc-close-btn {
+    text-align: center;
+    padding: 8px 0;
+  }
+  .amc-actions-left {
+    justify-content: center;
+  }
+}
+
+/* 减少动效模式 */
+@media (prefers-reduced-motion: reduce) {
+  .announcement-modal-overlay,
+  .announcement-modal-card,
+  .amc-title-wrap,
+  .amc-key-facts,
+  .amc-letter-content {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+/* ==========================================================================
+   Announcement Section — Editorial Directory & Index Redesign
+   ========================================================================== */
+
+/* 1. 整体容器重置：移去大白盒包裹，完全融入页面底色 */
+.announcement {
+  max-width: 1180px !important;
+  margin: 0 auto;
+  padding: 0 clamp(16px, 4vw, 40px);
+  background: transparent !important;
+}
+
+.announcementContent {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  padding: 0 !important;
+}
+
+.announcementList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 2. 分类过滤导航重构：纯文字杂志目录索引 */
+.announcementTabs {
+  display: flex;
+  align-items: center;
+  gap: clamp(20px, 3.8vw, 48px);
+  margin: 0 0 clamp(36px, 6vh, 56px);
+  padding: 0 0 16px;
+  border-bottom: 1px solid rgba(24, 61, 50, 0.14);
+  flex-wrap: wrap;
+}
+
+.announcementTab {
+  background: transparent !important;
+  border: 0 !important;
+  padding: 6px 0 !important;
+  font-family: var(--sans, sans-serif);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #687e74 !important;
+  cursor: pointer;
+  position: relative;
+  transition: color 0.25s ease;
+}
+
+.announcementTab::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: -17px;
+  height: 2px;
+  background: var(--pine, #183d32);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.28s var(--ease, ease);
+}
+
+.announcementTab:hover {
+  color: var(--pine, #183d32) !important;
+}
+
+.announcementTab.active {
+  color: var(--pine, #183d32) !important;
+  font-weight: 700;
+}
+
+.announcementTab.active::after {
+  transform: scaleX(1);
+}
+
+/* 3. 单条公告条目：左侧时间索引 + 右侧正文卡片 */
+.announcement-card-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr);
+  gap: clamp(24px, 4vw, 56px);
+  padding: clamp(32px, 5vh, 44px) 0;
+  border-bottom: 1px solid rgba(24, 61, 50, 0.12);
+  box-sizing: border-box;
+}
+
+.announcement-card-item:last-child {
+  border-bottom: 0;
+}
+
+/* 4 类公告主题色变量映射 */
+.announcement-card-item[data-category="community"] { --aci-theme: #0f3329; }
+.announcement-card-item[data-category="emergency"] { --aci-theme: #8b2a2a; }
+.announcement-card-item[data-category="maintenance"] { --aci-theme: #4a4a4a; }
+.announcement-card-item[data-category="events"] { --aci-theme: #8b6b3d; }
+
+/* ---------------- 左侧时间索引区 ---------------- */
+.aci-timeline {
+  position: relative;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding-right: 12px;
+}
+
+.aci-date-box {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.aci-year {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #687e74;
+}
+
+.aci-daymonth {
+  font-family: var(--sans, sans-serif);
+  font-size: 1.45rem;
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--pine, #183d32);
+  white-space: nowrap;
+}
+
+/* 越旧的公告时间越淡，营造时间纵深感 */
+.announcement-card-item:nth-child(n+3) .aci-daymonth { opacity: 0.82; }
+.announcement-card-item:nth-child(n+5) .aci-daymonth { opacity: 0.65; }
+
+/* 时间轴竖向细线与小圆点 */
+.aci-node-track {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  padding-top: 6px;
+}
+
+.aci-node-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: rgba(24, 61, 50, 0.25);
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+/* 最新公告小圆点高亮 */
+.announcement-card-item.is-latest .aci-node-dot {
+  background: var(--aci-theme, #0f3329);
+  box-shadow: 0 0 0 3px rgba(15, 51, 41, 0.12);
+}
+
+.aci-node-line {
+  position: absolute;
+  top: 18px;
+  bottom: -44px; /* 连接到下一条公告 */
+  width: 1px;
+  background: rgba(24, 61, 50, 0.12);
+}
+
+.announcement-card-item:last-child .aci-node-line {
+  display: none;
+}
+
+/* ---------------- 右侧公告卡片区 ---------------- */
+.aci-content-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  cursor: pointer;
+  outline: none;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* 标题行：左侧 3px 色条 + 分类标签 + 衬线标题 */
+.aci-title-row {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 8px 12px;
+  margin-bottom: 10px;
+}
+
+.aci-cat-bar {
+  display: inline-block;
+  width: 3px;
+  height: 14px;
+  border-radius: 2px;
+  background: var(--aci-theme, #0f3329);
+  transform: translateY(1px);
+}
+
+.aci-cat-tag {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--aci-theme, #0f3329);
+}
+
+.aci-card-title {
+  margin: 0;
+  font-family: var(--serif, "Playfair Display", Georgia, serif);
+  font-size: clamp(1.28rem, 2.2vw, 1.55rem);
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--pine, #183d32);
+  letter-spacing: -0.01em;
+  transition: color 0.25s ease;
+}
+
+/* 副标题关键信息行（小号无衬线，浅墨绿，全大写） */
+.aci-meta-line {
+  margin: 0 0 12px 15px; /* 与标题文字左侧对齐 */
+  font-family: var(--sans, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6a8277;
+}
+
+/* 正文摘要：限定 2~3 行截断 */
+.aci-summary {
+  margin: 0 0 16px 15px;
+  font-family: var(--sans, sans-serif);
+  font-size: 0.95rem;
+  line-height: 1.62;
+  color: #43554d;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 58rem;
+}
+
+/* Read More → 优雅文字链接 */
+.aci-action-row {
+  margin-left: 15px;
+}
+
+.aci-read-more {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: var(--sans, sans-serif);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--pine, #183d32);
+  position: relative;
+  padding-bottom: 2px;
+}
+
+.aci-read-more::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 1px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: right;
+  transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.aci-arrow {
+  display: inline-block;
+  transition: transform 0.28s ease;
+}
+
+/* ---------------- 5. 克制的 Hover 联动 ---------------- */
+.announcement-card-item:hover .aci-content-card,
+.announcement-card-item:focus-within .aci-content-card {
+  transform: translateX(6px); /* 整条卡片右移 6px */
+}
+
+.announcement-card-item:hover .aci-card-title,
+.announcement-card-item:focus-within .aci-card-title {
+  color: #071f18; /* 标题加深 */
+}
+
+.announcement-card-item:hover .aci-read-more::after,
+.announcement-card-item:focus-within .aci-read-more::after {
+  transform: scaleX(1);
+  transform-origin: left;
+}
+
+.announcement-card-item:hover .aci-arrow,
+.announcement-card-item:focus-within .aci-arrow {
+  transform: translateX(4px);
+}
+
+.announcement-card-item:hover .aci-node-dot,
+.announcement-card-item:focus-within .aci-node-dot {
+  background: var(--aci-theme, #0f3329);
+  transform: scale(1.3);
+}
+
+/* 空状态提示 */
+.aci-empty {
+  padding: 56px 0;
+  text-align: center;
+  color: #687e74;
+  font-size: 0.95rem;
+}
+
+/* ---------------- 6. 移动端自适应 ---------------- */
+@media (max-width: 768px) {
+  .announcement-card-item {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 28px 0;
+  }
+
+  .aci-timeline {
+    padding-right: 0;
+  }
+
+  .aci-node-track {
+    display: none; /* 移动端隐藏竖向线条，保持极简 */
+  }
+
+  .aci-date-box {
+    flex-direction: row;
+    align-items: baseline;
+    gap: 8px;
+  }
+
+  .aci-daymonth {
+    font-size: 1.15rem;
+  }
+
+  .aci-meta-line,
+  .aci-summary,
+  .aci-action-row {
+    margin-left: 0; /* 移动端左侧不内缩 */
+  }
+
+  .announcement-card-item:hover .aci-content-card {
+    transform: none; /* 移动端取消横向位移 */
   }
 }

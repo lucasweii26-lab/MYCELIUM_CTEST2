@@ -593,7 +593,7 @@ nav#nav.is-shrunk .menuItem::after {
   overflow: hidden;
   background:
     linear-gradient(180deg, rgba(244,241,231,0.55) 0%, rgba(244,241,231,0.88) 100%),
-    url("./img/Slide/backg.png") center / cover no-repeat;
+    url("./img/Slide/backg.webp") center / cover no-repeat;
 }
 .hero-meta {
   position: absolute;

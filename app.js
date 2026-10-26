@@ -1288,36 +1288,143 @@ function initApp() {
     }
   }
 
+// =========================================================================
+  // 外部公告列表 · 编辑目录式渲染引擎
+  // =========================================================================
+
+  // 格式化左侧大号时间索引（年份 + 月日）
+  function parseIndexDate(rawDateStr) {
+    if (!rawDateStr) return { year: "", dayMonth: "" };
+    const d = new Date(rawDateStr.includes("T") ? rawDateStr : `${rawDateStr}T00:00:00`);
+    if (Number.isNaN(d.getTime())) {
+      const yearMatch = rawDateStr.match(/(\d{4})/);
+      const year = yearMatch ? yearMatch[1] : "";
+      const dayMonth = rawDateStr.replace(/\d{4}/, "").replace(/[-/]/g, " ").trim().toUpperCase();
+      return { year, dayMonth };
+    }
+    const year = String(d.getFullYear());
+    const month = d.toLocaleString("en-US", { month: "short" }).toUpperCase();
+    const day = String(d.getDate()).padStart(2, "0");
+    return { year, dayMonth: `${day} ${month}` };
+  }
+
+  // 提取副标题信息行（日期 · 地点 / 时间）
+  function extractSubMetaRow(item, currentLang) {
+    const rawContent = item[`fullContent_${currentLang}`] || item.fullContent_en || item.fullContent || "";
+    const displayDate = item.displayDate || item.date || "";
+    
+    let time = "";
+    let place = "";
+
+    const lines = String(rawContent).split("\n");
+    for (const line of lines) {
+      const trimmed = line.trim();
+      const timeMatch = trimmed.match(/^(?:time|时间|masa|horario)\s*[:：]\s*(.+)/i);
+      const placeMatch = trimmed.match(/^(?:location|venue|assembly point|地点|集合点|lokasi|lugar)\s*[:：]\s*(.+)/i);
+      if (timeMatch && !time) time = timeMatch[1].trim();
+      if (placeMatch && !place) place = placeMatch[1].trim();
+      if (time && place) break;
+    }
+
+    const parts = [displayDate.toUpperCase()];
+    if (place) parts.push(place.toUpperCase());
+    if (time) parts.push(time.toUpperCase());
+
+    // 默认回退保障信息行格式完整
+    if (parts.length === 1) {
+      const catLabel = String(item.category || "NOTICE").toUpperCase();
+      parts.push(`${catLabel} BULLETIN`);
+    }
+
+    return parts.join(" · ");
+  }
+
   function renderAnnouncementList(category) {
     if (!announcementListEl) return;
     announcementListEl.innerHTML = "";
 
     const filtered = category === "all" 
       ? announcementData 
-      : announcementData.filter(item => item.category === category);
+      : announcementData.filter(item => String(item.category || "").toLowerCase() === category.toLowerCase());
 
-    filtered.forEach((item, index) => {
+    if (!filtered.length) {
+      announcementListEl.innerHTML = `
+        <li class="aci-empty">
+          <p>${t("common.searchNoResult") || "No announcements found in this category."}</p>
+        </li>
+      `;
+      return;
+    }
+
+    filtered.forEach((item, filteredIndex) => {
+      // 获取该项在原始数组中的真实索引，确保弹窗数据完全对齐
+      const realIndex = announcementData.indexOf(item);
+      const rawCategory = String(item.category || "community").toLowerCase();
+      const catKey = ["community", "emergency", "maintenance", "events"].includes(rawCategory) ? rawCategory : "community";
+
+      const title = item[`title_${currentLang}`] || item.title_en || item.title || "";
+      const cleanTitle = title.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
+
+      const shortText = item[`shortText_${currentLang}`] || item.shortText_en || item.shortText || "";
+      const rawDate = item.displayDate || item.date || "";
+      const { year, dayMonth } = parseIndexDate(rawDate);
+      const metaRowText = extractSubMetaRow(item, currentLang);
+      const isLatest = filteredIndex === 0;
+
       const li = document.createElement("li");
-      li.className = "announcementItem";
-      li.dataset.category = item.category;
-
-      const shortText = item[`shortText_${currentLang}`] || item.shortText_en || item.shortText;
-      const readMoreText = t("common.readMore");
+      li.className = "announcement-card-item";
+      li.dataset.category = catKey;
+      if (isLatest) li.classList.add("is-latest");
 
       li.innerHTML = `
-        <span class="announcementDate">${item.displayDate || item.date}</span>
-        <p class="announcementText">${shortText}</p>
-        <button class="announcementReadMoreBtn" data-index="${index}">${readMoreText}</button>
+        <!-- 左侧时间索引区 -->
+        <div class="aci-timeline">
+          <div class="aci-date-box">
+            <span class="aci-year">${year}</span>
+            <span class="aci-daymonth">${dayMonth}</span>
+          </div>
+          <div class="aci-node-track" aria-hidden="true">
+            <span class="aci-node-dot"></span>
+            <span class="aci-node-line"></span>
+          </div>
+        </div>
+
+        <!-- 右侧目录卡片主体 -->
+        <article class="aci-content-card" tabindex="0" role="button" aria-label="${cleanTitle}">
+          <div class="aci-title-row">
+            <span class="aci-cat-bar" aria-hidden="true"></span>
+            <span class="aci-cat-tag">[${catKey.toUpperCase()}]</span>
+            <h3 class="aci-card-title">${cleanTitle}</h3>
+          </div>
+
+          <p class="aci-meta-line">${metaRowText}</p>
+
+          <p class="aci-summary">${shortText}</p>
+
+          <div class="aci-action-row">
+            <span class="aci-read-more">
+              <span>${t("common.readMore") || "Read More"}</span>
+              <span class="aci-arrow" aria-hidden="true">→</span>
+            </span>
+          </div>
+        </article>
       `;
 
-      li.querySelector(".announcementReadMoreBtn").addEventListener("click", () => {
-        openAnnouncementDetail(index);
+      // 绑定点击与键盘 Enter 唤起编辑杂志风详情弹窗
+      const cardEl = li.querySelector(".aci-content-card");
+      const openDetail = () => openAnnouncementDetail(realIndex);
+
+      cardEl.addEventListener("click", openDetail);
+      cardEl.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          openDetail();
+        }
       });
 
       announcementListEl.appendChild(li);
     });
   }
-
   const setAnnouncementOpen = (isOpen) => {
     document.body.classList.toggle("show-announcement", isOpen);
     if (announcementOverlay) announcementOverlay.setAttribute("aria-hidden", String(!isOpen));
@@ -1354,39 +1461,168 @@ function initApp() {
     });
   });
 
+// =========================================================================
+  // 公告弹窗 · 编辑杂志风渲染逻辑
+  // =========================================================================
   const announcementModal = document.getElementById("announcementDetailModal");
+  const announcementModalCard = document.getElementById("announcementModalCard");
   const announcementModalTitle = document.getElementById("announcementModalTitle");
   const announcementModalContent = document.getElementById("announcementModalContent");
   const announcementModalClose = document.querySelector(".announcement-modal-close");
+  const amcMainCloseBtn = document.getElementById("amcMainCloseBtn");
+  const amcBadgeIcon = document.getElementById("amcBadgeIcon");
+  const amcCategoryLabel = document.getElementById("amcCategoryLabel");
+  const amcPublishDate = document.getElementById("amcPublishDate");
+  const amcKeyFacts = document.getElementById("amcKeyFacts");
+  const amcSalutation = document.getElementById("amcSalutation");
+  const amcSignoff = document.getElementById("amcSignoff");
+  const amcActionsLeft = document.getElementById("amcActionsLeft");
+
+  // 4 类公告极简线性 SVG 图标
+  const CATEGORY_ICONS = {
+    community: `<svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>`,
+    emergency: `<svg viewBox="0 0 24 24"><polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2"></polygon><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>`,
+    maintenance: `<svg viewBox="0 0 24 24"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"></path></svg>`,
+    events: `<svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>`
+  };
+
+  // 多语言称谓与落款映射
+  const LETTER_I18N = {
+    en: { salutation: "Dear Residents,", signoff: "Management Team", addToCal: "Add to Calendar" },
+    "zh-CN": { salutation: "尊敬的居民：", signoff: "社区管理处", addToCal: "添加到日历" },
+    ms: { salutation: "Kepada Penduduk Sekalian,", signoff: "Pihak Pengurusan", addToCal: "Tambah ke Kalendar" },
+    es: { salutation: "Estimados residentes:", signoff: "Equipo de administración", addToCal: "Añadir al calendario" },
+    ta: { salutation: "அன்புள்ள குடியிருப்பாளர்களே,", signoff: "நிர்வாகக் குழு", addToCal: "நாட்காட்டியில் சேர்" }
+  };
+
+  // 辅助函数：从富文本/长文本中自动抽离常见时间、地点关键行，提升阅读效率
+  function extractKeyFacts(content, rawDate) {
+    const facts = [];
+    if (rawDate) {
+      facts.push({ label: "DATE", value: rawDate });
+    }
+
+    const lines = String(content || "").split("\n");
+    const cleanLines = [];
+
+    lines.forEach(line => {
+      const trimmed = line.trim();
+      const timeMatch = trimmed.match(/^(?:time|时间|masa|horario)\s*[:：]\s*(.+)/i);
+      const placeMatch = trimmed.match(/^(?:location|venue|assembly point|地点|集合点|lokasi|lugar)\s*[:：]\s*(.+)/i);
+
+      if (timeMatch) {
+        facts.push({ label: "TIME", value: timeMatch[1] });
+      } else if (placeMatch) {
+        facts.push({ label: "LOCATION", value: placeMatch[1] });
+      } else {
+        cleanLines.push(line);
+      }
+    });
+
+    return {
+      facts,
+      filteredContent: cleanLines.join("\n").trim()
+    };
+  }
 
   function openAnnouncementDetail(index) {
     const detail = announcementData[index];
     if (!detail || !announcementModal) return;
-    
-    const title = detail[`title_${currentLang}`] || detail.title_en || detail.title;
-    const content = detail[`fullContent_${currentLang}`] || detail.fullContent_en || detail.fullContent;
 
-    announcementModalTitle.textContent = title;
-    announcementModalContent.textContent = content;
+    const rawCategory = String(detail.category || "community").toLowerCase();
+    const category = ["community", "emergency", "maintenance", "events"].includes(rawCategory) ? rawCategory : "community";
+    
+    // 1. 设置分类主题色变量
+    if (announcementModalCard) {
+      announcementModalCard.dataset.category = category;
+    }
+
+    // 2. 填充顶部信息栏
+    if (amcBadgeIcon) amcBadgeIcon.innerHTML = CATEGORY_ICONS[category] || CATEGORY_ICONS.community;
+    if (amcCategoryLabel) amcCategoryLabel.textContent = category.toUpperCase();
+    if (amcPublishDate) amcPublishDate.textContent = detail.displayDate || detail.date || "";
+
+    // 3. 标题处理（移除 emoji，保持纯粹文字）
+    const rawTitle = detail[`title_${currentLang}`] || detail.title_en || detail.title || "";
+    const cleanTitle = rawTitle.replace(/[\u{1F300}-\u{1F6FF}\u{1F900}-\u{1F9FF}\u{2600}-\u{26FF}\u{2700}-\u{27BF}]/gu, "").trim();
+    if (announcementModalTitle) announcementModalTitle.textContent = cleanTitle;
+
+    // 4. 关键信息块提取与正文信函排版
+    const rawContent = detail[`fullContent_${currentLang}`] || detail.fullContent_en || detail.fullContent || "";
+    const { facts, filteredContent } = extractKeyFacts(rawContent, detail.displayDate || detail.date);
+
+    if (amcKeyFacts) {
+      if (facts.length > 0) {
+        amcKeyFacts.hidden = false;
+        amcKeyFacts.innerHTML = facts.map(f => `
+          <div class="amc-fact-row">
+            <span class="amc-fact-dot" aria-hidden="true"></span>
+            <dt class="amc-fact-label">${f.label}</dt>
+            <dd class="amc-fact-val">${f.value}</dd>
+          </div>
+        `).join("");
+      } else {
+        amcKeyFacts.hidden = true;
+        amcKeyFacts.innerHTML = "";
+      }
+    }
+
+    const i18nLetter = LETTER_I18N[currentLang] || LETTER_I18N.en;
+    if (amcSalutation) amcSalutation.textContent = i18nLetter.salutation;
+    if (amcSignoff) amcSignoff.textContent = i18nLetter.signoff;
+
+    // 正文段落化渲染
+    if (announcementModalContent) {
+      const paragraphs = filteredContent.split(/\n\s*\n/).filter(Boolean);
+      if (paragraphs.length > 0) {
+        announcementModalContent.innerHTML = paragraphs.map(p => `<p>${p.replace(/\n/g, "<br>")}</p>`).join("");
+      } else {
+        announcementModalContent.innerHTML = `<p>${filteredContent.replace(/\n/g, "<br>")}</p>`;
+      }
+    }
+
+    // 5. 底部操作栏（活动类可选日历操作）
+    if (amcActionsLeft) {
+      if (category === "events") {
+        amcActionsLeft.innerHTML = `<button type="button" class="amc-calendar-btn" id="amcCalendarBtn">${i18nLetter.addToCal}</button>`;
+        document.getElementById("amcCalendarBtn")?.addEventListener("click", () => {
+          closeAnnouncementDetail();
+          document.getElementById("openCalendarBtn")?.click();
+        });
+      } else {
+        amcActionsLeft.innerHTML = "";
+      }
+    }
+
+    // 展现弹窗
     announcementModal.classList.add("active");
     announcementModal.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden"; // 锁定主页面滚动
+    amcMainCloseBtn?.focus();
   }
 
   function closeAnnouncementDetail() {
     if (!announcementModal) return;
     announcementModal.classList.remove("active");
     announcementModal.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = ""; // 恢复主页面滚动
   }
 
-  if (announcementModalClose) {
-    announcementModalClose.addEventListener("click", closeAnnouncementDetail);
-  }
+  // 关闭绑定
+  if (announcementModalClose) announcementModalClose.addEventListener("click", closeAnnouncementDetail);
+  if (amcMainCloseBtn) amcMainCloseBtn.addEventListener("click", closeAnnouncementDetail);
   if (announcementModal) {
     announcementModal.addEventListener("click", (e) => {
       if (e.target === announcementModal) closeAnnouncementDetail();
     });
   }
 
+  // Esc 键通用退出
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && announcementModal?.classList.contains("active")) {
+      closeAnnouncementDetail();
+    }
+  });
   const calendarOverlay = document.getElementById("calendarOverlay");
   const openCalendarBtn = document.getElementById("openCalendarBtn");
   const calendarCloseBtn = document.getElementById("calendarCloseBtn");
@@ -1612,23 +1848,28 @@ function initApp() {
             const isMobile = window.innerWidth <= 768;
             const rect = mapInfoBox.getBoundingClientRect();
             
-            if (isMobile) {
-              if (rect.bottom > window.innerHeight) {
-                const scrollAmount = rect.bottom - window.innerHeight + 16;
-                if (window.MYCELIUM_LENIS) {
-                  window.MYCELIUM_LENIS.scrollTo(window.scrollY + scrollAmount, { duration: 0.5 });
-                } else {
-                  window.scrollBy({ top: scrollAmount, behavior: "smooth" });
-                }
-              }
-            } else {
-              const targetY = window.scrollY + rect.top - window.innerHeight / 2;
+          // 额外多下滑的偏移量（数值越大，往下滑得越深）
+          const extraOffset = 100; 
+
+          if (isMobile) {
+            // 手机端：不仅把卡片底部露出，还额外多滑出 60px 舒适留白
+            if (rect.bottom > window.innerHeight - 60) {
+              const scrollAmount = rect.bottom - window.innerHeight + 60;
               if (window.MYCELIUM_LENIS) {
-                window.MYCELIUM_LENIS.scrollTo(targetY, { duration: 0.7 });
+                window.MYCELIUM_LENIS.scrollTo(window.scrollY + scrollAmount, { duration: 0.5 });
               } else {
-                window.scrollTo({ top: targetY, behavior: "smooth" });
+                window.scrollBy({ top: scrollAmount, behavior: "smooth" });
               }
             }
+          } else {
+            // 桌面端：在原本居中的基础上，多往下滑 80px（让信息框更靠上呈现，不易被下边缘挡住）
+            const targetY = window.scrollY + rect.top - window.innerHeight / 2 + extraOffset;
+            if (window.MYCELIUM_LENIS) {
+              window.MYCELIUM_LENIS.scrollTo(targetY, { duration: 0.7 });
+            } else {
+              window.scrollTo({ top: targetY, behavior: "smooth" });
+            }
+          }
           }, 60);
         });
       }
