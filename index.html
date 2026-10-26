@@ -433,10 +433,29 @@
         <header class="gallery-head">
             <p class="section-kicker" data-g="kicker">Gallery</p>
             <h2 class="section-title" data-g="title">Moments worth remembering</h2>
-            <p class="gallery-sub" data-g="sub">Enter the filmstrip — scroll to travel through moments.</p>
-            <button type="button" class="gallery-enter" id="galleryEnter" data-g="enter">Enter Gallery</button>
+            <p class="gallery-sub" data-g="sub">A filmstrip of community moments — scroll through every frame.</p>
         </header>
-        <div class="gallery-teaser" id="galleryTeaser" aria-hidden="true"></div>
+
+        <!-- 一体化极简画廊入口 -->
+        <div class="gallery-film-portal" id="galleryFilmPortal">
+            <div class="gfp-inner">
+                <!-- 胶囊按钮（动画时自然拉长右移） -->
+                <div class="gfp-button-anchor" id="gfpButtonAnchor">
+                    <button type="button" class="gfp-btn" id="galleryEnter" aria-label="Enter Gallery" aria-busy="false">
+                        <span class="gfp-btn-label" id="gfpBtnLabel" data-g="enter">ENTER GALLERY</span>
+                        <span class="gfp-btn-arrow" aria-hidden="true">→</span>
+                    </button>
+                </div>
+
+                <!-- 真实照片队列（最左最新，无基线包裹） -->
+                <div class="gfp-frames" id="gfpFrames" aria-label="Recent photo moments">
+                    <!-- 动态注入 4 帧真实色彩照片与轻量日期 -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 阶段 3：柔和米白晨光转场光幕 -->
+        <div class="gfp-bloom-curtain" id="gfpBloomCurtain" aria-hidden="true"></div>
     </section>
 
     <!-- Full-screen vertical filmstrip (Siena-style) -->

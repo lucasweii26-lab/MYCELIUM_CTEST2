@@ -822,3 +822,495 @@ body.show-volunteer .volunteer {
   .vi-meta-left, .vi-meta-right { max-width: 100%; }
   .vi-frame { height: 520px; }
 }
+/* ==========================================================================
+   Minimalist 35mm Filmstrip Gallery Entry Portal
+   ========================================================================== */
+
+.gallery-film-portal {
+  position: relative;
+  width: 100%;
+  max-width: 1320px;
+  margin: clamp(28px, 4vh, 48px) auto 0;
+  padding: 0 clamp(20px, 5vw, 64px);
+  box-sizing: border-box;
+  user-select: none;
+}
+
+/* 时间基准线：越往右越淡，营造时间深远纵深感 */
+.gfp-track-line {
+  position: absolute;
+  top: 50%;
+  left: clamp(20px, 5vw, 64px);
+  right: clamp(20px, 5vw, 64px);
+  height: 1px;
+  background: linear-gradient(90deg, rgba(24, 61, 50, 0.35) 0%, rgba(24, 61, 50, 0.18) 50%, rgba(24, 61, 50, 0.03) 88%, transparent 100%);
+  transform: translateY(-50%);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* 指示器走过的轨迹线（加粗、加深） */
+.gfp-progress-line {
+  position: absolute;
+  left: 0;
+  top: -1px;
+  height: 3px;
+  width: 0%;
+  background: linear-gradient(90deg, var(--pine, #183d32), var(--copper, #75503d));
+  border-radius: 999px;
+  transition: width 0.05s linear;
+}
+
+.gfp-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(24px, 4vw, 56px);
+  z-index: 2;
+}
+
+/* 按钮胶囊（同时充当时间轴磁头起点） */
+.gfp-head-wrap {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.gfp-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 26px;
+  border: 1px solid var(--pine, #183d32);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--paper, #f4f1e7);
+  color: var(--pine, #183d32);
+  font-family: var(--sans, sans-serif);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  position: relative;
+  z-index: 4;
+  box-shadow: 0 4px 14px rgba(24, 61, 50, 0.08);
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.3s ease,
+              color 0.3s ease,
+              box-shadow 0.35s ease;
+}
+
+.gfp-btn:hover,
+.gfp-btn:focus-visible {
+  transform: translateY(-2px);
+  background: var(--pine, #183d32);
+  color: var(--paper, #f4f1e7);
+  box-shadow: 0 10px 24px rgba(24, 61, 50, 0.18);
+  outline: none;
+}
+
+.gfp-btn-arrow {
+  display: inline-block;
+  transition: transform 0.3s var(--ease, ease);
+}
+.gfp-btn:hover .gfp-btn-arrow {
+  transform: translateX(4px);
+}
+
+/* 推进拉伸进度带（形成前推后拉的高级流体胶片带） */
+.gfp-indicator-tape {
+  position: absolute;
+  top: 50%;
+  left: 20px;
+  height: 38px;
+  width: 0;
+  background: rgba(24, 61, 50, 0.12);
+  border: 1px solid rgba(24, 61, 50, 0.28);
+  border-radius: var(--radius-pill, 999px);
+  transform: translateY(-50%);
+  z-index: 3;
+  pointer-events: none;
+  opacity: 0;
+  backdrop-filter: blur(4px);
+}
+
+/* 预览照片帧容器：从左到右时间递减 */
+.gfp-frames {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  gap: clamp(16px, 2.5vw, 36px);
+  overflow: visible;
+}
+
+/* 单张 35mm 比例胶片帧 */
+.gfp-frame {
+  position: relative;
+  flex: 0 0 clamp(130px, 16vw, 210px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+}
+
+.gfp-photo-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2; /* 经典 35mm 胶片长宽比 */
+  border-radius: 6px;
+  overflow: hidden;
+  background: #0d1210;
+  border: 1px solid rgba(24, 61, 50, 0.22);
+  box-shadow: 0 6px 18px rgba(24, 61, 50, 0.08);
+  transition: transform 0.4s var(--ease, ease), border-color 0.3s ease;
+}
+
+/* 胶片照片本身 */
+.gfp-photo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  /* 初始态：微弱负片冷感，等待显影 */
+  opacity: 0.65;
+  will-change: filter, transform, opacity;
+  transition: transform 0.4s ease;
+}
+
+/* 极其微妙的暗角（Vignette）模拟 */
+.gfp-photo-box::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  background: radial-gradient(circle at center, transparent 55%, rgba(13, 18, 16, 0.42) 100%);
+  pointer-events: none;
+}
+
+/* 微细模拟颗粒感（微噪点网格） */
+.gfp-photo-box::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  opacity: 0.14;
+  background-image: radial-gradient(rgba(244, 241, 231, 0.8) 1px, transparent 0);
+  background-size: 3px 3px;
+  pointer-events: none;
+}
+
+/* 胶片元数据（编号 + 日期） */
+.gfp-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px;
+}
+.gfp-exp-num {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--copper, #75503d);
+}
+.gfp-date {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft, #526258);
+}
+
+/* 悬停态：按钮微浮，最新第一帧（最左边）轻微放大提亮 */
+.gallery-film-portal:hover .gfp-frame:first-child .gfp-photo-box {
+  transform: translateY(-3px) scale(1.02);
+  border-color: var(--copper, #75503d);
+}
+.gallery-film-portal:hover .gfp-frame:first-child img {
+  opacity: 0.9;
+}
+
+/* 中止机制提示文本 */
+.gfp-abort-hint {
+  position: absolute;
+  bottom: -28px;
+  left: clamp(20px, 5vw, 64px);
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--copper, #75503d);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+}
+.gallery-film-portal.is-animating .gfp-abort-hint {
+  opacity: 1;
+}
+
+/* 全屏转场舒展遮罩（动画终点无缝过渡到画廊全屏模式） */
+.gfp-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 275;
+  background: #0a0a0a;
+  transform: scaleY(0);
+  transform-origin: center;
+  pointer-events: none;
+  opacity: 0;
+}
+
+/* 移动端响应式：小屏下仅保留 2 帧，防止挤压 */
+@media (max-width: 900px) {
+  .gfp-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .gfp-track-line {
+    top: 72%;
+  }
+  .gfp-frames {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .gfp-frames::-webkit-scrollbar { display: none; }
+  .gfp-frame {
+    flex: 0 0 160px;
+  }
+  .gfp-frame:nth-child(n+3) {
+    display: none; /* 移动端仅保留前 2 张最新记录 */
+  }
+}
+
+/* 减少动态效果降级（无动画，点击直接进入） */
+@media (prefers-reduced-motion: reduce) {
+  .gfp-photo-box img {
+    filter: none !important;
+    opacity: 1 !important;
+    transition: none !important;
+  }
+  .gfp-progress-line,
+  .gfp-indicator-tape,
+  .gfp-curtain {
+    display: none !important;
+  }
+}
+/* ==========================================================================
+   Minimalist Living Gallery Entry (Zero Jump & Zero Blue Tint Fix)
+   ========================================================================== */
+
+.gallery-film-portal {
+  position: relative;
+  width: 100%;
+  max-width: 1320px;
+  margin: clamp(24px, 4vh, 44px) auto 0;
+  padding: 0 clamp(20px, 5vw, 64px);
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.gfp-inner {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: clamp(28px, 4.5vw, 64px);
+}
+
+/* 按钮起始占位区 */
+.gfp-button-anchor {
+  position: relative;
+  flex: 0 0 auto;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+}
+
+.gfp-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 48px;
+  padding: 0 28px;
+  border: 1px solid var(--pine, #183d32);
+  border-radius: var(--radius-pill, 999px);
+  background: var(--paper, #f4f1e7);
+  color: var(--pine, #183d32);
+  font-family: var(--sans, sans-serif);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(24, 61, 50, 0.06);
+  white-space: nowrap;
+  transform-origin: left center;
+  transition: transform 0.35s cubic-bezier(0.22, 1, 0.36, 1),
+              background-color 0.3s ease,
+              color 0.3s ease,
+              box-shadow 0.35s ease;
+}
+
+.gfp-btn:hover,
+.gfp-btn:focus-visible {
+  transform: translateY(-2px);
+  background: var(--pine, #183d32);
+  color: var(--paper, #f4f1e7);
+  box-shadow: 0 10px 24px rgba(24, 61, 50, 0.16);
+  outline: none;
+}
+
+.gfp-btn-arrow {
+  display: inline-block;
+  transition: transform 0.3s var(--ease, ease);
+}
+.gfp-btn:hover .gfp-btn-arrow {
+  transform: translateX(4px);
+}
+
+/* 照片队列容器：固定在原位 */
+.gfp-frames {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: flex-start;
+  gap: clamp(16px, 2.4vw, 32px);
+  overflow: visible;
+}
+
+/* 单张卡片 */
+.gfp-frame {
+  position: relative;
+  flex: 0 0 clamp(130px, 15vw, 190px);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  cursor: pointer;
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.gfp-photo-box {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 2;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #111;
+  border: 1px solid rgba(24, 61, 50, 0.16);
+  box-shadow: 0 4px 14px rgba(24, 61, 50, 0.06);
+  transition: transform 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* 照片基础状态：100% 摄影原彩 */
+.gfp-photo-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  filter: none !important;
+  opacity: 1;
+  will-change: transform, opacity;
+  transition: transform 0.35s ease, opacity 0.3s ease;
+}
+
+/* 右侧随时间向过去的极轻微通透过渡 */
+.gfp-frame[data-index="1"] .gfp-photo-box img { opacity: 0.94; }
+.gfp-frame[data-index="2"] .gfp-photo-box img { opacity: 0.88; }
+.gfp-frame[data-index="3"] .gfp-photo-box img { opacity: 0.82; }
+
+/* ==========================================================================
+   【核心防御 1】：强力粉碎任何父级 hover 联动！
+   只要鼠标在整个大区块里移动，所有卡片默认保持绝对静止，绝对禁止变蓝或跳起！
+   ========================================================================== */
+.gallery-film-portal:hover .gfp-frame,
+.gallery-film-portal:hover .gfp-frame[data-index="0"],
+.gallery-film-portal:hover .gfp-frame:first-child {
+  transform: none;
+}
+.gallery-film-portal:hover .gfp-frame .gfp-photo-box,
+.gallery-film-portal:hover .gfp-frame[data-index="0"] .gfp-photo-box,
+.gallery-film-portal:hover .gfp-frame:first-child .gfp-photo-box {
+  border-color: rgba(24, 61, 50, 0.16);
+  box-shadow: 0 4px 14px rgba(24, 61, 50, 0.06);
+}
+.gallery-film-portal:hover .gfp-frame img,
+.gallery-film-portal:hover .gfp-frame[data-index="0"] img,
+.gallery-film-portal:hover .gfp-frame:first-child img {
+  transform: none;
+  filter: none !important; /* 彻底消灭蓝色 */
+}
+
+/* ==========================================================================
+   【核心防御 2】：精准高权重独立单卡高亮
+   只有鼠标光标真正停在某张卡片正上方时，那张卡片才被允许上浮
+   ========================================================================== */
+.gallery-film-portal .gfp-frames .gfp-frame:hover {
+  transform: translateY(-4px) !important;
+}
+
+.gallery-film-portal .gfp-frames .gfp-frame:hover .gfp-photo-box {
+  border-color: var(--copper, #75503d) !important;
+  box-shadow: 0 12px 28px rgba(24, 61, 50, 0.18) !important;
+}
+
+.gallery-film-portal .gfp-frames .gfp-frame:hover img {
+  transform: scale(1.05) !important;
+  opacity: 1 !important;
+  filter: none !important; /* 悬停时绝对保持 100% 真实原色 */
+}
+
+.gallery-film-portal .gfp-frames .gfp-frame:hover .gfp-date {
+  color: var(--pine, #183d32) !important;
+  opacity: 1 !important;
+  font-weight: 600 !important;
+}
+
+/* 日期轻量小字 */
+.gfp-date {
+  font-family: var(--sans, sans-serif);
+  font-size: 0.68rem;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-soft, #526258);
+  opacity: 0.72;
+  transition: color 0.25s ease, opacity 0.25s ease;
+}
+
+/* 阶段 3：米白晨光转场光幕 */
+.gfp-bloom-curtain {
+  position: fixed;
+  inset: 0;
+  z-index: 290;
+  background: var(--paper, #f4f1e7);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.22, 1, 0.36, 1),
+              visibility 0.4s ease;
+}
+.gfp-bloom-curtain.is-active {
+  visibility: visible;
+  opacity: 1;
+}
+
+/* 移动端响应式适配 */
+@media (max-width: 900px) {
+  .gfp-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 20px;
+  }
+  .gfp-frames {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: none;
+  }
+  .gfp-frames::-webkit-scrollbar { display: none; }
+  .gfp-frame {
+    flex: 0 0 150px;
+  }
+  .gfp-frame:nth-child(n+3) {
+    display: none;
+  }
+}

@@ -1,4 +1,4 @@
-// Gallery: Siena-style vertical full-screen filmstrip
+// gallery.js — Minimalist Living Gallery with Memory Wash Portal & Siena Filmstrip
 (() => {
   const section = document.getElementById("gallery");
   const enterBtn = document.getElementById("galleryEnter");
@@ -11,6 +11,13 @@
   const ticketTitle = document.getElementById("giTicketTitle");
   const ticketMeta = document.getElementById("giTicketMeta");
 
+  // Portal 阶段组件节点
+  const portal = document.getElementById("galleryFilmPortal");
+  const portalFrames = document.getElementById("gfpFrames");
+  const enterBtnLabel = document.getElementById("gfpBtnLabel");
+  const enterBtnArrow = enterBtn ? enterBtn.querySelector(".gfp-btn-arrow") : null;
+  const bloomCurtain = document.getElementById("gfpBloomCurtain");
+
   if (!section || !immersive || !viewport || !list || !article) {
     console.warn("[gallery] missing DOM nodes");
     return;
@@ -21,7 +28,7 @@
     en: {
       kicker: "Gallery", title: "Moments worth remembering",
       sub: "A filmstrip of community moments — scroll through every frame.",
-      enter: "Enter Gallery", close: "Close story",
+      enter: "Enter Gallery", entering: "Entering…", close: "Close story",
       newer: "Newer", older: "Older", when: "When", where: "Where",
       host: "Organised by", people: "Joined by", photo: "Photo slot",
       by: "MYCELIUM Community Desk", explore: "Explore", back: "Back"
@@ -29,7 +36,7 @@
     ms: {
       kicker: "Galeri", title: "Detik yang patut dikenang",
       sub: "Jalur filem detikan komuniti — tatal setiap bingkai.",
-      enter: "Masuk Galeri", close: "Tutup",
+      enter: "Masuk Galeri", entering: "Memasuki…", close: "Tutup",
       newer: "Lebih baharu", older: "Lebih lama", when: "Bila", where: "Di mana",
       host: "Dianjurkan oleh", people: "Penyertaan", photo: "Ruang foto",
       by: "Meja Komuniti MYCELIUM", explore: "Terokai", back: "Kembali"
@@ -37,7 +44,7 @@
     "zh-CN": {
       kicker: "图库", title: "值得铭记的时刻",
       sub: "社区时刻的胶片条 —— 上下滚动浏览每一帧。",
-      enter: "进入图库", close: "关闭",
+      enter: "进入图库", entering: "正在进入…", close: "关闭",
       newer: "更新", older: "更早", when: "时间", where: "地点",
       host: "主办", people: "参与", photo: "照片位",
       by: "MYCELIUM 社区编辑部", explore: "探索", back: "返回"
@@ -72,9 +79,250 @@
         if (span && span.children.length === 0) span.textContent = l[el.dataset.g] || span.textContent;
       }
     });
+
+    if (enterBtnLabel && !isPortalAnimating) {
+      enterBtnLabel.textContent = l.enter || "ENTER GALLERY";
+    }
   }
 
-  // infinite strip: render 3 copies, start in the middle set
+  // ==========================================================================
+  // 1. Gallery Portal: 极简照片印样队列与记忆擦拭动效
+  // ==========================================================================
+  let entryAnimation = null;
+  let isPortalAnimating = false;
+
+  // 格式化轻盈日期 (例如 "06 Sep 2026")
+  function formatLightDate(isoStr) {
+    if (!isoStr) return "";
+    const d = new Date(`${isoStr}T00:00:00`);
+    if (Number.isNaN(+d)) return String(isoStr);
+    const day = String(d.getDate()).padStart(2, "0");
+    const month = d.toLocaleString("en-US", { month: "short" });
+    const year = d.getFullYear();
+    return `${day} ${month} ${year}`;
+  }
+
+  // 渲染 4 帧真实色彩照片（最左为最新，无基线包裹）
+  function renderCleanFilmFrames(items) {
+    if (!portalFrames) return;
+    if (!items || !items.length) {
+      if (portal) portal.style.display = "none";
+      return;
+    }
+    if (portal) portal.style.display = "";
+
+    // 严格按日期降序排列
+    const sorted = sortDesc(items).slice(0, 4);
+
+    portalFrames.innerHTML = sorted.map((ev, i) => {
+      const label = pick(ev, "short") || pick(ev, "title") || "Moment";
+      const coverUrl = ev.cover || "./img/gallery/meditation.png";
+      const dateText = formatLightDate(ev.date);
+
+      return `
+        <article class="gfp-frame" data-slug="${esc(ev.slug)}" data-index="${i}">
+          <div class="gfp-photo-box">
+            <img src="${esc(coverUrl)}" alt="${esc(label)}" loading="lazy" decoding="async">
+          </div>
+          <time class="gfp-date">${dateText}</time>
+        </article>
+      `;
+    }).join("");
+
+    // 单击单个照片卡片也能触发动画并跳转
+    portalFrames.querySelectorAll(".gfp-frame").forEach((frame) => {
+      frame.addEventListener("click", () => {
+        if (!isPortalAnimating) triggerMemoryWashLaunch(frame.dataset.slug);
+      });
+    });
+  }
+
+  // 中止复原机制：平滑还原初始清晰态
+function abortMemoryWashLaunch(silent = false) {
+    if (!isPortalAnimating && !silent) return;
+    if (entryAnimation) {
+      entryAnimation.kill();
+      entryAnimation = null;
+    }
+    isPortalAnimating = false;
+
+    if (bloomCurtain) bloomCurtain.classList.remove("is-active");
+
+    const anchor = document.getElementById("gfpButtonAnchor");
+    if (anchor) {
+      anchor.style.width = "";
+      anchor.style.height = "";
+      anchor.style.flex = "";
+    }
+
+    if (enterBtn) {
+      enterBtn.style.position = "";
+      enterBtn.style.left = "";
+      enterBtn.style.top = "";
+      enterBtn.style.zIndex = "";
+
+      if (window.gsap) {
+        gsap.to(enterBtn, {
+          x: 0,
+          width: "auto",
+          backgroundColor: "var(--paper, #f4f1e7)",
+          color: "var(--pine, #183d32)",
+          duration: silent ? 0.05 : 0.35,
+          ease: "power2.out"
+        });
+      }
+    }
+
+    if (enterBtnLabel) {
+      enterBtnLabel.textContent = L().enter || "ENTER GALLERY";
+      if (window.gsap) {
+        gsap.to(enterBtnLabel, { opacity: 1, duration: silent ? 0.05 : 0.25 });
+      }
+    }
+    if (enterBtnArrow && window.gsap) {
+      gsap.to(enterBtnArrow, { opacity: 1, duration: silent ? 0.05 : 0.25 });
+    }
+
+    // 照片卡片瞬间柔和还原清晰全彩
+    const imgs = portalFrames?.querySelectorAll("img");
+    if (imgs && window.gsap) {
+      const naturalOpacities = [1, 0.94, 0.88, 0.82];
+      gsap.to(imgs, {
+        filter: "none",
+        opacity: (i) => naturalOpacities[i] || 0.85,
+        scale: 1,
+        duration: silent ? 0.05 : 0.35,
+        ease: "power2.out"
+      });
+    }
+  }
+  // 触发三阶段连贯过渡动效
+function triggerMemoryWashLaunch(targetSlug) {
+    if (isPortalAnimating) {
+      abortMemoryWashLaunch();
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    // 减少动态模式：直接无缝跳转
+    if (prefersReducedMotion || !window.gsap) {
+      openImmersive();
+      if (targetSlug) openArticleFromGallery(targetSlug);
+      return;
+    }
+
+    isPortalAnimating = true;
+
+    // 核心锁定：记录当前按钮初始尺寸并冻结父级 anchor 占位，照片绝不被推挤移动
+    const anchor = document.getElementById("gfpButtonAnchor");
+    const initW = enterBtn.offsetWidth;
+    const initH = enterBtn.offsetHeight;
+    if (anchor) {
+      anchor.style.width = `${initW}px`;
+      anchor.style.height = `${initH}px`;
+      anchor.style.flex = `0 0 ${initW}px`;
+    }
+    enterBtn.style.position = "absolute";
+    enterBtn.style.left = "0";
+    enterBtn.style.top = "0";
+    enterBtn.style.zIndex = "10";
+
+    const frameEls = Array.from(portalFrames?.querySelectorAll(".gfp-frame") || []);
+    const portalRect = portal ? portal.getBoundingClientRect() : { width: window.innerWidth, left: 0 };
+    const btnRect = enterBtn.getBoundingClientRect();
+    const framesRect = portalFrames ? portalFrames.getBoundingClientRect() : null;
+
+    // 推进距离：从按钮起点平滑滑过整组照片
+    const travelDistance = framesRect
+      ? Math.max(120, framesRect.right - btnRect.left - initW)
+      : Math.max(120, (portalRect.width - (btnRect.left - portalRect.left)) - 60);
+
+    const tl = gsap.timeline({
+      onComplete: () => {
+        // 阶段 3：米白晨光绽放，进入全屏画廊
+        if (bloomCurtain) bloomCurtain.classList.add("is-active");
+
+        setTimeout(() => {
+          openImmersive();
+          if (targetSlug) openArticleFromGallery(targetSlug);
+
+          // 开门完成后，在光幕后静默恢复按钮与照片状态
+          setTimeout(() => {
+            if (bloomCurtain) bloomCurtain.classList.remove("is-active");
+            abortMemoryWashLaunch(true);
+          }, 350);
+        }, 320);
+      }
+    });
+    entryAnimation = tl;
+
+    // 阶段 1：按钮文字渐隐变为 ENTERING...
+    if (enterBtnArrow) {
+      tl.to(enterBtnArrow, { opacity: 0, duration: 0.15, ease: "power1.out" }, 0);
+    }
+    if (enterBtnLabel) {
+      tl.to(enterBtnLabel, {
+        opacity: 0,
+        duration: 0.15,
+        ease: "power1.out",
+        onComplete: () => {
+          enterBtnLabel.textContent = L().entering || "ENTERING…";
+        }
+      }, 0);
+      tl.to(enterBtnLabel, { opacity: 0.95, duration: 0.2 }, 0.15);
+    }
+
+    // 按钮自身变长并向右推行（在原位占位盒上方滑动，不影响照片排版）
+    tl.to(enterBtn, {
+      x: travelDistance,
+      width: initW + 56,
+      backgroundColor: "var(--pine, #183d32)",
+      color: "var(--paper, #f4f1e7)",
+      duration: 1.45,
+      ease: "power2.in"
+    }, 0.1);
+
+    // 阶段 2：当按钮经过各照片时，照片在各自位置上依次擦拭成残影
+    frameEls.forEach((frame, idx) => {
+      const img = frame.querySelector("img");
+      if (!img) return;
+
+      const startTime = 0.22 + idx * 0.26;
+
+      tl.to(img, {
+        filter: "brightness(1.22) contrast(0.72) blur(3px) saturate(0.5)",
+        opacity: 0.12,
+        scale: 0.985,
+        duration: 0.42,
+        ease: "power2.out"
+      }, startTime);
+    });
+  }
+  function handleEnterAction(e) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    triggerMemoryWashLaunch();
+  }
+
+  if (enterBtn) enterBtn.addEventListener("click", handleEnterAction);
+  section.addEventListener("click", (e) => {
+    if (e.target.closest("#galleryEnter")) handleEnterAction(e);
+  });
+
+  // 键盘支持：Esc 随时取消复原
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && isPortalAnimating) {
+      e.preventDefault();
+      abortMemoryWashLaunch();
+    }
+  });
+
+  // ==========================================================================
+  // 2. Siena 沉浸式垂直胶片展厅核心渲染
+  // ==========================================================================
   const LOOP_COPIES = 3;
   function realCount() {
     return Math.max(0, events.length);
@@ -122,9 +370,7 @@
     list.innerHTML = parts.join("");
   }
 
-  // ---- motion ----
-  // itemH = center-to-center step (px)
-  // card is ~72% of viewport tall → large like Siena; step slightly larger for thin gap
+  // ---- motion & spring physics ----
   let y = 0;
   let targetY = 0;
   let velocity = 0;
@@ -136,16 +382,12 @@
   let rafId = 0;
   let isOpen = false;
   let prefersReduced = false;
-  let hintTimer = 0;
   let scrollDir = 1;
   let snapping = false;
   let pendingOpenSlug = null;
-  // spring state for snap (overshoot + settle)
   let springV = 0;
 
-  // drag resistance: mouse must travel more to move the strip the same amount
   const DRAG_SCALE = 0.55;
-  // wheel: one notch moves a fraction of a slide (need ~2–3 notches or a long drag)
   const WHEEL_SCALE = 0.22;
 
   function measure() {
@@ -153,7 +395,6 @@
     if (!items.length) { itemH = 0; return; }
 
     const vh = window.innerHeight;
-    // larger card (~78vh), tighter gap (~6vh) between card edges
     cardH = Math.round(Math.min(vh * 0.78, vh - 80));
     itemH = Math.round(cardH + vh * 0.06);
 
@@ -168,7 +409,6 @@
       item.style.justifyContent = "center";
       const card = item.querySelector(".gi-card");
       if (card) {
-        // wider: less black left/right (~ half the previous side margin)
         card.style.width = "min(1280px, 96vw)";
         card.style.maxHeight = cardH + "px";
       }
@@ -181,24 +421,12 @@
       }
     });
 
-    // Optical center sits ABOVE geometric center so more of the *next* card
-    // peeks at the bottom (Siena-like preview). Shift ~10% of viewport up.
     const centerBias = Math.round(vh * 0.10);
     const pad = Math.round((vh - itemH) / 2 + (itemH - cardH) / 2);
     list.style.paddingTop = Math.max(0, pad - centerBias) + "px";
     list.style.paddingBottom = Math.max(0, pad + centerBias) + "px";
   }
 
-  function maxIndex() {
-    // virtual max (last item of last copy)
-    return Math.max(0, virtualCount() - 1);
-  }
-  function clampIndex(i) {
-    const max = maxIndex();
-    if (max <= 0) return 0;
-    // keep inside middle copy band when clamping hard targets; free scroll uses wrap
-    return Math.max(0, Math.min(max, i));
-  }
   function yForIndex(i) {
     return -i * itemH;
   }
@@ -207,14 +435,13 @@
     return Math.round(-y / itemH);
   }
   function nearestIndex() {
-    // real event index (0..n-1) for ticket / article
     return realFromVirtual(nearestVirtualIndex());
   }
+
   function wrapInfinite() {
     const n = realCount();
     if (!n || !itemH || LOOP_COPIES < 2) return;
     const total = n * itemH;
-    // keep y inside the middle copy: [n, 2n)
     const midStart = n;
     const midEnd = n * 2;
     let vi = nearestVirtualIndex();
@@ -257,11 +484,10 @@
     items.forEach((item) => {
       const r = item.getBoundingClientRect();
       const itemCenter = r.top + r.height / 2;
-      const signed = (itemCenter - centerY) / half; // -1 above, +1 below
+      const signed = (itemCenter - centerY) / half;
       const dist = Math.abs(signed);
       const t = Math.min(1, dist);
 
-      // gentle scale / fade — Siena keeps neighbors almost full size, just cropped by viewport
       const scale = 1 - t * 0.04;
       const opacity = 1 - t * 0.22;
       const blur = t * 1.1 + speed * 2.8;
@@ -274,14 +500,12 @@
         card.style.filter = `blur(${blur.toFixed(2)}px) saturate(${sat.toFixed(2)})`;
       }
 
-      // image parallax inside frame (Siena: photo lags the frame)
       const img = item.querySelector(".gi-photo img");
       if (img) {
-        const parallax = signed * -14; // %
+        const parallax = signed * -14;
         img.style.transform = `translate3d(0, ${parallax.toFixed(2)}%, 0) scale(1.22)`;
       }
 
-      // text motion — rises when approaching from below, sinks when from above
       const texts = item.querySelectorAll(".gi-text");
       texts.forEach((el, ti) => {
         const delay = ti * 6;
@@ -299,9 +523,7 @@
 
     if (!isDragging) {
       if (snapping || Math.abs(velocity) < 0.25) {
-        // spring toward targetY — slower + slight overshoot feel
         const dy = targetY - y;
-        // critically-damped-ish spring
         const stiffness = 0.045;
         const damping = 0.78;
         springV = (springV + dy * stiffness) * damping;
@@ -319,7 +541,6 @@
           }
         }
       } else {
-        // free momentum then settle into snap
         velocity *= 0.92;
         y += velocity * (dt / 16);
         if (Math.abs(velocity) < 0.55) {
@@ -355,12 +576,9 @@
     if (!n) return;
     const curV = nearestVirtualIndex();
     let vTarget;
-    // relative steps from keyboard / edge-click: nearestIndex()+1 style passes real-ish
-    // Prefer treating i as virtual if close to current virtual position
     if (Math.abs(i - curV) <= n) {
       vTarget = i;
     } else {
-      // absolute real index → middle copy
       vTarget = n + realFromVirtual(i);
     }
     const nextReal = realFromVirtual(vTarget);
@@ -373,41 +591,26 @@
     if (openSlugAfter) pendingOpenSlug = openSlugAfter;
   }
 
-  let pointerMoved = 0;
-  let pointerStartY = 0;
-
-  /* Siena cursor + scrub gesture
-     Research-based composite gesture (pointerdown/move/up only):
-     - short down→up = light tap (trackpad taps often <100ms; mouse ~100–300ms)
-     - after a light tap, next press that is HELD (or dragged) = scrub
-     - setPointerCapture only after real drag / scrub (avoids trackpad 2nd-click loss)
-     Cursor shows only SCROLL text + chevrons (no hand). */
+  // ---- Cursor & Gesture (Siena-style) ----
   const ZONE_EDGE = 0.18;
   let cursorMode = "scroll";
   let scrubbing = false;
   let cursorOverUI = false;
   let edgeClickTimer = 0;
   let pendingEdgeDir = 0;
-  let articleClickTimer = 0;
-  let pendingArticleSlug = null;
-  let pendingArticleVIdx = -1;
 
   let tapReady = false;
   let tapReadyAt = 0;
   let pressStartedAt = 0;
   let longPressTimer = 0;
-  let awaitingHold = false; // 2nd press in progress, waiting for hold
+  let awaitingHold = false;
   let didCapture = false;
-  let lastTapX = 0;
-  let lastTapY = 0;
-  const TAP_POS_SLOP = 120; // px — 2nd press can be offset from 1st tap
-
-  const TAP_WINDOW = 1400;   // longer window after light tap
-  const HOLD_MS = 110;       // faster hold → scrub
-  const TAP_MOVE_MAX = 72;   // allow bigger offset between the two presses
-  const SHORT_UP_MS = 360;   // light tap can be a bit slower (trackpad)
+  let pointerMoved = 0;
+  const TAP_WINDOW = 1400;
+  const HOLD_MS = 110;
+  const TAP_MOVE_MAX = 72;
+  const SHORT_UP_MS = 360;
   const SCRUB_SCALE = 2.5;
-  const CLICK_THRESH = 72;
 
   function getRing() {
     return hint ? hint.querySelector(".gi-hint-ring") : null;
@@ -474,23 +677,19 @@
     clearTimeout(edgeClickTimer);
     edgeClickTimer = 0;
     pendingEdgeDir = 0;
-    clearTimeout(articleClickTimer);
-    articleClickTimer = 0;
-    pendingArticleSlug = null;
-    pendingArticleVIdx = -1;
   }
   function ensureCapture(e) {
     if (didCapture || !e) return;
     try {
       viewport.setPointerCapture(e.pointerId);
       didCapture = true;
-    } catch (err) { /* */ }
+    } catch (err) {}
   }
   function releaseCapture(e) {
     if (!didCapture) return;
     try {
       if (e) viewport.releasePointerCapture(e.pointerId);
-    } catch (err) { /* */ }
+    } catch (err) {}
     didCapture = false;
   }
   function enterScrub(e) {
@@ -502,7 +701,6 @@
     isDragging = true;
     if (e) {
       lastPointerY = e.clientY;
-      pointerStartY = e.clientY;
       ensureCapture(e);
     }
     velocity = 0;
@@ -534,7 +732,6 @@
     pressStartedAt = now;
     isDragging = true;
     pointerMoved = 0;
-    pointerStartY = e.clientY;
     lastPointerY = e.clientY;
     snapping = false;
     springV = 0;
@@ -542,18 +739,15 @@
     didCapture = false;
     viewport.classList.add("is-dragging");
 
-    // after a light tap: this press is a hold-candidate → scrub if held
     if (tapReady && now - tapReadyAt < TAP_WINDOW) {
       awaitingHold = true;
       cancelPendingActions();
-      // show dual-arrow intent early (still "holding")
       setCursorMode("scrub");
       clearHoldWatch();
       awaitingHold = true;
       longPressTimer = setTimeout(() => {
         if (isDragging && awaitingHold) enterScrub(e);
       }, HOLD_MS);
-      // also capture so trackpad keeps sending moves while held
       ensureCapture(e);
       return;
     }
@@ -567,15 +761,13 @@
     lastPointerY = e.clientY;
     pointerMoved += Math.abs(dy);
 
-    // 2nd press: drag while holding → enter scrub immediately
     if (awaitingHold && !scrubbing && pointerMoved > 4) {
       enterScrub(e);
     }
 
-    // real drag on normal press → capture so trackpad doesn't lose stream
     if (!scrubbing && !awaitingHold && pointerMoved > TAP_MOVE_MAX) {
       ensureCapture(e);
-      tapReady = false; // cancel tap memory once user is clearly dragging
+      tapReady = false;
     }
 
     if (scrubbing) {
@@ -613,9 +805,7 @@
       return;
     }
 
-    // 2nd press released too fast (not a hold) → stay tap-ready, no step
     if (wasAwaiting) {
-      // restore zone cursor
       setCursorMode(zoneFromY(e.clientY));
       return;
     }
@@ -628,8 +818,6 @@
     if (isLightTap) {
       tapReady = true;
       tapReadyAt = performance.now();
-      lastTapX = e.clientX;
-      lastTapY = e.clientY;
 
       if (zone === "up" || zone === "down") {
         pendingEdgeDir = zone === "up" ? -1 : 1;
@@ -641,12 +829,9 @@
         }, 320);
         return;
       }
-
-      // article open from photo click temporarily disabled
       return;
     }
 
-    // long single drag (not scrub)
     tapReady = false;
     targetY = yForIndex(nearestVirtualIndex());
     springV = velocity;
@@ -656,17 +841,14 @@
   function onWheel(e) {
     if (prefersReduced || !isOpen) return;
     e.preventDefault();
-    // accumulate wheel — need longer scroll to change slide
     const delta = e.deltaY * WHEEL_SCALE;
     if (snapping && Math.abs(targetY - y) > itemH * 0.35) {
-      // allow interrupting a snap if user scrolls hard
       snapping = false;
     }
     y -= delta;
     velocity = -delta;
     if (delta > 0.3) scrollDir = 1;
     if (delta < -0.3) scrollDir = -1;
-    // don't instantly snap; let momentum settle in tick()
     if (Math.abs(velocity) > 0.3) snapping = false;
   }
 
@@ -679,17 +861,14 @@
 
   function openArticleFromGallery(slug) {
     if (!slug) return;
-    // set hash for shareable URL; always open even if hash unchanged
     const next = `#gallery/${encodeURIComponent(slug)}`;
     if (location.hash === next) {
       openArticle(slug);
     } else {
-      location.hash = next; // hashchange → route → openArticle
+      location.hash = next;
     }
   }
 
-  // Only the explicit Explore button opens an article. Clicking the rest of a card
-  // must not navigate or open the article. Cards are rendered dynamically, so delegate.
   list.addEventListener("click", (e) => {
     const explore = e.target.closest("button.gi-explore");
     if (!explore || !list.contains(explore)) return;
@@ -703,7 +882,6 @@
   function onMouseMove(e) {
     if (!isOpen || !hint) return;
     updateCursorPos(e.clientX, e.clientY, e.target);
-    // scrub movement is handled in onPointerMove while button is held
   }
   window.addEventListener("mousemove", onMouseMove);
 
@@ -734,8 +912,6 @@
       if (hint) {
         hint.classList.add("is-visible");
         hint.setAttribute("aria-hidden", "false");
-        clearTimeout(hintTimer);
-        // stay visible for the whole immersive session (Siena)
       }
     } catch (err) {
       console.error("[gallery] openImmersive failed", err);
@@ -758,16 +934,6 @@
     }
     stopLoop();
   }
-
-  function onEnterClick(e) {
-    e.preventDefault();
-    e.stopPropagation();
-    openImmersive();
-  }
-  if (enterBtn) enterBtn.addEventListener("click", onEnterClick);
-  section.addEventListener("click", (e) => {
-    if (e.target.closest("#galleryEnter")) onEnterClick(e);
-  });
 
   if (backBtn) {
     backBtn.addEventListener("click", () => {
@@ -792,8 +958,6 @@
       e.preventDefault();
       goToIndex(nearestVirtualIndex() - 1);
     }
-    // Enter → article temporarily disabled
-
   });
 
   window.addEventListener("resize", () => {
@@ -808,7 +972,9 @@
     list.style.transform = `translate3d(0, ${y}px, 0)`;
   });
 
-  // ---- story layer ----
+  // ==========================================================================
+  // 3. Story Layer (Article Details Modal)
+  // ==========================================================================
   let lastFocus = null;
   const lockPage = (on) => {
     document.documentElement.classList.toggle("ga-lock", on);
@@ -934,6 +1100,9 @@
   });
   window.addEventListener("hashchange", route);
 
+  // ==========================================================================
+  // 4. 数据拉取与自检装配
+  // ==========================================================================
   async function loadRemote() {
     try {
       const db = window.db;
@@ -956,17 +1125,17 @@
     const rows = await loadRemote();
     events = sortDesc(rows || seedFor(window.MYCELIUM_COUNTRY || "MY"));
     applyLabels();
+    renderCleanFilmFrames(events);
+
     if (isOpen) {
       renderImmersive();
       requestAnimationFrame(() => {
         measure();
-        {
-          const n = realCount();
-          const real = Math.min(activeIndex, Math.max(0, n - 1));
-          const v = n ? n + real : 0;
-          y = yForIndex(v);
-          targetY = y;
-        }
+        const n = realCount();
+        const real = Math.min(activeIndex, Math.max(0, n - 1));
+        const v = n ? n + real : 0;
+        y = yForIndex(v);
+        targetY = y;
         springV = 0;
         list.style.transform = `translate3d(0, ${y}px, 0)`;
         updateTicket();
@@ -984,11 +1153,13 @@
     }
     events = sortDesc(seedFor(window.MYCELIUM_COUNTRY || "MY"));
     applyLabels();
+    renderCleanFilmFrames(events);
     route();
     refreshData();
 
     window.addEventListener("mycelium:languagechange", () => {
       applyLabels();
+      renderCleanFilmFrames(events);
       if (isOpen) renderImmersive();
       if (article.classList.contains("is-open")) route();
     });
