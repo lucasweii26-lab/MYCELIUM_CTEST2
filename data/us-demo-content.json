@@ -223,7 +223,8 @@
       "title_zh-CN": "秋季花园交换会",
       "description_en": "Bring spare seeds, bulbs and cuttings and take home something new. Meet at the Community Garden.",
       "description_es": "Traiga semillas, bulbos y esquejes sobrantes y llévese algo nuevo. Punto de encuentro: el huerto comunitario.",
-      "description_zh-CN": "带上多余的种子、球茎和插枝，换回新品种。集合地点：社区花园。"
+      "description_zh-CN": "带上多余的种子、球茎和插枝，换回新品种。集合地点：社区花园。",
+      "videoUrl": "./img/volunteer/garden.mp4"
     },
     {
       "id": "us-evt-fun-run",
@@ -233,7 +234,8 @@
       "title_zh-CN": "欢乐跑",
       "description_en": "A relaxed 5K along the Woodland Walking Trail. All ages and paces welcome.",
       "description_es": "Una carrera tranquila de 5 km por el sendero del bosque. Todas las edades y ritmos son bienvenidos.",
-      "description_zh-CN": "沿林间步道举行的轻松 5 公里跑，欢迎各年龄段和各种速度的居民参加。"
+      "description_zh-CN": "沿林间步道举行的轻松 5 公里跑，欢迎各年龄段和各种速度的居民参加。",
+      "videoUrl": "./img/volunteer/run.mp4"
     },
     {
       "id": "us-evt-food-drive",
@@ -243,7 +245,8 @@
       "title_zh-CN": "社区食物捐赠活动",
       "description_en": "Drop off non-perishable food at the Clubhouse between 10:00 AM and 2:00 PM.",
       "description_es": "Deje alimentos no perecederos en la casa club entre las 10:00 y las 14:00.",
-      "description_zh-CN": "上午 10:00 至下午 2:00 可将不易变质的食品送至社区会所。"
+      "description_zh-CN": "上午 10:00 至下午 2:00 可将不易变质的食品送至社区会所。",
+      "videoUrl": "./img/volunteer/food.mp4"
     },
     {
       "id": "us-evt-thanksgiving",
@@ -253,7 +256,8 @@
       "title_zh-CN": "社区感恩节聚餐",
       "description_en": "Bring a dish to share at the Clubhouse. Sign-up helps us plan seating.",
       "description_es": "Traiga un plato para compartir en la casa club. La inscripción nos ayuda a organizar los asientos.",
-      "description_zh-CN": "请带一道菜到社区会所共享。提前报名有助于安排座位。"
+      "description_zh-CN": "请带一道菜到社区会所共享。提前报名有助于安排座位。",
+      "videoUrl": "./img/volunteer/food.mp4"
     }
   ],
   "services": [

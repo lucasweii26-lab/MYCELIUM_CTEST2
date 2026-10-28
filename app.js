@@ -130,7 +130,7 @@ const i18n = {
     },
     calendar: {
       title: 'Community Events Calendar',
-      hint: 'Click a starred date to see the upcoming community event',
+      hint: 'Click a highlighted date to see the upcoming community event',
       prev: '‹',
       next: '›'
     },
@@ -434,7 +434,7 @@ const i18n = {
     },
     calendar: {
       title: '社区活动日历',
-      hint: '点击带星号的日期查看活动详情',
+      hint: '点击浅色标记的日期查看活动详情',
       prev: '‹',
       next: '›'
     },
@@ -613,7 +613,7 @@ const i18n = {
     },
     calendar: {
       title: 'Kalendar Acara Komuniti',
-      hint: 'Klik tarikh berbintang untuk melihat butiran acara',
+      hint: 'Klik tarikh yang ditanda warna untuk melihat butiran acara',
       prev: '‹',
       next: '›'
     },
@@ -719,7 +719,7 @@ const i18n = {
       subtitle: 'உங்கள் சமூகத்தின் சமீபத்திய செய்திகள் மற்றும் அறிவிப்புகளை அறிந்து கொள்ளுங்கள்'
     },
     map: { title: 'சமூக வசதி வரைபடம்', hint: 'வசதி விவரங்களைக் காண முள்ளைக் கிளிக் செய்யவும்' },
-    calendar: { title: 'சமூக நிகழ்வு நாட்காட்டி', hint: 'நிகழ்வு விவரங்களைக் காண நட்சத்திர தேதியைக் கிளிக் செய்யவும்' },
+    calendar: { title: 'சமூக நிகழ்வு நாட்காட்டி', hint: 'நிகழ்வு விவரங்களைக் காண நிறமுள்ள தேதியைக் கிளிக் செய்யவும்' },
     service: { title: 'உள்ளூர் சேவை அடைவு', phone: 'தொலைபேசி', email: 'மின்னஞ்சல்' },
     volunteer: {
       kicker: 'பங்கேற்கவும்',
@@ -768,11 +768,11 @@ i18n.es = mergeLocale(i18n.en, {
 });
 
 // 统一英雄区域文案
-i18n.en.heroIntro = { description: "A gated residential community built for wellness, safety and connection.", explore: "EXPLORE THE COMMUNITY", chooseLocation: "CHOOSE YOUR LOCATION" };
-i18n.es.heroIntro = { description: "Una comunidad residencial privada diseñada para el bienestar, la seguridad y la conexión.", explore: "EXPLORAR LA COMUNIDAD", chooseLocation: "ELIGE TU UBICACIÓN" };
-i18n["zh-CN"].heroIntro = { description: "一个以身心健康、安全与联结为核心的封闭式住宅社区。", explore: "探索社区", chooseLocation: "选择所在地区" };
-i18n.ms.heroIntro = { description: "Komuniti kediaman berpagar yang dibina demi kesejahteraan, keselamatan dan hubungan erat.", explore: "TEROKAI KOMUNITI", chooseLocation: "PILIH LOKASI ANDA" };
-i18n.ta.heroIntro = { description: "நல்வாழ்வு, பாதுகாப்பு மற்றும் சமூகத் தொடர்பை மையமாகக் கொண்டு உருவாக்கப்பட்ட பாதுகாப்பான குடியிருப்பு சமூகம்.", explore: "சமூகத்தை ஆராயுங்கள்", chooseLocation: "உங்கள் இடத்தைத் தேர்ந்தெடுக்கவும்" };
+i18n.en.heroIntro = { titleLine1: "Smart living,", titleLine2: "rooted in nature.", description: "A gated residential community built for wellness, safety and connection.", explore: "EXPLORE THE COMMUNITY", chooseLocation: "CHOOSE YOUR LOCATION" };
+i18n.es.heroIntro = { titleLine1: "Vida inteligente,", titleLine2: "arraigada en la naturaleza.", description: "Una comunidad residencial privada diseñada para el bienestar, la seguridad y la conexión.", explore: "EXPLORAR LA COMUNIDAD", chooseLocation: "ELIGE TU UBICACIÓN" };
+i18n["zh-CN"].heroIntro = { titleLine1: "智慧生活，", titleLine2: "根植于自然。", description: "一个以身心健康、安全与联结为核心的封闭式住宅社区。", explore: "探索社区", chooseLocation: "选择所在地区" };
+i18n.ms.heroIntro = { titleLine1: "Kehidupan pintar,", titleLine2: "berakar dalam alam semula jadi.", description: "Komuniti kediaman berpagar yang dibina demi kesejahteraan, keselamatan dan hubungan erat.", explore: "TEROKAI KOMUNITI", chooseLocation: "PILIH LOKASI ANDA" };
+i18n.ta.heroIntro = { titleLine1: "ஸ்மார்ட் வாழ்க்கை,", titleLine2: "இயற்கையில் வேரூன்றியது.", description: "நல்வாழ்வு, பாதுகாப்பு மற்றும் சமூகத் தொடர்பை மையமாகக் கொண்டு உருவாக்கப்பட்ட பாதுகாப்பான குடியிருப்பு சமூகம்.", explore: "சமூகத்தை ஆராயுங்கள்", chooseLocation: "உங்கள் இடத்தைத் தேர்ந்தெடுக்கவும்" };
 
 i18n.en.newsletter = { invalidEmail: "Please enter a valid email address.", submitting: "Submitting...", success: "Subscription successful! Thank you for subscribing.", failure: "Subscription failed, please try again later." };
 i18n["zh-CN"].newsletter = { invalidEmail: "请输入有效的电子邮箱地址。", submitting: "正在提交…", success: "订阅成功！感谢您的订阅。", failure: "订阅失败，请稍后重试。" };
@@ -784,15 +784,25 @@ function t(key) {
 }
 window.t = t;
 
-function setLanguage(langCode) {
+let languageRequestId = 0;
+async function setLanguage(langCode) {
+  const registry = window.MYCELIUM_LANGS;       // language-picker.js: every language beyond the five built-in ones
+  const requestId = ++languageRequestId;
+  if (!i18n[langCode] && registry?.has(langCode)) {
+    await registry.ensureLoaded(langCode, i18n); // fetches locales/<code>.json, falls back to English per key
+    if (requestId !== languageRequestId) return;  // a newer choice has taken over meanwhile
+  }
   if (!i18n[langCode]) langCode = DEFAULT_LANG;
   const siteConfig = window.MYCELIUM_COUNTRY_CONFIG;
-  if (siteConfig?.languages && !siteConfig.languages.includes(langCode)) langCode = siteConfig.languages[0] || DEFAULT_LANG;
+  const isRegistryLang = Boolean(registry?.has(langCode)) && !['en', 'es', 'zh-CN', 'ms', 'ta'].includes(langCode);
+  if (!isRegistryLang && siteConfig?.languages && !siteConfig.languages.includes(langCode)) langCode = siteConfig.languages[0] || DEFAULT_LANG;
   
   currentLang = langCode;
   window.currentLang = langCode;
   localStorage.setItem(STORAGE_KEY, langCode);
   document.documentElement.lang = langCode;
+  document.documentElement.dir = registry?.dir(langCode) || 'ltr';
+  registry?.applyFont(langCode);
 
   document.querySelectorAll('[data-i18n]').forEach(el => {
     el.textContent = t(el.getAttribute('data-i18n'));
@@ -804,16 +814,10 @@ function setLanguage(langCode) {
 
   const currentLangText = document.getElementById('currentLangText');
   if (currentLangText) {
-    currentLangText.textContent = LANG_LABELS[langCode];
+    currentLangText.textContent = registry?.label(langCode) || LANG_LABELS[langCode] || langCode;
   }
   const languageIcon = document.querySelector('.lang-icon');
-  if (languageIcon) languageIcon.textContent = ({ en: 'EN', es: 'ES', 'zh-CN': 'ZH', ms: 'MS', ta: 'TA' })[langCode] || 'EN';
-
-  document.querySelectorAll('.lang-item').forEach(item => {
-    const available = !siteConfig?.languages || siteConfig.languages.includes(item.dataset.lang);
-    item.hidden = !available;
-    item.classList.toggle('active', item.dataset.lang === langCode);
-  });
+  if (languageIcon) languageIcon.textContent = registry?.short(langCode) || (langCode || 'en').slice(0, 2).toUpperCase();
 
   if (typeof renderFAQItems === 'function') renderFAQItems();
   if (typeof renderServiceCards === 'function') renderServiceCards();
@@ -891,31 +895,9 @@ function updateMapPinsLanguage() {
 
 function initLanguage() {
   const saved = localStorage.getItem(STORAGE_KEY);
-  const targetLang = saved && i18n[saved] ? saved : DEFAULT_LANG;
-  setLanguage(targetLang);
-
-  const langToggleBtn = document.getElementById('langToggleBtn');
-  const langPanel = document.getElementById('langPanel');
-  
-  if (langToggleBtn && langPanel) {
-    langToggleBtn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      langPanel.classList.toggle('active');
-    });
-
-    document.addEventListener('click', (e) => {
-      if (!langPanel.contains(e.target) && e.target !== langToggleBtn) {
-        langPanel.classList.remove('active');
-      }
-    });
-
-    document.querySelectorAll('.lang-item').forEach(item => {
-      item.addEventListener('click', () => {
-        setLanguage(item.dataset.lang);
-        langPanel.classList.remove('active');
-      });
-    });
-  }
+  const known = saved && (i18n[saved] || window.MYCELIUM_LANGS?.has(saved));
+  setLanguage(known ? saved : DEFAULT_LANG);
+  // The language dialog (language-picker.js) owns #langToggleBtn and the list of languages.
 }
 
 const wrapper = document.querySelector(".sliderWrapper");
@@ -924,9 +906,19 @@ const menuItems = document.querySelectorAll(".menuItem");
 (function initLoadingScreen() {
   document.addEventListener('DOMContentLoaded', () => {
     initApp();
-    const langSwitcher = document.querySelector('.lang-switcher-wrap');
-    if (langSwitcher) requestAnimationFrame(() => langSwitcher.classList.add('show'));
   }, { once: true });
+
+  // 语言 / Chat 按钮与 Explore & Choose location 同步出现（intro actions / skip / done）
+  function showChromeControls() {
+    document.body.classList.add('chrome-ready');
+    const langSwitcher = document.querySelector('.lang-switcher-wrap');
+    if (langSwitcher) langSwitcher.classList.add('show');
+  }
+
+  document.addEventListener('mycelium:chrome-ready', showChromeControls, { once: true });
+  // 兜底：intro 完成或 60s 后仍未触发时强制显示，避免控件永久隐藏
+  document.addEventListener('mycelium:hero-intro-complete', showChromeControls, { once: true });
+  window.setTimeout(showChromeControls, 60000);
 })();
 
 function scrollPageToElement(element, options = {}) {
@@ -956,7 +948,7 @@ function scrollToSlider() {
 function scrollToNav() {
   scrollToSlider();
 }
-window.scrollToNav = scrollToNav;
+// window.scrollToNav is defined once, in hero-sequence.js (it knows the pinned hero geometry).
 
 function initApp() {
   initLanguage();
@@ -1240,6 +1232,65 @@ function initApp() {
     }
   });
 
+  // 同一文件夹 ./img/volunteer/ 下的视频；按卡片文案语义匹配，Firestore 可写 videoUrl 覆盖
+  const VOLUNTEER_VIDEO_DIR = "./img/volunteer/";
+  const VOLUNTEER_VIDEO_FALLBACK = [
+    `${VOLUNTEER_VIDEO_DIR}tree.mp4`,
+    `${VOLUNTEER_VIDEO_DIR}clean.mp4`,
+    `${VOLUNTEER_VIDEO_DIR}run.mp4`,
+  ];
+
+  function resolveVolunteerVideoSrc(event, index) {
+    if (!event) return VOLUNTEER_VIDEO_FALLBACK[index % VOLUNTEER_VIDEO_FALLBACK.length];
+    const explicit = event.videoUrl || event.video || event.mediaUrl || "";
+    if (explicit) return explicit;
+
+    const hay = [
+      event.title_en, event.title_es, event["title_zh-CN"],
+      event.description_en, event.description_es, event["description_zh-CN"],
+      event.id,
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    // 按内容语义选片（clean/run 可复用到相近主题）
+    if (/garden|plant|tree|seed|bulb|cutting|horticult|绿|植树|花园|园艺/.test(hay)) {
+      return `${VOLUNTEER_VIDEO_DIR}garden.mp4`;
+    }
+    if (/food|drive|potluck|meal|thanksgiving|pantry|捐|食物|聚餐/.test(hay)) {
+      return `${VOLUNTEER_VIDEO_DIR}food.mp4`;
+    }
+    if (/book|library|read|literacy|书|阅读|图书馆/.test(hay)) {
+      return `${VOLUNTEER_VIDEO_DIR}book.mp4`;
+    }
+    if (/wellness|yoga|health|fitness|mental|冥想|健康|瑜伽/.test(hay)) {
+      return `${VOLUNTEER_VIDEO_DIR}wellness.mp4`;
+    }
+    if (/clean|cleanup|tidy|litter|rubbish|清洁|清理/.test(hay)) {
+      return `${VOLUNTEER_VIDEO_DIR}clean.mp4`;
+    }
+    if (/run|race|marshal|5k|marathon|跑|赛事/.test(hay)) {
+      return `${VOLUNTEER_VIDEO_DIR}run.mp4`;
+    }
+    // 默认按卡片位：0 garden、1 run、2 food（覆盖常见 US 前三条）
+    const byIndex = [
+      `${VOLUNTEER_VIDEO_DIR}garden.mp4`,
+      `${VOLUNTEER_VIDEO_DIR}run.mp4`,
+      `${VOLUNTEER_VIDEO_DIR}food.mp4`,
+    ];
+    return byIndex[index] || VOLUNTEER_VIDEO_FALLBACK[index % VOLUNTEER_VIDEO_FALLBACK.length];
+  }
+
+  function applyVolunteerVideo(card, src) {
+    const video = card.querySelector("video.volunteerVideo, video.volunteerImg, video");
+    if (!video || !src) return;
+    const current = video.getAttribute("src") || video.currentSrc || "";
+    // 同源相对路径归一后再比，避免无意义 reload
+    const norm = (s) => String(s).replace(/^\.\//, "").split("?")[0];
+    if (norm(current) === norm(src)) return;
+    try { video.pause(); } catch (e) {}
+    video.setAttribute("src", src);
+    video.load();
+  }
+
   function renderRegionalVolunteerCards() {
     if (isDefaultMalaysia(activeCountryCode) || !regionEvents.length) return;
     const locale = ({ en: "en-US", es: "es-US", "zh-CN": "zh-CN" })[currentLang] || "en-US";
@@ -1266,8 +1317,17 @@ function initApp() {
       const button = card.querySelector(".volunteerRegisterBtn");
       button.dataset.activity = title;
       button.textContent = t("volunteer.registerNow");
-      card.querySelector(".volunteerImg").alt = title;
+      const imgOrVideo = card.querySelector(".volunteerImg");
+      if (imgOrVideo) imgOrVideo.alt = title;
+
+      // 视频：优先 event.videoUrl，否则按标题/简介语义匹配同目录 mp4
+      applyVolunteerVideo(card, resolveVolunteerVideoSrc(event, index));
     });
+
+    // 若 strip 已初始化，刷新当前可见卡的播放状态
+    if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.refreshVideos === "function") {
+      window.MYCELIUM_VOLUNTEER_STRIP.refreshVideos();
+    }
   }
 
   async function loadAnnouncementsFromFirebase() {
@@ -1748,17 +1808,7 @@ function initApp() {
           }
         });
 
-        const star = document.createElement("button");
-        star.type = "button";
-        star.className = "calendar-star";
-        star.setAttribute("aria-label", "Show event for day " + day);
-        star.textContent = "\u2605";
-        star.addEventListener("click", (e) => {
-          e.stopPropagation();
-          showDayEvent();
-        });
-        td.appendChild(star);
-
+        // 有活动的日期仅用浅色底标识（不再使用星星）
         const hasUnread = dayEvents.some(ev => !readIds.includes(ev.id));
         if (hasUnread) {
           const dot = document.createElement("span");
@@ -2024,25 +2074,65 @@ function initApp() {
   if (serviceNextBtn) serviceNextBtn.addEventListener("click", () => slideServiceCards(1));
 
   if (serviceSection) {
+    // 仅在明确横向滚动时才驱动卡片；纵向滚动完全放行，不干扰页面上下滑
     document.addEventListener("wheel", (event) => {
-      if (!document.body.classList.contains("show-service") || (!serviceWheelArmed && !serviceSection.contains(event.target))) return;
-      const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
-      if (!delta) return;
-      const canMove = delta > 0 ? serviceNextBtn && !serviceNextBtn.disabled : servicePrevBtn && !servicePrevBtn.disabled;
-      if (!canMove) {
+      if (!document.body.classList.contains("show-service")) return;
+      if (!serviceWheelArmed && !serviceSection.contains(event.target)) return;
+
+      const absX = Math.abs(event.deltaX);
+      const absY = Math.abs(event.deltaY);
+
+      // 必须是明显的横向意图：|deltaX| 显著大于 |deltaY|
+      const isHorizontal = absX > absY * 1.5 && absX > 4;
+      if (!isHorizontal) {
+        // 纯纵向或接近纵向 → 不拦截，让页面正常滚动
         serviceWheelRemainder = 0;
-        if (event.deltaY && window.MYCELIUM_LENIS) {
-          event.preventDefault();
-          window.MYCELIUM_LENIS.scrollTo(window.MYCELIUM_LENIS.scroll + event.deltaY, { duration: 0.55 });
-        }
         return;
       }
+
+      const delta = event.deltaX;
+      const canMove = delta > 0
+        ? serviceNextBtn && !serviceNextBtn.disabled
+        : servicePrevBtn && !servicePrevBtn.disabled;
+
+      if (!canMove) {
+        serviceWheelRemainder = 0;
+        return;
+      }
+
       event.preventDefault();
       serviceWheelRemainder += delta;
       if (Math.abs(serviceWheelRemainder) < 42) return;
       slideServiceCards(serviceWheelRemainder > 0 ? 1 : -1);
       serviceWheelRemainder = 0;
     }, { passive: false, capture: true });
+
+    // 触控左右滑动：只在水平位移明显大于垂直时触发
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let touchActive = false;
+
+    serviceSection.addEventListener("touchstart", (event) => {
+      if (!document.body.classList.contains("show-service")) return;
+      const t = event.changedTouches[0];
+      if (!t) return;
+      touchStartX = t.clientX;
+      touchStartY = t.clientY;
+      touchActive = true;
+      serviceWheelRemainder = 0;
+    }, { passive: true });
+
+    serviceSection.addEventListener("touchend", (event) => {
+      if (!touchActive || !document.body.classList.contains("show-service")) return;
+      touchActive = false;
+      const t = event.changedTouches[0];
+      if (!t) return;
+      const dx = t.clientX - touchStartX;
+      const dy = t.clientY - touchStartY;
+      // 水平滑动阈值，且水平明显大于垂直
+      if (Math.abs(dx) < 48 || Math.abs(dx) < Math.abs(dy) * 1.4) return;
+      slideServiceCards(dx < 0 ? 1 : -1);
+    }, { passive: true });
 
     document.addEventListener("pointerdown", (event) => {
       if (!document.body.classList.contains("show-service")) return;

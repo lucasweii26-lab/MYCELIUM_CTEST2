@@ -10,6 +10,8 @@
     history.replaceState(null, '', location.pathname + location.search);
   }
   addEventListener('load', function () { scrollTo(0, 0); }, { once: true });
+  // The hero intro (auto-scroll + copy reveal, see hero-sequence.js) is pending until it reports 'done'.
+  document.documentElement.dataset.heroIntro = 'pending';
 </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Mycelium — a smart residential community for health, safety, and connected neighbourhood living.">
@@ -19,9 +21,12 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://unpkg.com/lenis@1.3.26/dist/lenis.css">
+    <link rel="stylesheet" href="./corners.css">
     <link rel="stylesheet" href="./style.css">
     <link rel="stylesheet" href="./country-selector.css">
   <link rel="stylesheet" href="./polish.css">
+  <link rel="stylesheet" href="./language-picker.css">
+  <noscript><style>.intro-hero-inner .intro-reveal, .intro-hero-inner .intro-line-inner, .intro-hero-inner .intro-actions { opacity: 1 !important; transform: none !important; visibility: visible !important; }</style></noscript>
     <link rel="preload" as="image" href="./hero-frames/frame_0001.webp" fetchpriority="high">
 </head>
 
@@ -40,10 +45,10 @@
   <div class="hero-sequence" id="heroSequence">
   <section class="intro-hero" id="introHero">
     <canvas id="heroCanvas" class="hero-canvas" aria-hidden="true"></canvas>
-    <div class="intro-hero-inner">
-      <p class="intro-kicker">MYCELIUM RESIDENCES</p>
-      <h1 class="intro-title">Smart living,<br>rooted in nature.</h1>
-      <p class="intro-desc" data-i18n="heroIntro.description">A gated residential community built for wellness, safety and connection.</p>
+    <div class="intro-hero-inner" data-intro="pending">
+      <p class="intro-kicker intro-reveal" style="--i:0">MYCELIUM RESIDENCES</p>
+      <h1 class="intro-title"><span class="intro-line"><span class="intro-line-inner" style="--i:1" data-i18n="heroIntro.titleLine1">Smart living,</span></span><span class="intro-line"><span class="intro-line-inner" style="--i:2" data-i18n="heroIntro.titleLine2">rooted in nature.</span></span></h1>
+      <p class="intro-desc intro-reveal" style="--i:3" data-i18n="heroIntro.description">A gated residential community built for wellness, safety and connection.</p>
       <div class="intro-actions">
         <button class="intro-btn" type="button" onclick="scrollToNav()" data-i18n="heroIntro.explore">EXPLORE THE COMMUNITY</button>
         <button class="intro-location-btn" type="button" data-open-country-picker><span data-country-hero-label data-i18n="heroIntro.chooseLocation">CHOOSE YOUR LOCATION</span> <span aria-hidden="true">↗</span></button>
@@ -280,7 +285,7 @@
           <tbody id="calendarBody"></tbody>
         </table>
         <div class="calendar-info-box" id="calendarInfoBox">
-          <p class="calendar-info-hint" id="calendarInfoHint" data-i18n="calendar.hint">Click a starred date to see the upcoming community event.</p>
+          <p class="calendar-info-hint" id="calendarInfoHint" data-i18n="calendar.hint">Click a highlighted date to see the upcoming community event.</p>
           <p class="calendar-info-title" id="calendarInfoTitle"></p>
           <p class="calendar-info-desc" id="calendarInfoDesc"></p>
         </div>
@@ -510,7 +515,12 @@
     </div>
 
 <button class="chatbot-toggler" type="button" aria-label="Open community chatbot" aria-expanded="false">
-        <span class="chatbot-open-icon" aria-hidden="true" data-i18n="chatbot.open">Chat</span>
+        <span class="siri-orb" aria-hidden="true">
+          <span class="siri-glow siri-glow-1"></span>
+          <span class="siri-glow siri-glow-2"></span>
+          <span class="siri-glow siri-glow-3"></span>
+        </span>
+        <span class="chatbot-open-icon" data-i18n="chatbot.open">Chat</span>
         <span class="chatbot-close-icon" aria-hidden="true">×</span>
     </button>
 
@@ -786,18 +796,11 @@
     <button id="backToTopBtn" class="back-to-top-btn" type="button" aria-label="Back to community menu">↑</button>
 
 <div class="lang-switcher-wrap">
-  <button id="langToggleBtn" class="lang-toggle-btn">
+  <button id="langToggleBtn" class="lang-toggle-btn" type="button" aria-haspopup="dialog" aria-expanded="false" aria-label="Language">
     <span class="lang-icon">EN</span>
     <span id="currentLangText">English</span>
-    <span class="lang-arrow">▾</span>
+    <span class="lang-arrow" aria-hidden="true">▾</span>
   </button>
-  <div id="langPanel" class="lang-panel">
-    <button class="lang-item" data-lang="en">English</button>
-    <button class="lang-item" data-lang="es">Español</button>
-    <button class="lang-item" data-lang="zh-CN">简体中文</button>
-    <button class="lang-item" data-lang="ms">Bahasa Melayu</button>
-    <button class="lang-item" data-lang="ta">தமிழ்</button>
-  </div>
 </div>
 
         </main>
@@ -902,6 +905,7 @@
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/ScrollTrigger.min.js" defer></script>
     <script src="./smooth-scroll.js" defer></script>
+<script src="./language-picker.js" defer></script>
     <script src ="./app.js" defer></script>
     <script src ="./script.js" defer></script>
     <script src ="./hero-sequence.js" defer></script>

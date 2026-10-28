@@ -1,4 +1,3 @@
-// volunteer-strip.js — Flawless Momentum Scroll Snapping (Respects fast flicks)
 (() => {
   "use strict";
 
@@ -297,7 +296,8 @@
   window.MYCELIUM_VOLUNTEER_STRIP = {
     open: activate,
     close: deactivate,
-    refresh: handleScroll
+    refresh: handleScroll,
+    refreshVideos: updateVideos
   };
 
   if (document.body.classList.contains("show-volunteer")) activate();

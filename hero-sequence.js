@@ -21,8 +21,8 @@
 
    One eased scroll value `scrollPosition` (vh from the top of the track) drives:
 
-     1 FRAMES   0 → frameVh            frame_001 → frame_100
-     2 LANDING  → +holdVh              frame_100 rests (veil / copy begin just after it lands)
+     1 FRAMES   0 → frameVh            frame_001 → frame_251
+     2 LANDING  → +holdVh              frame_251 rests (veil / copy begin just after it lands)
      3 HANDOFF  → +HANDOFF_VH          the next scene rises (native scroll). Meanwhile:
           · veil      the film melts into the page colour (finishes ~45% in,
                       so the rising sheet meets an already-cream hero: no edge)
@@ -44,11 +44,11 @@
 
   // Scroll budget in vh: [desktop, mobile]. Mobile is shorter to limit scroll fatigue.
   const FRAME_VH = [300, 240];        // beat 1: frame sequence (desktop = original distance)
-  const HOLD_VH = [40, 30];           // beat 2: landing on frame_100
+  const HOLD_VH = [40, 30];           // beat 2: landing on frame_251
   const HANDOFF_VH = 100;             // beat 3: next scene travels one full viewport (geometry, not taste)
 
   // Hero → page-colour melt ("veil"), in vh relative to the end of the frames / the handoff
-  const VEIL_START_AFTER_FRAMES = 14; // veil starts this many vh after frame_100 lands
+  const VEIL_START_AFTER_FRAMES = 14; // veil starts this many vh after frame_251 lands
   const VEIL_END_HANDOFF = 0.45;      // veil completes at this share of the handoff
   const FILM_PUSH = 0.05;             // film scales 1 → 1.05 while it dissolves (0 disables)
 
@@ -81,6 +81,7 @@
   const heroCanvas = document.getElementById('heroCanvas');
   if (!heroSequence || !introHero || !heroCanvas) {
     console.error('[hero-sequence] #heroSequence / #introHero / #heroCanvas not found');
+    delete document.documentElement.dataset.heroIntro;
     return;
   }
   const heroInner = introHero.querySelector('.intro-hero-inner');
@@ -129,15 +130,18 @@
     // ---- Loading strategy ----
   // The loading screen only waits for "critical" frames. The rest stream in
   // the background around the scroll position, inside a bounded window.
-  const CRITICAL_STEP = 6;                         // ~43 critical frames
+  const CRITICAL_STEP = 3;                         // ~84 critical frames: enough for a smooth 9 s play, the rest streams in
   const IS_MOBILE = mobileQuery.matches;
-  const CACHE_LIMIT = IS_MOBILE ? 90 : 150;
+  const CACHE_LIMIT = IS_MOBILE ? 120 : 150;
   const WINDOW_RADIUS = IS_MOBILE ? 20 : 45;
-  const BG_CONCURRENCY = IS_MOBILE ? 2 : 3;
+  const BG_CONCURRENCY_IDLE = IS_MOBILE ? 2 : 3;
+  const BG_CONCURRENCY_PLAY = IS_MOBILE ? 4 : 6;   // while the intro plays, fetch ahead of the playhead faster
+  const PLAY_AHEAD = IS_MOBILE ? 30 : 60;          // frames fetched ahead of the playhead during the intro
   const isCritical = i => i === 0 || i === TOTAL_FRAMES - 1 || i % CRITICAL_STEP === 0;
   let planDone = false;
   let bgPaused = false; // true while the first-visit reveal and wave play
   let bgWorkers = 0;
+  let introRunning = false; // true while the hero intro auto-scroll is playing
 
   function touchFrame() { /* kept as a no-op: eviction is now distance-based */ }
 
@@ -152,7 +156,13 @@
       if (!isCritical(i) && i !== currentIndex && i !== displayedIndex) evictable.push(i);
     }
     if (cached <= CACHE_LIMIT) return;
-    evictable.sort((a, b) => Math.abs(b - currentIndex) - Math.abs(a - currentIndex));
+    evictable.sort((a, b) => {
+      if (introRunning) {                       // already-played frames are the cheapest to lose
+        const behindA = a < currentIndex ? 0 : 1, behindB = b < currentIndex ? 0 : 1;
+        if (behindA !== behindB) return behindA - behindB;
+      }
+      return Math.abs(b - currentIndex) - Math.abs(a - currentIndex);
+    });
     for (const i of evictable) {
       if (cached <= CACHE_LIMIT) break;
       frames[i] = null;
@@ -169,6 +179,15 @@
   }
 
   function pickNextMissing() {
+    if (introRunning) {
+      for (let d = 0; d <= PLAY_AHEAD; d++) {
+        const i = currentIndex + d;
+        if (i >= TOTAL_FRAMES) break;
+        if (frames[i] || frameLoads.has(i) || frameFailures[i] >= 2) continue;
+        return i;
+      }
+      return -1;
+    }
     for (let d = 0; d <= WINDOW_RADIUS; d++) {
       const candidates = d === 0 ? [currentIndex] : [currentIndex + d, currentIndex - d];
       for (const i of candidates) {
@@ -183,7 +202,7 @@
   // Background streaming: nearest-to-current first, only after the loading plan.
   function kickBackground() {
     if (!planDone || document.hidden || bgPaused) return;
-    while (bgWorkers < BG_CONCURRENCY) {
+    while (bgWorkers < (introRunning ? BG_CONCURRENCY_PLAY : BG_CONCURRENCY_IDLE)) {
       const next = pickNextMissing();
       if (next < 0) return;
       bgWorkers++;
@@ -535,8 +554,8 @@
     if (reduced) { drawFrame(TOTAL_FRAMES - 1); return; }   // reduced motion: static final frame
 
         targetPos = readScrollPosition();
-    if (window.MYCELIUM_LENIS) {
-      // Lenis 已经负责平滑，这里不能再叠第二层指数缓动，否则尾段会拖出长尾
+    if (window.MYCELIUM_LENIS || introRunning) {
+      // Lenis 已经负责平滑（intro 自动播放时则必须 1:1 跟随），这里不能再叠第二层指数缓动，否则尾段会拖出长尾
       scrollPosition = targetPos;
     } else {
       // 没有 Lenis（降级为原生滚动）时才保留原来的缓动
@@ -546,7 +565,7 @@
       const delta = targetPos - scrollPosition;
       scrollPosition = Math.abs(delta) < 0.15 ? targetPos : scrollPosition + delta * k;
     }
-    // 1 FRAMES: frame_001 → frame_100
+    // 1 FRAMES: frame_001 → frame_251
     const scrollProgress = clamp01(scrollPosition / frameVh);
     currentIndex = Math.round(scrollProgress * (TOTAL_FRAMES - 1));
     requestMasterFrame(currentIndex);
@@ -664,6 +683,7 @@
   document.addEventListener('webkitfullscreenchange', onLayoutChange, { passive: true });
   const onReducedChange = event => {
     reduced = event.matches;
+    if (reduced && typeof finishIntro === 'function') { introStarted = true; finishIntro(); }
     if (reduced) resetStage(); else { refreshMetrics(); scrollPosition = targetPos = readScrollPosition(); }
     lastDrawKey = '';
     schedule();
@@ -718,9 +738,113 @@ window.scrollToNav = () => {
     };
     glideRaf = requestAnimationFrame(step);
 };
+
+  /* ------------------------------ HERO INTRO ------------------------------ */
+  // Once the loading cover is about to open, the film plays itself ONCE: a plain, linear scroll from the
+  // first to the last frame (no easing, no inertia - it behaves like a video). While it runs the hero copy
+  // is hidden; the lines rise one by one shortly before the end and the buttons arrive last, more gently.
+  // Any wheel / touch / key / pointer input hands control back to the visitor immediately.
+  const INTRO_PLAY_MS = 9000;           // play length (8-10 s)
+  const INTRO_COPY_AT = 0.72;           // share of the play at which the first copy line starts to rise
+  const INTRO_ACTIONS_MS = 1700;        // keep in sync with the button transition in polish.css
+  const INTRO_SKIP_MS = 520;            // keep in sync with the [data-intro="skip"] transition in polish.css
+  const INTRO_INPUT_EVENTS = ['wheel', 'touchstart', 'pointerdown', 'keydown'];
+  const rootEl = document.documentElement;
+  let introStarted = false, introRaf = 0, introState = 'pending', introTimer = 0;
+
+  function setIntro(state) {
+    introState = state;
+    if (heroInner) heroInner.dataset.intro = state;
+    rootEl.dataset.heroIntro = state === 'done' ? 'done' : 'playing';
+    // 与 Explore / Choose location 同步：actions / skip / done 时显示语言与 Chat 按钮
+    if (state === 'actions' || state === 'skip' || state === 'done') {
+      document.dispatchEvent(new CustomEvent('mycelium:chrome-ready'));
+    }
+  }
+
+  function dropIntroInput() { INTRO_INPUT_EVENTS.forEach(name => removeEventListener(name, onIntroInput)); }
+
+  function finishIntro() {
+    if (introState === 'done') return;
+    clearTimeout(introTimer);
+    cancelAnimationFrame(introRaf); introRaf = 0;
+    introRunning = false;
+    dropIntroInput();
+    setIntro('done');
+    document.dispatchEvent(new CustomEvent('mycelium:hero-intro-complete'));
+  }
+
+  // The visitor took over (or the intro is not allowed to play): show whatever is still hidden, softly.
+  function onIntroInput() {
+    if (introRunning) {
+      introRunning = false;
+      cancelAnimationFrame(introRaf); introRaf = 0;
+      dropIntroInput();
+      setIntro('skip');
+      clearTimeout(introTimer);
+      introTimer = setTimeout(finishIntro, INTRO_SKIP_MS + 80);
+    } else {
+      finishIntro();
+    }
+  }
+
+  function revealCopyNow() {
+    introStarted = true;
+    if (reduced) { finishIntro(); return; }
+    setIntro('skip');
+    clearTimeout(introTimer);
+    introTimer = setTimeout(finishIntro, INTRO_SKIP_MS + 80);
+  }
+
+  function jumpTo(y) {
+    if (window.MYCELIUM_LENIS) window.MYCELIUM_LENIS.scrollTo(y, { immediate: true, force: true });
+    else window.scrollTo({ top: y, behavior: 'instant' });
+  }
+
+  function startIntro() {
+    if (introStarted) return;
+    introStarted = true;
+    if (reduced || navigator.connection?.saveData || window.scrollY > 4) { revealCopyNow(); return; }
+
+    const from = window.scrollY;
+    introRunning = true;
+    setIntro('pending');
+    bgPaused = false; kickBackground();              // frames must stream in ahead of the playhead now
+    INTRO_INPUT_EVENTS.forEach(name => addEventListener(name, onIntroInput, { passive: true }));
+
+    const t0 = performance.now();
+    let copyShown = false;
+    const step = now => {
+      if (!introRunning) return;
+      const k = clamp01((now - t0) / INTRO_PLAY_MS);
+      const end = trackTop + frameVh * vhPx;         // live value: survives a resize while playing
+      jumpTo(from + (end - from) * k);               // strictly linear
+      schedule();
+      if (!copyShown && k >= INTRO_COPY_AT) { copyShown = true; setIntro('lines'); }
+      if (k < 1) { introRaf = requestAnimationFrame(step); return; }
+      introRunning = false;
+      setIntro('actions');                           // the playhead has stopped: buttons arrive, gently
+      clearTimeout(introTimer);
+      introTimer = setTimeout(finishIntro, INTRO_ACTIONS_MS + 120);
+    };
+    introRaf = requestAnimationFrame(step);
+  }
+
+  // The loading cover announces its own ending (0.3 s before it is gone). The second event of
+  // `mycelium:loading-revealed` is a fallback for pages where the zoom reveal does not run.
+  document.addEventListener('mycelium:loading-reveal-ending', startIntro, { once: true });
+  document.addEventListener('mycelium:loading-revealed', () => {
+    const cover = document.querySelector('.loading-screen');
+    setTimeout(() => {                               // let loading-reveal.js react to the same class change first
+      if (introStarted || cover?.classList.contains('is-revealing')) return;
+      setTimeout(startIntro, 300);
+    }, 0);
+  });
+  setTimeout(() => { if (!introStarted) revealCopyNow(); }, 60000);   // never leave the copy hidden
+
   /* -------------------------------- START -------------------------------- */
   applyScrollBudget();
   refreshMetrics();
-  if (reduced) resetStage(); else scrollPosition = targetPos = readScrollPosition();
+  if (reduced) { resetStage(); introStarted = true; setIntro('done'); } else scrollPosition = targetPos = readScrollPosition();
   schedule();
 })();

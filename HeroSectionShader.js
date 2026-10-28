@@ -1,7 +1,6 @@
 import { createHeroPreviewState } from "./hero-preview-state.js";
 
 const FRAME_COUNT = 251;
-const DEPTH_FRAME_COUNT = FRAME_COUNT;
 const MAX_DPR = 1.25;
 // Quiet pre-roll between the page being ready and the wave starting. The shader runs invisibly for this long so
 // quality is chosen BEFORE anything is visible; keep it short (the wave then starts < 3 s after the loading reveal).
@@ -9,8 +8,7 @@ const WAVE_PREROLL_MS = 900;
 // Add ?heroPerf=1 to the page URL to log frame rate and quality changes while the wave plays.
 const HERO_PERF_LOG = new URLSearchParams(window.location.search).get("heroPerf") === "1";
 const TEXTURE_CACHE_LIMIT = 6;
-const PAIR_SETTLE_MS = 140; // load wire/depth only after scrolling settles
-const DEPTH_ENABLED = matchMedia("(hover: hover) and (pointer: fine)").matches; // no depth on touch
+const PAIR_SETTLE_MS = 140; // load the wire texture only after scrolling settles
 const TEXTURE_LOAD_TIMEOUT_MS = 10000;
 const SOURCE_ASPECT = 16 / 9;
 const HERO_WAVE_DEBUG_ENABLED = new URLSearchParams(window.location.search).get("heroWaveDebug") === "1";
@@ -28,13 +26,10 @@ const HERO_WIRE_PREVIEW = Object.freeze({
   edgeSoftness: 0.02,    // softer crest edge
   waveAmplitude: 0.02,   // more organic crest line
   scrollIdleMs: 320,
-});// The supplied depth sequence is PNG and uses the same frame_#### naming as
-// the base sequence. Probe the real asset once instead of generating console
-// 404s for formats and directory names that are not part of this project.
+});
 // Resolve copied public sequences from the document base. This works in
 // Live Server routes and in Vite's production bundle under /assets/ alike.
 const ASSET_BASE_URL = document.baseURI;
-const DEPTH_DIRECTORY = new URL("./hero-depth/", ASSET_BASE_URL).href;
 const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 
 function reportLoadingState(stage, detail = {}) {
@@ -53,8 +48,6 @@ const VERTEX_SHADER = /* glsl */ `
 const FRAGMENT_SHADER = /* glsl */ `
   uniform sampler2D uBaseMap;
   uniform sampler2D uWireMap;
-  uniform sampler2D uDepthMap;
-  uniform sampler2D uDepthMapNext;
   uniform vec2 uPointer;
   uniform vec2 uTrail;
   uniform vec2 uVelocity;
@@ -66,8 +59,6 @@ const FRAGMENT_SHADER = /* glsl */ `
   uniform float uMotion;
   uniform float uFeather;
   uniform float uUserPresence;
-  uniform float uDepthAvailable;
-  uniform float uDepthBlend;
   uniform float uPreviewProgress;
   uniform float uPreviewMainHeight;
   uniform float uPreviewTotalHeight;
@@ -138,19 +129,11 @@ const FRAGMENT_SHADER = /* glsl */ `
 
   void main() {
     float aspect = uResolution.x / max(uResolution.y, 1.0);
-    vec2 centeredPointer = uPointer - 0.5;
     vec2 sourceUv = (vUv - 0.5) * uSourceUvScale + 0.5;
-    float depthA = texture2D(uDepthMap, sourceUv).r;
-    float depthB = texture2D(uDepthMapNext, sourceUv).r;
-    float depth = mix(depthA, depthB, uDepthBlend);
+    // No depth displacement: the base frame and the wire layer are sampled 1:1.
+    vec3 baseColor = texture2D(uBaseMap, vUv).rgb;
 
-    float localInfluence = 0.32 + organicReveal(vUv, uPointer, aspect, 0.22, uTime, 1.0) * 0.68;
-    vec2 depthOffset = centeredPointer * (depth - 0.5) * 0.018
-      * uDepthAvailable * localInfluence;
-    vec2 baseUv = clamp(vUv + depthOffset, vec2(0.001), vec2(0.999));
-    vec3 baseColor = texture2D(uBaseMap, baseUv).rgb;
-
-    vec2 wireUv = clamp(sourceUv + depthOffset * uSourceUvScale, vec2(0.001), vec2(0.999));
+    vec2 wireUv = clamp(sourceUv, vec2(0.001), vec2(0.999));
     vec4 wireSample = texture2D(uWireMap, wireUv);
     float wireLuma = max(wireSample.r, max(wireSample.g, wireSample.b));
     float wireInk = smoothstep(0.085, 0.42, wireLuma) * smoothstep(0.025, 0.18, wireLuma);
@@ -227,15 +210,6 @@ function probeImage(url) {
   });
 }
 
-async function findDepthSequence() {
-  for (const extension of ["webp", "png"]) {
-    if (await probeImage(new URL(`frame_0001.${extension}`, DEPTH_DIRECTORY).href)) {
-      return { directory: DEPTH_DIRECTORY, filenamePattern: "frame", extension, frameCount: DEPTH_FRAME_COUNT };
-    }
-  }
-  return null;
-}
-
 function frameUrl(directory, index, pattern, extension = "webp") {
   const frameNumber = String(index).padStart(4, "0");
   const filename = pattern === "frame" ? `frame_${frameNumber}.${extension}` : `${frameNumber}.${extension}`;
@@ -277,7 +251,6 @@ async function mountFrameInteraction() {
   const hero = document.getElementById("introHero");
   const baseCanvas = document.getElementById("heroCanvas");
   if (!hero || !baseCanvas) { reportLoadingState("skipped", { reason: "hero-elements-missing" }); return; }
-  const heroCopy = hero.querySelector(".intro-hero-inner");
   if (matchMedia(REDUCED_MOTION_QUERY).matches || navigator.connection?.saveData) {
     reportLoadingState("skipped", { reason: "reduced-motion-or-save-data" });
     return;
@@ -365,22 +338,20 @@ async function mountFrameInteraction() {
     uniforms.uBaseMap.value = baseTexture;
   }
 
-  const neutralDepthCanvas = document.createElement("canvas");
-  neutralDepthCanvas.width = 1;
-  neutralDepthCanvas.height = 1;
-  const neutralDepthContext = neutralDepthCanvas.getContext("2d");
-  neutralDepthContext.fillStyle = "rgb(128,128,128)";
-  neutralDepthContext.fillRect(0, 0, 1, 1);
-  const neutralDepthTexture = new THREE.CanvasTexture(neutralDepthCanvas);
-  neutralDepthTexture.minFilter = THREE.LinearFilter;
-  neutralDepthTexture.magFilter = THREE.LinearFilter;
-  neutralDepthTexture.generateMipmaps = false;
+  const neutralCanvas = document.createElement("canvas");
+  neutralCanvas.width = 1;
+  neutralCanvas.height = 1;
+  const neutralContext = neutralCanvas.getContext("2d");
+  neutralContext.fillStyle = "rgb(128,128,128)";
+  neutralContext.fillRect(0, 0, 1, 1);
+  const neutralTexture = new THREE.CanvasTexture(neutralCanvas);
+  neutralTexture.minFilter = THREE.LinearFilter;
+  neutralTexture.magFilter = THREE.LinearFilter;
+  neutralTexture.generateMipmaps = false;
 
   const uniforms = {
     uBaseMap: { value: baseTexture },
-    uWireMap: { value: neutralDepthTexture },
-    uDepthMap: { value: neutralDepthTexture },
-    uDepthMapNext: { value: neutralDepthTexture },
+    uWireMap: { value: neutralTexture },
     uPointer: { value: new THREE.Vector2(0.5, 0.5) },
     uTrail: { value: new THREE.Vector2(0.5, 0.5) },
     uVelocity: { value: new THREE.Vector2(0, 0) },
@@ -392,8 +363,6 @@ async function mountFrameInteraction() {
     uMotion: { value: 0 },
     uFeather: { value: 0.48 },
     uUserPresence: { value: 0 },
-    uDepthAvailable: { value: 0 },
-    uDepthBlend: { value: 0 },
     uPreviewProgress: { value: 0 },
     uPreviewMainHeight: { value: HERO_WIRE_PREVIEW.mainHeight },
     uPreviewTotalHeight: { value: HERO_WIRE_PREVIEW.totalHeight },
@@ -420,11 +389,8 @@ async function mountFrameInteraction() {
   const textureCache = new Map();
   const pendingFrames = new Map();
   await waitForHeroPlan();
-  const [depthSequence, wireSequence] = await Promise.all([
-    DEPTH_ENABLED ? findDepthSequence() : Promise.resolve(null),
-    findWireSequence(),
-  ]);
-  reportLoadingState("depth-probe-complete", { available: Boolean(depthSequence), wire: Boolean(wireSequence) });
+  const wireSequence = await findWireSequence();
+  reportLoadingState("wire-probe-complete", { wire: Boolean(wireSequence) });
   if (!wireSequence) {
     console.warn("[hero-interaction] Wire sequence not found in hero-wire/. The wave effect is disabled until it is.");
   }
@@ -504,8 +470,7 @@ async function mountFrameInteraction() {
       state: wirePreview.phase,
       elapsedMs: Math.round(elapsedMs),
       normalizedProgress: uniforms.uPreviewProgress.value,
-      wireTextureLoaded: Boolean(currentFrame && uniforms.uWireMap.value !== neutralDepthTexture),
-      depthTextureLoaded: Boolean(currentFrame && uniforms.uDepthMap.value !== neutralDepthTexture),
+      wireTextureLoaded: Boolean(currentFrame && uniforms.uWireMap.value !== neutralTexture),
       currentFrame,
       rendererReady: Boolean(renderer && renderer.getContext()),
       renderCount: debugRenderCount,
@@ -594,9 +559,7 @@ async function mountFrameInteraction() {
   }
 
   function disposeTexturePair(pair) {
-    for (const texture of new Set([pair.wire, pair.depth, pair.nextDepth])) {
-      texture?.dispose();
-    }
+    pair.wire?.dispose();
   }
 
   function cancelWirePreview() {
@@ -619,6 +582,13 @@ async function mountFrameInteraction() {
     if (hasUserScrolled && performance.now() - lastScrollAt < HERO_WIRE_PREVIEW.scrollIdleMs - 30) {
       previewPending = true;
       debugLastBlock = "user-still-scrolling";
+      return false;
+    }
+    // The wave waits until the hero intro (auto-scroll + copy reveal) has finished.
+    const introState = document.documentElement.dataset.heroIntro;
+    if (introState && introState !== "done") {
+      previewPending = true;
+      debugLastBlock = "hero-intro-playing";
       return false;
     }
     const loadingScreen = document.querySelector(".loading-screen");
@@ -761,6 +731,9 @@ async function mountFrameInteraction() {
     window.setTimeout(() => { if (previewPending) tryStartWirePreview("loading-revealed"); }, 150);
   }, { once: true });
   document.addEventListener("mycelium:loading-plan-complete", () => { if (previewPending) tryStartWirePreview("plan-complete"); }, { once: true });
+  document.addEventListener("mycelium:hero-intro-complete", () => {
+    window.setTimeout(() => { if (previewPending) tryStartWirePreview("hero-intro-complete"); }, 700);
+  }, { once: true });
 
   let lastScrollY = window.scrollY;
   function onWindowScroll() {
@@ -787,12 +760,12 @@ async function mountFrameInteraction() {
     }
   }
 
-  function loadTexture(url, isDepth = false) {
+  function loadTexture(url) {
     let timedOut = false;
     let timeoutId;
     const loading = loader.loadAsync(url).then((texture) => {
       if (timedOut || disposed) { texture.dispose(); throw new Error(`Late texture result: ${url}`); }
-      texture.colorSpace = isDepth ? THREE.NoColorSpace : THREE.SRGBColorSpace;
+      texture.colorSpace = THREE.SRGBColorSpace;
       texture.minFilter = THREE.LinearFilter;
       texture.magFilter = THREE.LinearFilter;
       texture.generateMipmaps = false;
@@ -820,13 +793,10 @@ async function mountFrameInteraction() {
     const wireUrl = wireSequence
       ? frameUrl(wireSequence.directory, index, wireSequence.pattern, wireSequence.extension)
       : null;
-    const depthUrl = depthSequence
-      ? frameUrl(depthSequence.directory, index, depthSequence.filenamePattern, depthSequence.extension)
-      : null;
 
-    const loadWithRetry = async (url, isDepth) => {
+    const loadWithRetry = async (url) => {
       for (let attempt = 0; attempt < 2; attempt++) {
-        try { return await loadTexture(url, isDepth); }
+        try { return await loadTexture(url); }
         catch (error) {
           if (attempt === 1) console.warn(`[hero-interaction] Texture failed twice: ${url}`, error);
         }
@@ -834,12 +804,9 @@ async function mountFrameInteraction() {
       return null;
     };
 
-    const loadPromise = Promise.all([
-      wireUrl ? loadWithRetry(wireUrl, false) : Promise.resolve(null),
-      depthUrl ? loadWithRetry(depthUrl, true) : Promise.resolve(null),
-    ]).then(([wire, depth]) => {
+    const loadPromise = (wireUrl ? loadWithRetry(wireUrl) : Promise.resolve(null)).then((wire) => {
       pendingFrames.delete(index);
-      const pair = { wire, depth, nextDepth: depth, depthBlend: 0 };
+      const pair = { wire };
       // Never cache a failed wire texture: that made the wave impossible for this frame forever.
       if (wire) {
         textureCache.set(index, pair);
@@ -882,16 +849,10 @@ async function mountFrameInteraction() {
         }
 
         renderer.initTexture?.(pair.wire);
-        if (pair.depth) renderer.initTexture?.(pair.depth);
         currentFrame = oneBasedIndex;
         uniforms.uWireMap.value = pair.wire;
-        uniforms.uDepthMap.value = pair.depth || neutralDepthTexture;
-        uniforms.uDepthMapNext.value = pair.depth || neutralDepthTexture;
-        uniforms.uDepthBlend.value = 0;
-        uniforms.uDepthAvailable.value = pair.depth ? 1 : 0;
         overlayCanvas.dataset.frameIndex = String(oneBasedIndex);
         overlayCanvas.dataset.wireFrame = String(oneBasedIndex);
-        overlayCanvas.dataset.depthFrame = String(oneBasedIndex);
         activePairAvailable = true;
         trimTextureCache(oneBasedIndex);
         request.commit();
@@ -934,7 +895,7 @@ async function mountFrameInteraction() {
     event.detail.commit();
     requestRender();
     // While the user is scrubbing, only the 2D base canvas is drawn.
-    // The heavy wire/depth textures load once scrolling settles.
+    // The heavy wire textures load once scrolling settles.
     window.clearTimeout(pairTimer);
     pairTimer = window.setTimeout(processDesiredFrame, PAIR_SETTLE_MS);
   }
@@ -1036,13 +997,7 @@ async function mountFrameInteraction() {
     uniforms.uMotion.value = clamp(energy, 0, 1);
     uniforms.uUserPresence.value = userPresence;
     updateWirePreview(timestamp);
-    if (heroCopy) {
-      const offsetX = clamp((0.5 - current.x) * 4 * userPresence, -2, 2);
-      const offsetY = clamp((0.5 - current.y) * 4 * userPresence, -2, 2);
-      heroCopy.style.setProperty("--hero-copy-parallax-x", `${offsetX.toFixed(2)}px`);
-      heroCopy.style.setProperty("--hero-copy-parallax-y", `${offsetY.toFixed(2)}px`);
-    }
-        // No matching wire/depth pair (e.g. while scrolling): skip the expensive shader.
+        // No matching wire frame (e.g. while scrolling): skip the expensive shader.
     // The loop is restarted by requestRender() when a pair becomes ready.
     if (!(hasBaseFrame && activePairAvailable)) {
       overlayCanvas.style.opacity = "0";
@@ -1132,8 +1087,6 @@ async function mountFrameInteraction() {
     activePairAvailable = false;
     overlayCanvas.style.opacity = "0";
     baseCanvas.style.opacity = "1";
-    heroCopy?.style.removeProperty("--hero-copy-parallax-x");
-    heroCopy?.style.removeProperty("--hero-copy-parallax-y");
     settleFirstRenderItem(true);
   }
 
@@ -1162,7 +1115,7 @@ async function mountFrameInteraction() {
     textureCache.clear();
     pendingFrames.clear();
     baseTexture.dispose();
-    neutralDepthTexture.dispose();
+    neutralTexture.dispose();
     geometry.dispose();
     material.dispose();
     renderer.dispose();

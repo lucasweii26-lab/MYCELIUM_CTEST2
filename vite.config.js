@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const classicScripts = ["region-paths.js", "app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js"];
+const classicScripts = ["region-paths.js", "app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js", "language-picker.js", "volunteer-strip.js"];
 
 const copyClassicScripts = {
   name: "copy-classic-scripts-to-publish-directory",
@@ -33,17 +33,9 @@ const copyClassicScripts = {
     if (existsSync(facilityPhotos)) {
       cpSync(facilityPhotos, path.join(outputDirectory, "img/Facilities"), { recursive: true });
     }
-    cpSync(
-      path.resolve(projectRoot, "hero-frames"),
-      path.join(outputDirectory, "hero-frames"),
-      { recursive: true },
-    );
-    cpSync(
-      path.resolve(projectRoot, "hero-wire"),
-      path.join(outputDirectory, "hero-wire"),
-      { recursive: true },
-    );
-    for (const directoryName of ["hero-depth", "hero-frames-large", "hero-depth-frames", "hero-frames-depth", "depth-frames"]) {
+    // Hero sequences and language packs are fetched at runtime, so Vite cannot see them.
+    // (hero-depth is gone: the depth effect was removed.)
+    for (const directoryName of ["hero-frames", "hero-frames-large", "hero-wire", "locales"]) {
       const sourceDirectory = path.resolve(projectRoot, directoryName);
       if (existsSync(sourceDirectory)) {
         cpSync(sourceDirectory, path.join(outputDirectory, directoryName), { recursive: true });

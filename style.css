@@ -218,7 +218,7 @@ a { color: inherit; }
 .loading-bar-container {
   width: min(280px, 70vw);
   height: 3px;
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   background: rgba(243, 238, 230, 0.16);
   overflow: hidden;
   opacity: 0;
@@ -345,7 +345,7 @@ nav#nav {
   border: 1px solid var(--line, rgba(24, 61, 50, 0.2));
   color: var(--ink, #1c2b25);
   background: rgba(24, 61, 50, 0.04);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   cursor: pointer;
   transition: all 0.35s var(--ease);
 }
@@ -442,7 +442,7 @@ nav#nav {
   align-items: center;
   background: var(--paper);
   border: 1px solid var(--line);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   padding: 4px 12px 4px 16px;
   width: 280px;
   box-shadow: 0 8px 24px rgba(24, 61, 50, 0.12);
@@ -768,13 +768,10 @@ nav#nav.is-shrunk .menuItem::after {
   background: var(--paper);
   padding: 40px 28px 36px;
   border-right: 1px solid var(--line);
-  transform: perspective(900px) rotateX(var(--card-rotate-x, 0deg)) rotateY(var(--card-rotate-y, 0deg));
-  transform-style: preserve-3d;
   transition: background 0.3s ease, transform 0.32s var(--ease), box-shadow 0.32s var(--ease);
 }
 .feature:last-child { border-right: 0; }
 .feature:hover { background: #e7eadf; }
-.feature.is-pointer-following { z-index: 1; box-shadow: 0 18px 36px rgba(24, 61, 50, .13); }
 .features img,
 .featureIcon,
 .featureIcon2 {
@@ -850,6 +847,7 @@ nav#nav.is-shrunk .menuItem::after {
   height: 40px;
   padding: 0;
   border: 1px solid var(--line);
+  border-radius: var(--cr-sm); corner-shape: var(--corner-shape);
   background: transparent;
   color: var(--ink);
   font-size: 22px;
@@ -951,6 +949,8 @@ nav#nav.is-shrunk .menuItem::after {
   margin: 0 auto;
   background: #fbfaf5;
   border: 1px solid var(--line);
+  border-radius: var(--cr-md); corner-shape: var(--corner-shape);
+  overflow: hidden;
 }
 .map-modal-header,
 .service-section-header,
@@ -959,6 +959,12 @@ nav#nav.is-shrunk .menuItem::after {
   padding: 22px 60px 22px 28px;
   background: var(--pine);
   color: var(--paper);
+}
+.service-section-header {
+  border-radius: var(--cr-md) var(--cr-md) 0 0; corner-shape: var(--corner-shape);
+}
+.faq-section-header {
+  border-radius: var(--cr-md) var(--cr-md) 0 0; corner-shape: var(--corner-shape);
 }
 .map-modal-header h2,
 .service-section-header h2,
@@ -984,6 +990,7 @@ nav#nav.is-shrunk .menuItem::after {
   width: 100%;
   overflow: hidden;
   border: 1px solid var(--line);
+  border-radius: var(--cr-sm); corner-shape: var(--corner-shape);
 }
 .map-image { width: 100%; }
 
@@ -1066,6 +1073,7 @@ nav#nav.is-shrunk .menuItem::after {
   background: linear-gradient(115deg, #fffdf7, var(--paper));
   border: 1px solid var(--line);
   border-left: 4px solid var(--moss, #7b9565);
+  border-radius: var(--cr-sm); corner-shape: var(--corner-shape);
   display: none;
   box-shadow: 0 10px 26px rgba(24, 43, 37, .08);
 }
@@ -1130,15 +1138,28 @@ nav#nav.is-shrunk .menuItem::after {
 .calendar-table {
   flex: 2;
   min-width: 320px;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   width: 100%;
   background: #fbfaf5;
+  border-radius: var(--cr-md); corner-shape: var(--corner-shape);
+  overflow: hidden;
+  border: 1px solid var(--line);
 }
 .calendar-table th,
 .calendar-table td {
   border: 1px solid var(--line);
+  border-top: 0;
+  border-left: 0;
   padding: 12px 10px;
 }
+.calendar-table th:first-child,
+.calendar-table td:first-child { border-left: 1px solid var(--line); }
+.calendar-table thead tr:first-child th { border-top: 1px solid var(--line); }
+.calendar-table thead tr:first-child th:first-child { border-top-left-radius: calc(var(--cr-md) - 1px); corner-shape: var(--corner-shape); }
+.calendar-table thead tr:first-child th:last-child { border-top-right-radius: calc(var(--cr-md) - 1px); corner-shape: var(--corner-shape); }
+.calendar-table tbody tr:last-child td:first-child { border-bottom-left-radius: calc(var(--cr-md) - 1px); corner-shape: var(--corner-shape); }
+.calendar-table tbody tr:last-child td:last-child { border-bottom-right-radius: calc(var(--cr-md) - 1px); corner-shape: var(--corner-shape); }
 .calendar-table th {
   font-size: 0.72rem;
   letter-spacing: 0.12em;
@@ -1157,13 +1178,13 @@ nav#nav.is-shrunk .menuItem::after {
   position: relative;
 }
 .calendar-table td.has-event {
-  background: rgba(145, 169, 138, 0.18);
-  box-shadow: inset 0 0 0 1px rgba(73, 111, 88, 0.12);
+  /* 统一浅色标记有活动的日期，不抢眼 */
+  background: rgba(145, 169, 138, 0.14);
   transition: background-color 0.2s ease;
 }
 .calendar-table td.has-event:hover,
 .calendar-table td.has-event:focus-visible {
-  background: rgba(145, 169, 138, 0.30);
+  background: rgba(145, 169, 138, 0.22);
 }
 .calendar-table td.has-event:focus-visible { outline: 2px solid var(--moss); outline-offset: -3px; }
 .calendar-info-box {
@@ -1225,6 +1246,12 @@ nav#nav.is-shrunk .menuItem::after {
   border-top: 0;
   padding: 28px 20px 20px;
 }
+.service-section-body {
+  border-radius: 0 0 var(--cr-md) var(--cr-md); corner-shape: var(--corner-shape);
+}
+.faq-section-body {
+  border-radius: 0 0 var(--cr-md) var(--cr-md); corner-shape: var(--corner-shape);
+}
 .carousel-window-wrapper { overflow: hidden; width: 100%; }
 .service-track {
   display: flex;
@@ -1235,6 +1262,7 @@ nav#nav.is-shrunk .menuItem::after {
   flex: 0 0 300px;
   background: var(--paper);
   border: 1px solid var(--line);
+  border-radius: var(--cr-sm); corner-shape: var(--corner-shape);
   padding: 28px 24px 22px;
   transition: transform 0.25s ease, border-color 0.25s ease;
 }
@@ -1292,6 +1320,7 @@ nav#nav.is-shrunk .menuItem::after {
   width: 40px;
   height: 40px;
   border: 1px solid var(--line);
+  border-radius: var(--corner-pill);
   background: #fbfaf5;
   cursor: pointer;
   transition: background 0.2s ease, color 0.2s ease;
@@ -1594,7 +1623,7 @@ nav#nav.is-shrunk .menuItem::after {
   font-size: 0.92rem;
 }
 
-/* Chatbot UI：滚动条移除、用户专属暖木色、输入框末尾内嵌图标与磨砂连续形变菜单 */
+/* Chatbot UI：纯色圆形按钮 + 轻微高光与薄浅色层 */
 .chatbot-toggler {
   position: fixed;
   right: 24px;
@@ -1603,16 +1632,62 @@ nav#nav.is-shrunk .menuItem::after {
   width: 56px;
   height: 56px;
   padding: 0;
-  border: 1px solid var(--pine);
+  /* 站点墨绿 glossy：上浅下深 + 顶边内高光（同 btn-glossy 原理） */
+  border: 1px solid #123228;
   border-radius: 50%;
-  background: var(--pine);
-  color: var(--paper);
+  background: linear-gradient(to bottom, #1f4d40 0%, var(--pine, #183d32) 48%, #123228 100%);
+  color: var(--paper, #f4f1e7);
   cursor: pointer;
-  box-shadow: var(--shadow);
-  transition: transform 0.25s ease, background 0.25s ease;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.12),
+    0 2px 4px rgba(0, 0, 0, 0.15),
+    0 8px 20px rgba(24, 61, 50, 0.22);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px) scale(1);
+  transition: transform 0.45s var(--ease), opacity 0.45s ease, visibility 0.45s ease, background 0.25s ease, box-shadow 0.3s ease, border-color 0.25s ease;
+  overflow: hidden;
 }
-.chatbot-toggler:hover { background: #123228; }
-.chatbot-toggler span {
+body.chrome-ready .chatbot-toggler {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+}
+body.chrome-ready .chatbot-toggler:hover {
+  background: linear-gradient(to bottom, #275a4b 0%, #1a4539 50%, #0f2a22 100%);
+  border-color: #0f2a22;
+  transform: translateY(-2px) scale(1.04);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
+    0 4px 8px rgba(0, 0, 0, 0.16),
+    0 12px 28px rgba(24, 61, 50, 0.28);
+}
+body.chrome-ready .chatbot-toggler:active {
+  transform: translateY(0) scale(0.97);
+  box-shadow:
+    inset 0 1px 2px rgba(0, 0, 0, 0.22),
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    0 1px 3px rgba(0, 0, 0, 0.12);
+}
+.chatbot-toggler.active {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.35),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.14),
+    0 4px 10px rgba(0, 0, 0, 0.16),
+    0 10px 26px rgba(24, 61, 50, 0.32);
+}
+
+.chatbot-toggler .siri-orb,
+.chatbot-toggler .siri-glow {
+  display: none !important;
+}
+
+.chatbot-toggler .chatbot-open-icon,
+.chatbot-toggler .chatbot-close-icon {
   position: absolute;
   inset: 0;
   display: flex;
@@ -1622,32 +1697,58 @@ nav#nav.is-shrunk .menuItem::after {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   font-weight: 600;
+  color: var(--paper);
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.25s ease;
 }
-.chatbot-toggler .chatbot-close-icon { opacity: 0; font-size: 22px; }
+.chatbot-toggler .chatbot-close-icon {
+  opacity: 0;
+  font-size: 22px;
+  letter-spacing: 0;
+  text-transform: none;
+}
 .show-chatbot .chatbot-toggler .chatbot-open-icon { opacity: 0; }
 .show-chatbot .chatbot-toggler .chatbot-close-icon { opacity: 1; }
+
 
 .chatbot {
   position: fixed;
   right: 24px;
-  bottom: 92px;
+  /* 与 CHAT 按钮同锚点，打开后直接盖住按钮 */
+  bottom: max(24px, env(safe-area-inset-bottom, 0px));
   z-index: 100;
-  width: 380px;
+  width: min(380px, calc(100vw - 32px));
   height: 540px;
+  max-height: calc(100vh - 48px);
   overflow: hidden;
   background: #fbfaf5;
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
-  transform: translateY(8px);
+  /* 从右下角（按钮位置）弹出 / 收回 */
+  transform-origin: 100% 100%;
+  transform: scale(0.18);
   opacity: 0;
   pointer-events: none;
   overscroll-behavior: contain !important;
-  transition: transform 0.25s var(--ease), opacity 0.25s ease;
+  transition:
+    transform 0.38s cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 0.28s ease,
+    height 0.3s var(--ease),
+    bottom 0.3s var(--ease);
 }
 .show-chatbot .chatbot {
-  transform: none;
+  transform: scale(1);
   opacity: 1;
   pointer-events: auto;
+}
+/* 打开过程中按钮先淡出，面板盖住其位置 */
+.show-chatbot .chatbot-toggler {
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+  transform: scale(0.85);
+  transition: opacity 0.18s ease, transform 0.28s var(--ease), visibility 0.18s ease;
 }
 .chatbot-header {
   display: grid;
@@ -1730,7 +1831,7 @@ nav#nav.is-shrunk .menuItem::after {
   font-size: 0.88rem;
   white-space: pre-wrap;
   overflow-wrap: anywhere;
-  border-radius: 16px 16px 0 16px;
+  border-radius: var(--cr-md) var(--cr-md) 0 var(--cr-md); corner-shape: var(--corner-shape);
 }
 
 /* 用户气泡颜色升级为品牌陶木暖褐，彻底与顶部墨绿 header 解耦 */
@@ -1740,7 +1841,7 @@ nav#nav.is-shrunk .menuItem::after {
   border: 1px solid rgba(244, 241, 231, 0.15);
   box-shadow: 0 2px 8px rgba(117, 80, 61, 0.15);
 }
-.chatbox .incoming p { background: var(--paper-2); color: var(--ink); border-radius: 16px 16px 16px 0; }
+.chatbox .incoming p { background: var(--paper-2); color: var(--ink); border-radius: var(--cr-md) var(--cr-md) var(--cr-md) 0; corner-shape: var(--corner-shape); }
 .chatbox .chat p.error { background: #f3e4dc; color: #6b2e1e; }
 
 /* 输入底栏 */
@@ -1772,7 +1873,7 @@ nav#nav.is-shrunk .menuItem::after {
   padding-right: 38px;
   resize: none;
   border: 1px solid var(--line);
-  border-radius: 20px;
+  border-radius: var(--corner-lg); /* stadium-ended single-line field: plain round */
   background: var(--paper);
   outline: 0;
   font-size: 0.88rem;
@@ -1834,7 +1935,7 @@ nav#nav.is-shrunk .menuItem::after {
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(24, 61, 50, 0.16);
-  border-radius: 22px;
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   padding: 10px;
   box-shadow: 0 12px 36px rgba(24, 61, 50, 0.14);
   display: grid;
@@ -1852,7 +1953,7 @@ nav#nav.is-shrunk .menuItem::after {
   opacity: 1;
   visibility: visible;
   transform: translateY(0) scale(1);
-  border-radius: 16px;
+  border-radius: var(--cr-md); corner-shape: var(--corner-shape);
   pointer-events: auto;
 }
 
@@ -1860,7 +1961,7 @@ nav#nav.is-shrunk .menuItem::after {
 .chat-quick-item {
   padding: 8px 12px;
   border: 1px solid rgba(24, 61, 50, 0.12);
-  border-radius: 10px;
+  border-radius: var(--cr-xs); corner-shape: var(--corner-shape);
   background: rgba(255, 255, 255, 0.65);
   color: var(--pine);
   font-size: 0.78rem;
@@ -1940,7 +2041,7 @@ nav#nav.is-shrunk .menuItem::after {
   width: min(420px, 100%);
   background: var(--paper, #f4f1e7);
   border: 1px solid var(--line, rgba(24, 61, 50, 0.18));
-  border-radius: 20px;
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   padding: 36px 32px 28px;
   text-align: center;
   box-shadow: 0 16px 40px rgba(18, 43, 35, 0.16);
@@ -1975,7 +2076,7 @@ nav#nav.is-shrunk .menuItem::after {
   width: 100%;
   padding: 12px;
   border: 1px solid var(--pine);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   background: var(--pine);
   color: var(--paper);
   font-size: 0.78rem;
@@ -2166,30 +2267,6 @@ nav#nav.is-shrunk .menuItem::after {
   letter-spacing: 0.12em;
   font-weight: 700;
 }
-.lang-panel {
-  position: absolute;
-  bottom: calc(100% + 8px);
-  left: 0;
-  min-width: 180px;
-  background: #fbfaf5;
-  border: 1px solid var(--line);
-  opacity: 0;
-  visibility: hidden;
-  transform: translateY(6px);
-  transition: all 0.22s ease;
-}
-.lang-panel.active { opacity: 1; visibility: visible; transform: none; }
-.lang-item {
-  display: block;
-  width: 100%;
-  padding: 10px 14px;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-.lang-item:hover, .lang-item.active { background: var(--paper-2); }
 
 .search-tip {
   position: fixed;
@@ -2265,11 +2342,19 @@ nav#nav.is-shrunk .menuItem::after {
   .service-section, .faq-section, .volunteer { padding: 0 20px; }
   .chatbot {
     right: 0;
+    left: 0;
     bottom: 0;
     width: 100%;
     height: 82vh;
+    transform-origin: 90% 100%; /* 仍从右下角按钮方向弹出 */
   }
   .chatbot-toggler { right: 16px; bottom: 16px; }
+  .show-chatbot .chatbot {
+    left: 0;
+    right: 0;
+    width: 100%;
+    border-radius: var(--cr-md) var(--cr-md) 0 0; corner-shape: var(--corner-shape);
+  }
   .lang-switcher-wrap { left: 16px; bottom: 80px; }
   .back-to-top-btn { left: 16px; bottom: 136px; }
   .feature-modal-card { grid-template-columns: minmax(0, 1fr); gap: 14px; padding: 34px 22px 22px; }
@@ -2365,8 +2450,6 @@ nav#nav {
 .slider .sliderImg2 {
   transform: translate3d(0, calc((1 - var(--enter, 1)) * 22vh), 0);
   opacity: clamp(0, calc((var(--enter, 1) - 0.15) * 2), 1);
-  translate: var(--slide-drift-x, 0px) var(--slide-drift-y, 0px);
-  transition: translate 520ms var(--ease);
 }
 .slider .sliderContent,
 .slider .announcementSlideContent {
@@ -2427,9 +2510,6 @@ nav#nav {
   text-align: center;
   padding: 0 24px;
   max-width: 720px;
-  translate: var(--hero-copy-parallax-x, 0px) var(--hero-copy-parallax-y, 0px);
-  will-change: translate;
-  animation: fadeInUp 1s var(--ease) 0.2s backwards;
 }
 
 .intro-hero-inner :is(button, a, input, select, textarea) {
@@ -2619,7 +2699,7 @@ html.gi-lock { overflow: hidden; }
   padding: 10px 14px 10px 18px;
   background: #f4f1ea;
   color: #1a1a1a;
-  border-radius: 4px 12px 12px 4px;
+  border-radius: 4px var(--cr-sm) var(--cr-sm) 4px; corner-shape: var(--corner-shape);
   min-width: 140px;
   max-width: 220px;
   clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%, 8px 50%);
@@ -2677,7 +2757,7 @@ html.gi-lock { overflow: hidden; }
   position: relative;
   width: 100%;
   /* height forced by JS to ~72vh — large Siena-like frame */
-  border-radius: 18px;
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   overflow: hidden;
   background: #000;
   box-shadow: 0 28px 80px rgba(0,0,0,.55);
@@ -2778,7 +2858,7 @@ html.gi-lock .lang-switcher-wrap {
   z-index: 2;
   padding: 12px 18px;
   border: 1px solid rgba(255,255,255,.45);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   background: rgba(0,0,0,.25);
   color: #fff;
   font: 600 .72rem var(--sans);
@@ -3114,7 +3194,7 @@ html.ga-lock { overflow: hidden; }
   font: 600 0.72rem var(--sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
 }
 
 .vi-noselect,
@@ -3165,7 +3245,6 @@ html.ga-lock { overflow: hidden; }
   position: relative;
   width: 100%;
   height: min(78vh, 820px);
-  border-radius: 14px;
   overflow: hidden;
   background: #000;
   isolation: isolate;
@@ -3263,7 +3342,7 @@ html.ga-lock { overflow: hidden; }
   font: 600 0.72rem/1 var(--sans);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   cursor: pointer;
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);

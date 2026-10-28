@@ -14,7 +14,7 @@
   background: transparent;
   text-align: left;
   cursor: pointer;
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   transition: border-color 0.25s var(--ease, ease), background 0.25s var(--ease, ease), padding 0.3s ease;
 }
 .country-switcher:hover {
@@ -53,7 +53,7 @@
   min-height: 48px;
   padding: 14px 22px;
   border: 1px solid rgba(244, 241, 231, 0.72);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   background: transparent;
   color: var(--paper, #f4f1e7);
   font-size: 0.72rem;
@@ -85,7 +85,8 @@
   z-index: 10020;
   inset: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1.15fr) minmax(320px, 0.85fr);
+  /* 地球略宽、右侧决策栏给足阅读宽度（奢侈地产分屏常见 55/45～60/40） */
+  grid-template-columns: minmax(0, 1.2fr) minmax(360px, 0.8fr);
   background: var(--pine, #183d32);
   color: var(--paper, #f4f1e7);
   opacity: 0;
@@ -162,22 +163,23 @@ body.country-picker-open {
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  padding: clamp(24px, 4.5vh, 48px) clamp(24px, 4vw, 54px);
+  justify-content: flex-start;
+  /* 上标题区更松、下 CTA 区更沉稳，避免整栏被 space-between 拉成“挤条” */
+  padding: clamp(36px, 6vh, 64px) clamp(32px, 4.5vw, 56px) clamp(28px, 4vh, 44px);
   background: var(--pine, #183d32);
   border-left: 1px solid rgba(244, 241, 231, 0.12);
   overflow-y: auto;
   overscroll-behavior: contain;
-  gap: 0;
+  gap: clamp(22px, 3.2vh, 36px);
 }
 
 /* 关闭按钮 */
 .country-picker-close {
   position: absolute;
-  top: clamp(16px, 2.5vh, 28px);
-  right: clamp(16px, 2.5vw, 28px);
-  width: 38px;
-  height: 38px;
+  top: clamp(20px, 3vh, 32px);
+  right: clamp(20px, 3vw, 32px);
+  width: 40px;
+  height: 40px;
   border: 1px solid rgba(244, 241, 231, 0.2);
   border-radius: 50%;
   background: transparent;
@@ -197,55 +199,63 @@ body.country-picker-open {
 
 /* 标签小字 */
 .country-picker-kicker {
-  margin: 0 0 8px;
+  margin: 0 0 12px;
   color: rgba(145, 169, 138, 0.72);
-  font-size: 0.62rem;
-  letter-spacing: 0.22em;
+  font-size: 0.68rem;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   font-weight: 600;
 }
 
 /* 情绪锚点主标题 */
 .country-picker-title {
-  margin: 0 0 clamp(16px, 2.8vh, 32px);
+  margin: 0;
   font-family: var(--serif, Georgia, serif);
-  font-size: clamp(2rem, 3.4vw, 3.2rem);
+  font-size: clamp(2.15rem, 3.6vw, 3.35rem);
   font-weight: 500;
-  line-height: 1.05;
+  line-height: 1.08;
   color: var(--paper, #f4f1e7);
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
+  max-width: 12ch;
+}
+
+.country-picker-header {
+  padding-right: 48px; /* 避开关闭按钮 */
+  margin-bottom: clamp(4px, 1vh, 12px);
 }
 
 /* 城市列表区域：微层级感容器，提示可滚动 */
 .country-picker-options-wrap {
   position: relative;
-  margin-bottom: clamp(16px, 2.5vh, 28px);
+  margin: 0;
+  flex: 0 1 auto;
 }
 .country-picker-options {
   display: grid;
-  gap: 6px;
-  max-height: clamp(130px, 20vh, 180px);
-  overflow-y: auto;
+  gap: 10px;
+  /* 仅 3 个地点：不再用矮 max-height 把选项压成挤在一起的滚动条 */
+  max-height: none;
+  overflow: visible;
   overscroll-behavior: contain;
-  padding: 6px;
-  background: rgba(0, 0, 0, 0.16);
-  border: 1px solid rgba(244, 241, 231, 0.08);
-  border-radius: 12px;
+  padding: 12px;
+  background: rgba(0, 0, 0, 0.14);
+  border: 1px solid rgba(244, 241, 231, 0.1);
+  border-radius: var(--cr-md); corner-shape: var(--corner-shape);
 }
 
 /* 单个城市选项 */
 .country-option {
   display: flex;
   align-items: center;
-  gap: 12px;
-  min-height: 42px;
-  padding: 8px 14px;
+  gap: 14px;
+  min-height: 52px;
+  padding: 14px 18px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: var(--cr-sm); corner-shape: var(--corner-shape);
   background: transparent;
-  color: rgba(244, 241, 231, 0.68);
+  color: rgba(244, 241, 231, 0.72);
   font-family: inherit;
-  font-size: 0.9rem;
+  font-size: 0.98rem;
   cursor: pointer;
   text-align: left;
   transition: border-color 0.2s ease, color 0.2s ease, background-color 0.2s ease;
@@ -261,38 +271,43 @@ body.country-picker-open {
 
 /* 选中态：极简细边框 + 小圆点激活 */
 .country-option.is-selected {
-  background: transparent;
-  border-color: rgba(244, 241, 231, 0.28);
+  background: rgba(244, 241, 231, 0.04);
+  border-color: rgba(244, 241, 231, 0.32);
   color: var(--paper, #f4f1e7);
 }
 .country-option-marker {
-  width: 6px;
-  height: 6px;
+  flex: 0 0 auto;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: rgba(244, 241, 231, 0.22);
   transition: background-color 0.25s ease, transform 0.25s ease;
 }
 .country-option.is-selected .country-option-marker {
   background: var(--copper-soft, #91a98a);
-  transform: scale(1.35);
-  box-shadow: 0 0 8px rgba(145, 169, 138, 0.5);
+  transform: scale(1.25);
+  box-shadow: 0 0 10px rgba(145, 169, 138, 0.45);
 }
 .country-option-name {
   font-weight: 500;
   letter-spacing: 0.01em;
+  line-height: 1.35;
 }
 
-/* SELECTED 区域 */
+/* SELECTED 区域：与列表拉开，确认态更清晰 */
 .country-picker-selection {
-  padding: clamp(12px, 2vh, 18px) 0;
+  padding: clamp(16px, 2.4vh, 22px) 4px;
   border-top: 1px solid rgba(244, 241, 231, 0.12);
   border-bottom: 1px solid rgba(244, 241, 231, 0.12);
-  margin-bottom: clamp(16px, 2.5vh, 28px);
+  margin: 0;
+}
+.country-picker-selection .country-picker-kicker {
+  margin-bottom: 14px;
 }
 .country-picker-country {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 16px;
   width: 100%;
   padding: 0;
   border: 0;
@@ -301,44 +316,47 @@ body.country-picker-open {
   text-align: left;
 }
 .country-picker-marker {
-  width: 8px;
-  height: 8px;
+  flex: 0 0 auto;
+  width: 9px;
+  height: 9px;
   border-radius: 50%;
   background: var(--copper-soft, #91a98a);
-  box-shadow: 0 0 0 5px rgba(145, 169, 138, 0.15);
+  box-shadow: 0 0 0 6px rgba(145, 169, 138, 0.14);
 }
 .country-picker-country-name {
   margin: 0;
-  font-size: 1.05rem;
+  font-size: 1.12rem;
   font-weight: 500;
   color: var(--paper, #f4f1e7);
+  line-height: 1.3;
 }
 .country-picker-country-meta {
-  margin: 3px 0 0;
-  color: rgba(244, 241, 231, 0.45);
-  font-size: 0.7rem;
+  margin: 6px 0 0;
+  color: rgba(244, 241, 231, 0.48);
+  font-size: 0.72rem;
   letter-spacing: 0.06em;
 }
 
-/* Continue 按钮：永不下沉，保持在第一屏最佳视口 */
+/* Continue：贴底留白，与上方内容拉开（margin-top: auto） */
 .country-picker-continue {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  min-height: 48px;
-  padding: 0 20px;
+  min-height: 54px;
+  padding: 0 24px;
   border: 1px solid var(--paper, #f4f1e7);
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   background: var(--paper, #f4f1e7);
   color: var(--pine, #183d32);
   font-family: inherit;
-  font-size: 0.75rem;
+  font-size: 0.76rem;
   font-weight: 650;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
   cursor: pointer;
-  margin-bottom: 10px;
+  margin-top: auto;
+  margin-bottom: 0;
   transition: background-color 0.25s var(--ease, ease), color 0.25s var(--ease, ease), transform 0.25s var(--ease, ease);
 }
 .country-picker-continue:hover {
@@ -354,10 +372,11 @@ body.country-picker-open {
 
 /* 底部备注 */
 .country-picker-help {
-  margin: 0;
+  margin: 4px 0 0;
   color: rgba(244, 241, 231, 0.42);
-  font-size: 0.68rem;
-  line-height: 1.5;
+  font-size: 0.72rem;
+  line-height: 1.55;
+  max-width: 36ch;
 }
 
 /* 6. 轻量 Toast 提示 */
@@ -368,7 +387,7 @@ body.country-picker-open {
   bottom: 24px;
   max-width: min(520px, calc(100vw - 32px));
   padding: 12px 20px;
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   background: var(--pine, #183d32);
   color: var(--paper, #f4f1e7);
   border: 1px solid rgba(244, 241, 231, 0.2);
@@ -385,27 +404,27 @@ body.country-picker-open {
 }
 
 /* 针对矮视口（非全屏笔记本）的自适应紧凑规则 */
-@media (max-height: 780px) {
+@media (max-height: 720px) {
   .country-picker-panel {
-    padding: 20px 28px 18px;
+    padding: 28px 28px 20px;
+    gap: 16px;
   }
   .country-picker-title {
-    font-size: 1.85rem;
-    margin-bottom: 12px;
-  }
-  .country-picker-options {
-    max-height: 125px;
+    font-size: 1.9rem;
   }
   .country-option {
-    min-height: 38px;
-    padding: 6px 12px;
+    min-height: 46px;
+    padding: 10px 14px;
+  }
+  .country-picker-options {
+    gap: 8px;
+    padding: 10px;
   }
   .country-picker-selection {
-    padding: 8px 0;
-    margin-bottom: 12px;
+    padding: 12px 4px;
   }
   .country-picker-continue {
-    min-height: 44px;
+    min-height: 48px;
   }
 }
 
@@ -413,13 +432,21 @@ body.country-picker-open {
   .country-switcher-label { display: none; }
   .country-picker {
     grid-template-columns: 1fr;
-    grid-template-rows: minmax(240px, 40vh) 1fr;
+    grid-template-rows: minmax(220px, 36vh) 1fr;
     overflow-y: auto;
   }
-  .country-picker-scene { min-height: 240px; }
+  .country-picker-scene { min-height: 220px; }
   .country-picker-panel {
-    padding: 24px 20px max(24px, env(safe-area-inset-bottom));
+    padding: 28px 22px max(28px, env(safe-area-inset-bottom));
     border-left: 0;
     border-top: 1px solid rgba(244, 241, 231, 0.12);
+    gap: 20px;
+  }
+  .country-picker-title {
+    max-width: none;
+    font-size: clamp(1.9rem, 7vw, 2.6rem);
+  }
+  .country-picker-continue {
+    margin-top: 8px;
   }
 }

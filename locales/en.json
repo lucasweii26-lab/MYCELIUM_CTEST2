@@ -1,0 +1,408 @@
+{
+  "nav": {
+    "announcement": "ANNOUNCEMENT",
+    "facilities": "FACILITIES",
+    "services": "LOCAL SERVICE DIRECTORY",
+    "events": "EVENTS",
+    "volunteer": "VOLUNTEER REGISTRATION",
+    "faq": "FAQ",
+    "searchPlaceholder": "Search ....."
+  },
+  "common": {
+    "close": "Close",
+    "submit": "Submit",
+    "backToTop": "Back to Top",
+    "readMore": "Read More",
+    "all": "All",
+    "searchNoResult": "No matching section found, please try another keyword"
+  },
+  "announcement": {
+    "title": "Community Announcements",
+    "subtitle": "Stay informed with the latest news and notices from your community",
+    "tabAll": "All",
+    "tabEmergency": "Emergency",
+    "tabMaintenance": "Maintenance",
+    "tabCommunity": "Community",
+    "tabEvents": "Events"
+  },
+  "map": {
+    "title": "Community Facilities Map",
+    "hint": "Click a pin to view facility details"
+  },
+  "calendar": {
+    "title": "Community Events Calendar",
+    "hint": "Click a highlighted date to see the upcoming community event",
+    "prev": "‹",
+    "next": "›"
+  },
+  "service": {
+    "title": "Local Service Directory",
+    "phone": "Phone",
+    "email": "Email"
+  },
+  "volunteer": {
+    "kicker": "Participate",
+    "title": "Volunteer Registration",
+    "subtitle": "Join our volunteer team and make a positive impact in the community",
+    "registerNow": "Register Now",
+    "formTitle": "Register as a Volunteer",
+    "fullName": "Full Name",
+    "phone": "Phone Number",
+    "address": "House Address",
+    "namePlaceholder": "John Doe",
+    "addressPlaceholder": "Elton St 21 22-145",
+    "notesPlaceholder": "e.g. dietary restrictions, accessibility needs",
+    "activityLabel": "Activity:",
+    "notes": "Requirements / Notes (optional)",
+    "submitBtn": "Submit Registration",
+    "submitting": "Submitting...",
+    "requiredTip": "Please fill in your name, phone number and select an activity.",
+    "successTip": "Thank you! Your registration has been submitted. We'll contact you soon.",
+    "errorTip": "Submission failed, please check your network and try again.",
+    "card1": {
+      "title": "Tree Planting Day",
+      "date": "1 August 2026 · 8:00 AM · Community Park",
+      "desc": "Help beautify our neighbourhood and promote environmental awareness by planting trees around the community.",
+      "bring": "What to bring: Gardening gloves, a small shovel, a reusable water bottle",
+      "btn": "Register Now"
+    },
+    "card2": {
+      "title": "Neighborhood Cleanup Day",
+      "date": "9 August 2026 · 9:00 AM · Guest Parking Lot",
+      "desc": "Join a walk-and-clean around the pond and park to help keep our community tidy and green.",
+      "bring": "What to bring: Gloves, face mask, tongs (garbage bags provided)",
+      "btn": "Register Now"
+    },
+    "card3": {
+      "title": "Fun Run Marshal",
+      "date": "22 August 2026 · 7:00 AM · Community Park",
+      "desc": "Support runners along the route as a marshal, guiding directions and handing out refreshments.",
+      "bring": "What to bring: Comfortable shoes, cap, reusable water bottle",
+      "btn": "Register Now"
+    }
+  },
+  "faq": {
+    "title": "Frequently Asked Questions"
+  },
+  "chatbot": {
+    "open": "Chat",
+    "title": "Community Assistant",
+    "placeholder": "Enter a message...",
+    "send": "Send",
+    "welcome": "Hi there. How can I help you today?",
+    "thinking": "Thinking...",
+    "report": "Report",
+    "error": "Sorry, I don't quite understand that. You can try asking about events, facilities, services or volunteer registration.",
+    "thankFeedback": "Thank you for your feedback",
+    "quickReply": {
+      "announcement": "Announcements",
+      "facilities": "Facilities",
+      "services": "Services",
+      "events": "Events",
+      "volunteer": "Volunteer",
+      "faq": "FAQ"
+    },
+    "replies": {
+      "announcement": "Latest Community Announcements:\n\n• 30 July - Heavy rain warning (2pm-8pm)\n• 24 Aug - Water supply interruption (9am-4pm)\n• 15 Aug - Annual community meeting\n\nOpen the Announcements page to view all categories and full details.",
+      "greeting": "Hello! How can I help you today? You can ask me about events, facilities, services, volunteer registration or FAQs.",
+      "events": "Upcoming Community Events:\n\n• 1 Aug - Tree Planting Day\n• 9 Aug - Neighbourhood Cleanup Day\n• 22 Aug - Fun Run\n\nOpen the Event Calendar page to view full details and registration info.",
+      "volunteer": "You can sign up on the Volunteer Registration page. We currently have 3 activities: Tree Planting Day, Neighborhood Cleanup, and Fun Run Marshal. Click 'REGISTER NOW!' on the volunteer slide to fill in the form.",
+      "facilities": "Open the Interactive Facilities Map to view all amenities. It marks 11 locations including the gym, swimming pool, playground and clubhouse. You can also search for specific facilities in the top search bar.",
+      "faq": "Visit the FAQ section for answers about membership, facility booking, community rules and maintenance reports. You can also use the search bar to find content quickly.",
+      "services": "The Local Service Directory has contacts for 8 types of trusted local services including plumbers, electricians and air-condition technicians. Open the directory to view phone numbers and emails.",
+      "thank": "You're welcome! Feel free to ask if you have any other questions.",
+      "contact": "You can reach the community management office at +60 10-557 0900 or email myceliumresidence07@gmail.com. Office hours are 9am-6pm on weekdays."
+    }
+  },
+  "report": {
+    "title": "Submit Feedback",
+    "name": "Name",
+    "surname": "Surname",
+    "contactNumber": "Contact Number",
+    "email": "Email Address",
+    "address": "Your Address",
+    "message": "Write Your Message",
+    "subscribe": "I would like to receive updates on campaigns.",
+    "submit": "Submit",
+    "successAlert": "Thank you for your feedback! We have received your report and will respond within 48 hours.",
+    "errorAlert": "Sorry, there was an error submitting your feedback. Please try again or email us directly."
+  },
+  "slider": {
+    "announcement": {
+      "title": "ANNOUNCEMENT",
+      "desc": "Stay informed with the latest news and notices from your community",
+      "btn": "CHECK NOW !"
+    },
+    "facilities": {
+      "title": "FACILITIES",
+      "desc": "Explore community facilities, including the gym, playground, swimming pool and more",
+      "btn": "CHECK NOW!"
+    },
+    "services": {
+      "title": "LOCAL SERVICE DIRECTORY",
+      "desc": "Find trusted local services such as plumbers, electricians, cleaners and technicians",
+      "btn": "CONTACT NOW!"
+    },
+    "events": {
+      "title": "EVENTS",
+      "desc": "Discover upcoming community events, activities and celebrations happening near you",
+      "btn": "CHECK NOW!"
+    },
+    "volunteer": {
+      "title": "VOLUNTEER REGISTRATION",
+      "desc": "Join our volunteer team and make a positive impact in the community",
+      "btn": "REGISTER NOW!"
+    },
+    "faq": {
+      "title": "FAQ",
+      "desc": "Find quick answers to frequently asked questions about community services and facilities",
+      "btn": "CHECK NOW!"
+    }
+  },
+  "mapPins": {
+    "tennis": {
+      "name": "Tennis court",
+      "desc": "A tennis court near the front entrance, beside the row of front-facing homes."
+    },
+    "clubhouse": {
+      "name": "Clubhouse",
+      "desc": "The main community building, adjoining the pool deck and open lawn near the center of the neighborhood."
+    },
+    "pool": {
+      "name": "Main pool",
+      "desc": "The community's central pool with a sun deck, loungers, and umbrellas, right next to the clubhouse."
+    },
+    "playground": {
+      "name": "Playground",
+      "desc": "A sand-based play area with slide equipment, just behind the clubhouse."
+    },
+    "park": {
+      "name": "Community park",
+      "desc": "An open green lawn with a looping walking path, on the east side of the property."
+    },
+    "parking": {
+      "name": "Guest parking",
+      "desc": "A striped parking lot for residents and visitors, just south of the clubhouse."
+    },
+    "basketball": {
+      "name": "Basketball court",
+      "desc": "A basketball court near the southwest corner homes."
+    },
+    "gym": {
+      "name": "Gym",
+      "desc": "The grey-roofed house beside the basketball court, used as the community gym."
+    },
+    "pond": {
+      "name": "Pond",
+      "desc": "A natural pond along the southeast edge of the community, bordered by trees."
+    },
+    "recycle1": {
+      "name": "Recycling point",
+      "desc": "Recycling point near guest parking."
+    },
+    "recycle2": {
+      "name": "Recycling point",
+      "desc": "Recycling point near the bottom row of homes."
+    }
+  },
+  "features": {
+    "tooltip": "CLICK TO READ MORE",
+    "smart": {
+      "title": "SMART FACILITIES",
+      "desc": "Access modern facilities and services designed to improve daily community life.",
+      "modal": {
+        "title": "Smart Facilities",
+        "items": {
+          "digitalPayments": "Digital Payments",
+          "facilityBooking": "Facility Booking",
+          "procurement": "Procurement",
+          "eform": "eForm"
+        }
+      }
+    },
+    "safety": {
+      "title": "COMMUNITY SAFETY",
+      "desc": "Creating a safer and more connected neighborhood.",
+      "modal": {
+        "title": "Community Safety",
+        "items": {
+          "contractManagement": "Contract Management",
+          "visitorManagement": "Visitor Management",
+          "videoAnalytics": "Video Analytics",
+          "virtualPatrol": "Virtual Patrol"
+        }
+      }
+    },
+    "green": {
+      "title": "GREEN LIVING",
+      "desc": "Promoting a clean, healthy and sustainable environment.",
+      "modal": {
+        "title": "Green Living",
+        "items": {
+          "smartIrrigation": "Smart Irrigation",
+          "wasteManagement": "Waste Management",
+          "evCharging": "EV Charging",
+          "energyEfficiency": "Energy Efficiency"
+        }
+      }
+    },
+    "connect": {
+      "title": "CONNECT WITH US",
+      "desc": "Share ideas, feedback and stay connected with the community.",
+      "tooltip": "CLICK TO CONTACT"
+    }
+  },
+  "footer": {
+    "tagline": "EMPOWERING HEALTH\nENRICHING LIVES",
+    "desc": "Building a smarter, greener and more connected community for all residents.",
+    "quickLinks": "Quick Links",
+    "linkAnnouncement": "Announcements",
+    "linkMap": "Facilities Map",
+    "linkService": "Service Directory",
+    "linkEvent": "Events Calendar",
+    "linkVolunteer": "Volunteer",
+    "linkFaq": "FAQ",
+    "contactTitle": "Contact Us",
+    "contactAddr": "📍 Management Office, Clubhouse Level 1",
+    "contactPhone": "📞 +6010-5570900",
+    "contactEmail": "✉ myceliumresidence07@gmail.com",
+    "contactHour": "🕘 Mon – Fri: 9.00 AM – 6.00 PM",
+    "newsletterTitle": "Newsletter",
+    "newsletterDesc": "Subscribe for weekly community updates and event notices.",
+    "newsletterBtn": "Subscribe",
+    "newsletterPlaceholder": "Enter your email address",
+    "copyright": "© 2026 MYCELIUM Smart Community. All rights reserved.",
+    "privacy": "Privacy Policy",
+    "terms": "Terms of Service",
+    "rules": "Community Rules"
+  },
+  "legalDocs": {
+    "privacy": {
+      "title": "Privacy Policy",
+      "content": "\n          <h4>1. Information We Collect</h4>\n          <p>We may collect personal information you voluntarily provide, including your name, contact number, email address, and house address when you submit feedback, register for volunteer activities, or use community services.</p>\n          <h4>2. How We Use Your Information</h4>\n          <ul>\n            <li>To provide and maintain community services and facilities</li>\n            <li>To send important announcements, event notifications and service updates</li>\n            <li>To respond to your inquiries and feedback</li>\n            <li>To improve community management and user experience</li>\n          </ul>\n          <h4>3. Information Sharing</h4>\n          <p>We do not sell, rent or disclose your personal information to third parties for commercial purposes.</p>\n          <h4>4. Data Security</h4>\n          <p>We adopt appropriate technical and organizational measures to protect your personal information.</p>\n          <h4>5. Your Rights</h4>\n          <p>You have the right to access, correct or request deletion of your personal information.</p>\n          <h4>6. Contact Us</h4>\n          <p>If you have any questions, please contact myceliumresidence07@gmail.com.</p>\n        "
+    },
+    "terms": {
+      "title": "Terms of Service",
+      "content": "\n          <h4>1. Acceptance of Terms</h4>\n          <p>By accessing and using the MYCELIUM Smart Community services, you agree to be bound by these Terms of Service.</p>\n          <h4>2. Service Description</h4>\n          <p>We provide community information, facility booking, and online services.</p>\n          <h4>3. User Obligations</h4>\n          <ul>\n            <li>Comply with applicable laws and community regulations</li>\n            <li>Provide true and accurate information</li>\n          </ul>\n        "
+    },
+    "rules": {
+      "title": "Community Rules",
+      "content": "\n          <h4>1. Public Area Etiquette</h4>\n          <p>Keep public areas clean and tidy. Take good care of public facilities.</p>\n          <h4>2. Quiet Hours</h4>\n          <p>Quiet hours are from 10:00 PM to 7:00 AM daily.</p>\n          <h4>3. Pet Management</h4>\n          <p>Pets must be kept on a leash in public areas.</p>\n        "
+    }
+  },
+  "searchKeywords": [
+    {
+      "keywords": [
+        "announcement",
+        "announcements",
+        "news",
+        "notice",
+        "update",
+        "emergency",
+        "maintenance",
+        "rain",
+        "water supply"
+      ],
+      "action": "announcement",
+      "slideIndex": 0
+    },
+    {
+      "keywords": [
+        "facility",
+        "facilities",
+        "map",
+        "gym",
+        "pool",
+        "swimming",
+        "playground",
+        "park",
+        "tennis",
+        "basketball",
+        "clubhouse",
+        "parking",
+        "pond",
+        "recycling",
+        "site plan"
+      ],
+      "action": "map",
+      "slideIndex": 1
+    },
+    {
+      "keywords": [
+        "service",
+        "directory",
+        "plumber",
+        "electrician",
+        "cleaner",
+        "repair",
+        "air cond",
+        "carpenter",
+        "painter",
+        "landscaper",
+        "doctor",
+        "contact"
+      ],
+      "action": "service",
+      "slideIndex": 2
+    },
+    {
+      "keywords": [
+        "event",
+        "calendar",
+        "activity",
+        "tree planting",
+        "cleanup",
+        "fun run",
+        "celebration",
+        "july",
+        "august"
+      ],
+      "action": "calendar",
+      "slideIndex": 3
+    },
+    {
+      "keywords": [
+        "volunteer",
+        "register",
+        "join",
+        "sign up",
+        "help",
+        "marshal"
+      ],
+      "action": "volunteer",
+      "slideIndex": 4
+    },
+    {
+      "keywords": [
+        "faq",
+        "question",
+        "answer",
+        "how to",
+        "rule",
+        "membership",
+        "report",
+        "issue",
+        "safety",
+        "quiet hours",
+        "pet",
+        "parking",
+        "newsletter"
+      ],
+      "action": "faq",
+      "slideIndex": 5
+    }
+  ],
+  "heroIntro": {
+    "titleLine1": "Smart living,",
+    "titleLine2": "rooted in nature.",
+    "description": "A gated residential community built for wellness, safety and connection.",
+    "explore": "EXPLORE THE COMMUNITY",
+    "chooseLocation": "CHOOSE YOUR LOCATION"
+  },
+  "newsletter": {
+    "invalidEmail": "Please enter a valid email address.",
+    "submitting": "Submitting...",
+    "success": "Subscription successful! Thank you for subscribing.",
+    "failure": "Subscription failed, please try again later."
+  }
+}

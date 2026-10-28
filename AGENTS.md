@@ -8,7 +8,7 @@ Bring MYCELIUM to the craft level of landonorris.com (benchmark for polish, inte
 When designing a NEW visual or motion effect, check `docs/reference-effects.md` if it exists. If it is missing, continue using the Mission and Brand sections and mention it in one line at the end. Never block or refuse a task because this file is missing. Asset swaps (textures, images, fonts, copy), bug fixes and small tweaks never need it.
 
 ## Architecture (Hybrid)
-- Bottom layer: one full-screen WebGL canvas (Three.js) for 2.5D depth parallax, fluid/cursor-reactive masks, and later a 3D community model.
+- Bottom layer: WebGL canvas (Three.js) for a 3D community model.
 - Top layer: transparent HTML DOM for ALL text, navigation, forms and buttons. Never bake page text into WebGL textures (SEO, selectable text, accessibility).
 - Mouse/touch events are listened on `window`/DOM (the DOM layer sits above the canvas) and mapped to WebGL with normalized device coordinates: x = (clientX / innerWidth) * 2 - 1, y = -(clientY / innerHeight) * 2 + 1.
 - WebGL is PROGRESSIVE ENHANCEMENT: if WebGL is unavailable, the device is low-power, `prefers-reduced-motion` is on, or `Save-Data` is set, fall back to the existing hero (hero-frames / static image). The site must always work without WebGL.

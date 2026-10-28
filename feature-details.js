@@ -1,27 +1,6 @@
 // Adds a focused, keyboard-accessible detail view to each community pillar.
 // The existing modal layout stays intact; the selected item reveals its own copy.
 (() => {
-  const motionIsReduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  if (!motionIsReduced && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
-    document.querySelectorAll(".features > .feature").forEach((card) => {
-      card.addEventListener("pointermove", (event) => {
-        const rect = card.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width;
-        const y = (event.clientY - rect.top) / rect.height;
-        const rotateY = (x - 0.5) * 5;
-        const rotateX = (0.5 - y) * 5;
-        card.style.setProperty("--card-rotate-x", `${rotateX.toFixed(2)}deg`);
-        card.style.setProperty("--card-rotate-y", `${rotateY.toFixed(2)}deg`);
-        card.classList.add("is-pointer-following");
-      });
-      card.addEventListener("pointerleave", () => {
-        card.classList.remove("is-pointer-following");
-        card.style.setProperty("--card-rotate-x", "0deg");
-        card.style.setProperty("--card-rotate-y", "0deg");
-      });
-    });
-  }
-
   const details = {
     smartFacilitiesModal: [
       "Pay community charges and facility fees through a clear, convenient digital flow. Residents can review what they owe and keep a record of completed payments.",

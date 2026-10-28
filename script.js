@@ -1,4 +1,3 @@
-// script.js
 const chatInput = document.querySelector(".chat-input textarea");
 const sendChatBtn = document.querySelector(".send-chat-btn");
 const chatbox = document.querySelector(".chatbox");
@@ -116,13 +115,38 @@ const handleChat = async () => {
   }, 600);
 };
 
+// 全站可用：与 CHAT 按钮同右下角锚点，面板盖住按钮并向上展开
+const layoutChatbot = () => {
+  if (!chatbotPanel) return;
+  if (!document.body.classList.contains("show-chatbot")) {
+    // 关闭时保留 bottom 锚点，交给 CSS scale 收回按钮位置；仅清高度相关内联
+    chatbotPanel.style.top = "";
+    chatbotPanel.style.height = "";
+    chatbotPanel.style.maxHeight = "";
+    return;
+  }
+
+  const bottomPad = 24;
+  const topSafe = 16;
+  const maxH = Math.max(280, window.innerHeight - bottomPad - topSafe);
+  const preferred = Math.min(560, maxH);
+
+  chatbotPanel.style.top = "auto";
+  chatbotPanel.style.bottom = `max(${bottomPad}px, env(safe-area-inset-bottom, 0px))`;
+  chatbotPanel.style.height = `${preferred}px`;
+  chatbotPanel.style.maxHeight = `${maxH}px`;
+};
+
 const setChatbotOpen = (isOpen) => {
   document.body.classList.toggle("show-chatbot", isOpen);
+  chatbotToggler.classList.toggle("active", isOpen);
   chatbotToggler.setAttribute("aria-expanded", String(isOpen));
   chatbotPanel.setAttribute("aria-hidden", String(!isOpen));
   if (isOpen) {
+    layoutChatbot();
     chatInput.focus();
   } else {
+    layoutChatbot(); // 清掉内联 top/height
     // 关闭聊天机器人时，确保快捷菜单也一并复原
     const chatQuickMenu = document.getElementById("chatQuickMenu");
     const chatPromptTrigger = document.getElementById("chatPromptTrigger");
@@ -135,6 +159,22 @@ const setChatbotOpen = (isOpen) => {
     }
   }
 };
+
+window.addEventListener("scroll", () => {
+  if (document.body.classList.contains("show-chatbot")) layoutChatbot();
+}, { passive: true });
+window.addEventListener("resize", () => {
+  if (document.body.classList.contains("show-chatbot")) layoutChatbot();
+}, { passive: true });
+// nav 收缩是 class 切换，用 rAF 在布局后补一次，避免量到过渡中途的高度
+const _navElForChat = document.getElementById("nav");
+if (_navElForChat && typeof MutationObserver !== "undefined") {
+  new MutationObserver(() => {
+    if (document.body.classList.contains("show-chatbot")) {
+      requestAnimationFrame(layoutChatbot);
+    }
+  }).observe(_navElForChat, { attributes: true, attributeFilter: ["class"] });
+}
 
 if (chatInput && sendChatBtn && chatbox && chatbotToggler && chatbotCloseBtn && chatbotPanel) {
   // 核心：监听输入，打字时自动隐形图标，清空时优雅浮现

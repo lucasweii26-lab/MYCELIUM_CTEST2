@@ -21,6 +21,7 @@
   const ANCHOR_Y = BOX / 2 + 9;             // 106: move centre down by 15 SVG units
   const DELAY_MS = 220;                     // lets the loading text fade first
   const DURATION_MS = 650;
+  const ENDING_LEAD_MS = 300;               // `mycelium:loading-reveal-ending` fires this long before the cover is gone
   const ZOOM_MULTIPLIER = 27;              // increase reveal reach; previous value was 1.35 (~6.5x larger)
   const MAX_ZOOM = 700;                     // safety cap in px per SVG unit
   const GREEN_SHIFT_START = 0;             // start changing colour at 50% reveal progress
@@ -155,6 +156,9 @@
       document.dispatchEvent(new CustomEvent("mycelium:loading-revealed"));
     };
     setTimeout(finish, DELAY_MS + DURATION_MS + 2500); // hard stop, whatever happens
+    // Tell the hero it can start its intro: 0.3 s before the loading cover is completely gone.
+    setTimeout(() => document.dispatchEvent(new CustomEvent("mycelium:loading-reveal-ending")),
+      Math.max(0, DELAY_MS + DURATION_MS - ENDING_LEAD_MS));
 
     const startedAt = performance.now();
     const parseColor = (value) => {

@@ -7,10 +7,6 @@
 
 /* 1 · Tokens ------------------------------------------------------------- */
 :root {
-  --radius-sm: 12px;
-  --radius-md: 20px;
-  --radius-lg: 28px;
-  --radius-pill: 999px;
   --card-bg: rgba(251, 250, 245, 0.72);
   --card-bg-hover: #fbfaf5;
   --lift: 0 14px 32px rgba(24, 61, 50, 0.08);
@@ -49,14 +45,13 @@
   min-height: 292px;
   padding: 32px 28px 28px;
   border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   background: var(--card-bg);
   transform: none; /* removes the 3D pointer tilt: calmer, more premium */
   transition: transform 0.4s var(--ease), box-shadow 0.4s var(--ease), border-color 0.3s ease, background 0.3s ease;
 }
 .features > .feature:hover,
-.features > .feature:focus-visible,
-.features > .feature.is-pointer-following {
+.features > .feature:focus-visible {
   transform: translateY(-4px);
   border-color: rgba(24, 61, 50, 0.32);
   background: var(--card-bg-hover);
@@ -130,9 +125,8 @@
 .slider .slide-icon {
   transform: translate3d(0, calc((1 - var(--enter, 1)) * 22vh), 0);
   opacity: clamp(0, calc((var(--enter, 1) - 0.15) * 2), 1);
-  translate: var(--slide-drift-x, 0px) var(--slide-drift-y, 0px);
   scale: 0.965;
-  transition: scale 900ms var(--ease), translate 520ms var(--ease);
+  transition: scale 900ms var(--ease);
 }
 .slider :is(.sliderItem, .sliderItem2, .sliderItem3, .sliderItem4, .sliderItem5, .sliderItem6).is-current .slide-icon { scale: 1; }
 
@@ -153,15 +147,15 @@
     .footer-newsletter-btn, .report-submit-btn, .announcementReadMoreBtn, .report-btn,
     .calendar-nav-btn, .service-nav-btn, .quick-reply-btn, .ai-mode-btn, .send-chat-btn,
     .lang-toggle-btn, .back-to-top-btn) {
-  border-radius: var(--radius-pill);
+  border-radius: var(--corner-pill);
   transition: background-color 0.3s var(--ease), color 0.3s var(--ease), border-color 0.3s var(--ease),
     transform 0.35s var(--ease), box-shadow 0.35s var(--ease);
 }
-:is(.footer-newsletter-input, .report-input) { border-radius: var(--radius-sm); }
-.report-textarea { border-radius: var(--radius-md); }
-:is(.report-form-card, .feature-modal-card) { border-radius: var(--radius-lg); }
-:is(.feature-detail-panel) { border-radius: var(--radius-md); }
-.chatbot { border-radius: var(--radius-md); overflow: hidden; }
+:is(.footer-newsletter-input, .report-input) { border-radius: var(--cr-sm); corner-shape: var(--corner-shape); }
+.report-textarea { border-radius: var(--cr-lg); corner-shape: var(--corner-shape); }
+:is(.report-form-card, .feature-modal-card) { border-radius: var(--cr-xl); corner-shape: var(--corner-shape); }
+:is(.feature-detail-panel) { border-radius: var(--cr-lg); corner-shape: var(--corner-shape); }
+.chatbot { border-radius: var(--cr-lg); corner-shape: var(--corner-shape); overflow: hidden; }
 
 @media (hover: hover) {
   :is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6,
@@ -275,7 +269,7 @@
   :is(.buyButton, .buyButton2, .buyButton3, .buyButton4, .buyButton5, .buyButton6, .intro-btn, .intro-location-btn) {
     transition: none;
   }
-  .features > .feature:hover, .features > .feature.is-pointer-following { transform: none; }
+  .features > .feature:hover { transform: none; }
 }
 
 /* Menu slider drag state (swipe-nav.js) */
@@ -393,8 +387,8 @@ nav#nav.is-shrunk .country-switcher-value::before {
 @media (prefers-reduced-motion: reduce) { .loading-slogan span { animation: none; } }
 
 /* 9 · Modal cards: rounded corners, no visible scrollbar (they still scroll) ---------------------- */
-:is(.volunteerForm, .announcement-modal-card, .doc-modal-card) { border-radius: var(--radius-lg); }
-:is(.volunteerInput, .volunteerTextarea) { border-radius: var(--radius-sm); }
+:is(.volunteerForm, .doc-modal-card) { border-radius: var(--cr-xl); corner-shape: var(--corner-shape); }
+:is(.volunteerInput, .volunteerTextarea) { border-radius: var(--cr-sm); corner-shape: var(--corner-shape); }
 :is(.volunteerForm, .report-form-card, .feature-modal-card, .announcement-modal-card, .doc-modal-card, .doc-modal-content, .chatbox) {
   scrollbar-width: none;
   -ms-overflow-style: none;
@@ -411,7 +405,7 @@ nav#nav.is-shrunk .country-switcher-value::before {
   width: 100%;
   margin: 0 0 16px;
   overflow: hidden;
-  border-radius: var(--radius-md);
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   background:
     repeating-linear-gradient(135deg, rgba(24, 61, 50, 0.05) 0 12px, transparent 12px 24px),
     var(--paper-2, #ece7d6);
@@ -474,7 +468,7 @@ body.show-volunteer .volunteer { display: block; }
   margin: 0;
   padding: 8px 20px;
   border: 1px solid var(--line, rgba(24, 61, 50, 0.18));
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--corner-pill);
   background: transparent;
   color: var(--pine, #183d32);
   font-size: 0.72rem;
@@ -516,7 +510,7 @@ body.show-volunteer .volunteer { display: block; }
   margin: 0 auto;
   will-change: transform, opacity, filter;
   transform-origin: center center;
-  border-radius: 20px;
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   box-shadow: 0 16px 40px rgba(24, 61, 50, 0.12);
 }
 
@@ -527,7 +521,7 @@ body.show-volunteer .volunteer { display: block; }
   grid-template-rows: 1fr auto !important; /* 第一行留白，第二行高度由文字决定 */
   width: 100%;
   height: clamp(520px, 75vh, 800px);
-  border-radius: 20px;
+  border-radius: var(--cr-lg); corner-shape: var(--corner-shape);
   overflow: hidden;
   background: #111;
 }
@@ -632,7 +626,7 @@ body.show-volunteer .volunteer { display: block; }
   margin-top: 8px;
   padding: 12px 24px;
   border: 1px solid rgba(255,255,255,0.75);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--corner-pill);
   background: rgba(255,255,255,0.15);
   color: #ffffff;
   font-size: 0.74rem;
@@ -660,7 +654,7 @@ body.show-volunteer .volunteer { display: block; }
   
   .vi-frame {
     height: clamp(520px, 72vh, 680px); /* 保持画面高度足够 */
-    border-radius: 16px;
+    border-radius: var(--cr-md); corner-shape: var(--corner-shape);
   }
   
   .vi-meta {
@@ -716,7 +710,7 @@ body.show-volunteer .volunteer { display: block; }
   height: 3px;
   width: 0%;
   background: linear-gradient(90deg, var(--pine, #183d32), var(--copper, #75503d));
-  border-radius: 999px;
+  border-radius: var(--corner-pill);
   transition: width 0.05s linear;
 }
 
@@ -740,7 +734,7 @@ body.show-volunteer .volunteer { display: block; }
   gap: 12px;
   padding: 14px 26px;
   border: 1px solid var(--pine, #183d32);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--corner-pill);
   background: var(--paper, #f4f1e7);
   color: var(--pine, #183d32);
   font-family: var(--sans, sans-serif);
@@ -784,7 +778,7 @@ body.show-volunteer .volunteer { display: block; }
   width: 0;
   background: rgba(24, 61, 50, 0.12);
   border: 1px solid rgba(24, 61, 50, 0.28);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--corner-pill);
   transform: translateY(-50%);
   z-index: 3;
   pointer-events: none;
@@ -815,7 +809,6 @@ body.show-volunteer .volunteer { display: block; }
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 2; /* 经典 35mm 胶片长宽比 */
-  border-radius: 6px;
   overflow: hidden;
   background: #0d1210;
   border: 1px solid rgba(24, 61, 50, 0.22);
@@ -984,7 +977,7 @@ body.show-volunteer .volunteer { display: block; }
   min-height: 48px;
   padding: 0 28px;
   border: 1px solid var(--pine, #183d32);
-  border-radius: var(--radius-pill, 999px);
+  border-radius: var(--corner-pill);
   background: var(--paper, #f4f1e7);
   color: var(--pine, #183d32);
   font-family: var(--sans, sans-serif);
@@ -1043,7 +1036,7 @@ body.show-volunteer .volunteer { display: block; }
   position: relative;
   width: 100%;
   aspect-ratio: 3 / 2;
-  border-radius: 8px;
+  border-radius: var(--cr-xs); corner-shape: var(--corner-shape);
   overflow: hidden;
   background: #111;
   border: 1px solid rgba(24, 61, 50, 0.16);
@@ -1205,7 +1198,7 @@ body.show-volunteer .volunteer { display: block; }
   padding: 48px 40px;
   box-sizing: border-box;
   background: #faf7f1 !important;
-  border-radius: 12px !important;
+  border-radius: var(--cr-sm); corner-shape: var(--corner-shape);
   border: 1px solid rgba(24, 61, 50, 0.12);
   box-shadow: 0 20px 60px -20px rgba(15, 51, 41, 0.15) !important;
   color: #0f3329;
@@ -1916,4 +1909,46 @@ body.show-volunteer .volunteer { display: block; }
   .announcement-card-item:hover .aci-content-card {
     transform: none; /* 移动端取消横向位移 */
   }
+}
+
+/* 7 · Hero intro: the copy stays hidden while the film plays itself, then rises line by line ------
+   hero-sequence.js drives [data-intro]: pending → lines → actions → done  (skip = visitor took over).
+   Timing constants (1.7 s buttons, 0.52 s skip) are mirrored in hero-sequence.js. */
+.intro-line { display: block; overflow: hidden; padding: 0.06em 0 0.16em; margin: -0.06em 0 -0.16em; }
+.intro-line-inner { display: block; }
+
+.intro-hero-inner:not([data-intro="done"]) .intro-reveal {
+  transition: opacity 1.1s var(--ease) calc(var(--i, 0) * 0.22s), transform 1.1s var(--ease) calc(var(--i, 0) * 0.22s);
+}
+.intro-hero-inner:not([data-intro="done"]) .intro-line-inner {
+  transition: transform 1.25s var(--ease) calc(var(--i, 0) * 0.22s);
+}
+.intro-hero-inner[data-intro="pending"] .intro-reveal { opacity: 0; transform: translate3d(0, 14px, 0); }
+.intro-hero-inner[data-intro="pending"] .intro-line-inner { transform: translate3d(0, 112%, 0); }
+
+/* Buttons arrive last, slower and with less travel than the lines. */
+.intro-hero-inner:not([data-intro="done"]) .intro-actions {
+  transition: opacity 1.7s cubic-bezier(0.33, 0, 0.2, 1), transform 1.7s cubic-bezier(0.33, 0, 0.2, 1);
+}
+.intro-hero-inner[data-intro="pending"] .intro-actions,
+.intro-hero-inner[data-intro="lines"] .intro-actions {
+  opacity: 0;
+  transform: translate3d(0, 10px, 0);
+  visibility: hidden;
+}
+
+/* The visitor scrolled before the intro finished: show everything that is still hidden, quickly. */
+.intro-hero-inner[data-intro="skip"] :is(.intro-reveal, .intro-line-inner, .intro-actions) {
+  transition-duration: 0.45s;
+  transition-delay: 0s;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-hero-inner :is(.intro-reveal, .intro-line-inner, .intro-actions) { transition: none !important; }
+}
+
+/* 8 · Chat button: Siri orb — polish only focus ring; hover/scale live in style.css */
+.chatbot-toggler:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.85);
+  outline-offset: 3px;
 }

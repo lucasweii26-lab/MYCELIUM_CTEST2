@@ -1,4 +1,3 @@
-// country-selector.js
 import { COUNTRY_SITES, DEFAULT_COUNTRY_CODE, getCountrySite } from "./country-config.js";
 
 const STORE_KEY = "myceliumCountry";
@@ -264,6 +263,7 @@ function markerPosition(latitude, longitude, radius = 1.018) {
 }
 
 function updateSolarLighting() {
+  // 真实太阳方向 → 仅驱动日夜分界 shader；场景灯保持固定（与旧版观感一致）
   if (!THREE || !earthShader || !sceneState) return;
   const now = new Date();
   const yearStart = Date.UTC(now.getUTCFullYear(), 0, 0);
@@ -284,11 +284,25 @@ function normalizeAngle(angle) {
   return Math.atan2(Math.sin(angle), Math.cos(angle));
 }
 
+// 地球自转轴视觉倾角（约 23.5°，按你要求用 24°），自动飞向城市时保持北极朝上
+const EARTH_AXIAL_TILT = (24 * Math.PI) / 180;
+
 function countryFocusRotation(country) {
-  const point = markerPosition(country.coordinates.latitude, country.coordinates.longitude, 1).normalize();
-  const quaternion = new THREE.Quaternion().setFromUnitVectors(point, new THREE.Vector3(0, 0, 1));
-  const euler = new THREE.Euler().setFromQuaternion(quaternion, "XYZ");
-  return { x: euler.x, y: euler.y, z: euler.z };
+  // content 有 24° 轴倾：用四元数把「倾角后的地点」对准相机(+Z)，再绕视线拧到北极朝上
+  if (!THREE) return { x: 0, y: 0, z: 0 };
+  const geo = markerPosition(country.coordinates.latitude, country.coordinates.longitude, 1).normalize();
+  const p = geo.clone().applyAxisAngle(new THREE.Vector3(0, 0, 1), EARTH_AXIAL_TILT);
+  const q = new THREE.Quaternion().setFromUnitVectors(p, new THREE.Vector3(0, 0, 1));
+  // 倾角后的「地理北极」投影到屏幕平面，拧到朝上
+  const north = new THREE.Vector3(0, 1, 0).applyAxisAngle(new THREE.Vector3(0, 0, 1), EARTH_AXIAL_TILT).applyQuaternion(q);
+  const northXY = new THREE.Vector3(north.x, north.y, 0);
+  if (northXY.lengthSq() > 1e-8) {
+    northXY.normalize();
+    const twist = Math.atan2(northXY.x, northXY.y);
+    q.premultiply(new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0, 0, 1), twist));
+  }
+  const e = new THREE.Euler().setFromQuaternion(q, "YXZ");
+  return { x: e.x, y: e.y, z: e.z };
 }
 
 async function createGlobe() {
@@ -309,7 +323,9 @@ async function createGlobe() {
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 40);
     camera.position.set(0, 0, 3.35);
     const group = new THREE.Group();
+    group.rotation.order = "YXZ"; // yaw/pitch 语义，聚焦时北极在上
     scene.add(group);
+    // 旧版渲染观感：固定 Ambient + Directional；真实太阳方向只驱动日夜/晨昏 shader
     scene.add(new THREE.AmbientLight(0xffffff, 0.62));
     const keyLight = new THREE.DirectionalLight(0xdbe9ff, 2.2);
     keyLight.position.set(-3, 2, 4);
@@ -353,14 +369,18 @@ async function createGlobe() {
       new THREE.SphereGeometry(1, 56, 56),
       earthMaterial,
     );
-    group.add(earth);
+    // content：地球+云+地点钉；固定 24° 轴倾。group：用户拖拽/飞向城市的旋转（北极朝上）
+    const content = new THREE.Group();
+    content.rotation.z = EARTH_AXIAL_TILT;
+    group.add(content);
+    content.add(earth);
 
     const clouds = new THREE.Mesh(
       new THREE.SphereGeometry(1.008, 48, 48),
       new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: false }),
     );
     clouds.visible = false;
-    group.add(clouds);
+    content.add(clouds);
 
     const markerMeshes = [];
     Object.values(COUNTRY_SITES).filter((country) => country.status === "active").forEach((country) => {
@@ -371,7 +391,7 @@ async function createGlobe() {
       );
       marker.position.copy(point);
       marker.userData.countryCode = country.code;
-      group.add(marker);
+      content.add(marker);
 
       const markerRing = new THREE.Mesh(
         new THREE.RingGeometry(0.03, 0.037, 36),
@@ -380,7 +400,7 @@ async function createGlobe() {
       markerRing.position.copy(point.clone().multiplyScalar(1.018));
       markerRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), point.clone().normalize());
       markerRing.userData.countryCode = country.code;
-      group.add(markerRing);
+      content.add(markerRing);
       markerMeshes.push(marker, markerRing);
     });
 
@@ -407,9 +427,11 @@ async function createGlobe() {
       const dx = event.clientX - sceneState.drag.x;
       const dy = event.clientY - sceneState.drag.y;
       if (Math.abs(event.clientX - sceneState.drag.startX) + Math.abs(event.clientY - sceneState.drag.startY) > 5) sceneState.isDragging = true;
-      group.rotation.y += dx * 0.005;
-      group.rotation.x = THREE.MathUtils.clamp(group.rotation.x + dy * 0.003, -1.1, 1.1);
-      sceneState.baseRotation = { x: group.rotation.x, y: group.rotation.y, z: group.rotation.z };
+      // 世界轴轨道球：可同方向连续旋转，无欧拉角万向节/隐形限位
+      if (dx) group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), dx * 0.005);
+      if (dy) group.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), dy * 0.0035);
+      const e = new THREE.Euler().setFromQuaternion(group.quaternion, "YXZ");
+      sceneState.baseRotation = { x: e.x, y: e.y, z: e.z };
       sceneState.drag.x = event.clientX;
       sceneState.drag.y = event.clientY;
       renderer.render(sceneState.scene, sceneState.camera);
@@ -427,7 +449,8 @@ async function createGlobe() {
       }
       if (sceneState) {
         sceneState.drag = null;
-        sceneState.baseRotation = { x: group.rotation.x, y: group.rotation.y, z: group.rotation.z };
+        const e = new THREE.Euler().setFromQuaternion(group.quaternion, "YXZ");
+        sceneState.baseRotation = { x: e.x, y: e.y, z: e.z };
         startRendering();
       }
     });
@@ -444,9 +467,13 @@ async function createGlobe() {
       }
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
         event.preventDefault();
-        if (event.key === "ArrowLeft" || event.key === "ArrowRight") group.rotation.y += event.key === "ArrowLeft" ? -0.18 : 0.18;
-        else group.rotation.x = THREE.MathUtils.clamp(group.rotation.x + (event.key === "ArrowUp" ? -0.18 : 0.18), -1.1, 1.1);
-        sceneState.baseRotation = { x: group.rotation.x, y: group.rotation.y, z: group.rotation.z };
+        if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+          group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), event.key === "ArrowLeft" ? -0.18 : 0.18);
+        } else {
+          group.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), event.key === "ArrowUp" ? -0.18 : 0.18);
+        }
+        const e = new THREE.Euler().setFromQuaternion(group.quaternion, "YXZ");
+        sceneState.baseRotation = { x: e.x, y: e.y, z: e.z };
         renderer.render(sceneState.scene, sceneState.camera);
       }
     });
@@ -486,7 +513,6 @@ async function createGlobe() {
       console.warn("[country-selector] Pre-compile skipped.", error);
     }
     updateSolarLighting();
-
     const refreshIfOpen = () => {
       if (renderer && sceneState && picker.classList.contains("is-open")) renderer.render(sceneState.scene, sceneState.camera);
     };
@@ -541,16 +567,19 @@ function startRendering() {
   const render = () => {
     if (!picker.classList.contains("is-open")) { animationFrame = 0; return; }
     if (sceneState.focusTarget) {
-      sceneState.group.rotation.y += normalizeAngle(sceneState.focusTarget.y - sceneState.group.rotation.y) * 0.035;
-      sceneState.group.rotation.x += (sceneState.focusTarget.x - sceneState.group.rotation.x) * 0.035;
-      sceneState.group.rotation.z += normalizeAngle(sceneState.focusTarget.z - sceneState.group.rotation.z) * 0.035;
-      const settled = Math.abs(normalizeAngle(sceneState.focusTarget.y - sceneState.group.rotation.y)) < 0.001
-        && Math.abs(sceneState.focusTarget.x - sceneState.group.rotation.x) < 0.001
-        && Math.abs(normalizeAngle(sceneState.focusTarget.z - sceneState.group.rotation.z)) < 0.001;
+      const g = sceneState.group;
+      const t = sceneState.focusTarget;
+      // 最短角插值飞向目标（含 roll，保证地点居中且北极朝上）
+      g.rotation.y += normalizeAngle(t.y - g.rotation.y) * 0.06;
+      g.rotation.x += normalizeAngle(t.x - g.rotation.x) * 0.06;
+      g.rotation.z += normalizeAngle(t.z - g.rotation.z) * 0.06;
+      const settled = Math.abs(normalizeAngle(t.y - g.rotation.y)) < 0.002
+        && Math.abs(normalizeAngle(t.x - g.rotation.x)) < 0.002
+        && Math.abs(normalizeAngle(t.z - g.rotation.z)) < 0.002;
       if (settled) {
-        const target = { ...sceneState.focusTarget };
+        const target = { ...t };
         if (!sceneState.previewing) sceneState.baseRotation = target;
-        sceneState.group.rotation.set(target.x, target.y, target.z);
+        g.rotation.set(target.x, target.y, target.z, "YXZ");
         sceneState.focusTarget = null;
       }
     }
@@ -569,8 +598,7 @@ function selectCountry(code) {
     sceneState.previewing = false;
     sceneState.baseRotation = { ...target };
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      sceneState.group.rotation.set(target.x, target.y, 0);
-      sceneState.group.rotation.z = target.z;
+      sceneState.group.rotation.set(target.x, target.y, target.z, "YXZ");
       sceneState.baseRotation = { ...target };
       sceneState.focusTarget = null;
       renderer.render(sceneState.scene, sceneState.camera);
@@ -617,8 +645,10 @@ async function openPicker(event) {
   window.clearInterval(solarClockTimer);
   solarClockTimer = window.setInterval(() => {
     updateSolarLighting();
-    if (renderer && sceneState && picker.classList.contains("is-open")) renderer.render(sceneState.scene, sceneState.camera);
-  }, 60000);
+    if (renderer && sceneState && picker.classList.contains("is-open")) {
+      renderer.render(sceneState.scene, sceneState.camera);
+    }
+  }, 30000);
   startRendering();
 }
 
@@ -632,6 +662,13 @@ function closePicker() {
   animationFrame = 0;
   if (returnFocus?.focus) returnFocus.focus();
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && picker.classList.contains("is-open")) {
+    updateSolarLighting();
+    if (renderer && sceneState) renderer.render(sceneState.scene, sceneState.camera);
+  }
+});
 
 document.querySelectorAll("[data-open-country-picker]").forEach((button) => {
   button.addEventListener("click", openPicker);
