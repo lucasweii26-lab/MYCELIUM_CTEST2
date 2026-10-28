@@ -1635,7 +1635,7 @@ nav#nav.is-shrunk .menuItem::after {
   /* 站点墨绿 glossy：上浅下深 + 顶边内高光（同 btn-glossy 原理） */
   border: 1px solid #123228;
   border-radius: 50%;
-  background: linear-gradient(to bottom, #1f4d40 0%, var(--pine, #183d32) 48%, #123228 100%);
+  background: transparent;
   color: var(--paper, #f4f1e7);
   cursor: pointer;
   box-shadow:
@@ -1710,6 +1710,15 @@ body.chrome-ready .chatbot-toggler:active {
 }
 .show-chatbot .chatbot-toggler .chatbot-open-icon { opacity: 0; }
 .show-chatbot .chatbot-toggler .chatbot-close-icon { opacity: 1; }
+
+/* Chat button crystal-ball (chat-orb.js). The label sits between the back and front canvases,
+   so particles drift behind it and sometimes over it. Without WebGL2 the plain button above is used. */
+.chat-orb-canvas { display: none; position: absolute; left: 50%; top: 50%; width: 96px; height: 96px; margin: -48px 0 0 -48px; pointer-events: none; }
+.chatbot-toggler.has-orb { overflow: visible; }
+.chatbot-toggler.has-orb .chat-orb-canvas { display: block; }
+.chat-orb-back { z-index: 1; }
+.chat-orb-front { z-index: 3; }
+.chatbot-toggler.has-orb .chatbot-open-icon { text-shadow: 0 0 6px rgba(10, 30, 24, 0.95), 0 1px 2px rgba(0, 0, 0, 0.6); }
 
 
 .chatbot {
@@ -2216,30 +2225,62 @@ body.chrome-ready .chatbot-toggler:active {
   left: 24px;
   bottom: 88px;
   z-index: 1000;
-  width: 42px;
-  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 50px;
+  height: 50px;
   padding: 0;
-  border: 1px solid var(--pine);
-  background: var(--paper);
-  color: var(--pine);
+  overflow: hidden;
+  border: none;
+  border-radius: var(--corner-pill);
+  background: var(--pine);
+  color: var(--paper);
+  box-shadow: 0 0 0 4px rgba(145, 169, 138, 0.3);
   cursor: pointer;
   opacity: 0;
   visibility: hidden;
   transform: translateY(8px);
-  transition: opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
+  transition: width 0.3s var(--ease), background-color 0.3s var(--ease), opacity 0.25s ease, transform 0.25s ease, visibility 0.25s ease;
 }
 .back-to-top-btn.show {
   opacity: 1;
   visibility: visible;
   transform: none;
 }
+.back-to-top-icon {
+  flex: none;
+  width: 12px;
+  fill: currentColor;
+  transition: transform 0.3s var(--ease);
+}
+/* The label is a real element (not ::before) so the language switcher can translate it. */
+.back-to-top-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  padding: 0 12px;
+  text-align: center;
+  white-space: nowrap;
+  font: 600 0.7rem var(--sans, sans-serif);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(calc(-50% + 22px));
+  transition: transform 0.3s var(--ease), opacity 0.3s var(--ease);
+  pointer-events: none;
+}
 .back-to-top-btn:hover,
 .back-to-top-btn:focus-visible {
-  background: var(--pine);
-  color: var(--linen);
-  border-color: var(--pine);
-  transform: translateY(-3px);
+  width: 156px;
+  background: var(--moss);
 }
+.back-to-top-btn:hover .back-to-top-icon,
+.back-to-top-btn:focus-visible .back-to-top-icon { transform: translateY(-200%); }
+.back-to-top-btn:hover .back-to-top-label,
+.back-to-top-btn:focus-visible .back-to-top-label { opacity: 1; transform: translateY(-50%); }
+.back-to-top-btn:focus-visible { outline: 2px solid var(--moss); outline-offset: 6px; }
 
 .lang-switcher-wrap {
   position: fixed;

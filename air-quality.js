@@ -93,21 +93,21 @@
       .air-quality[hidden] { display: none; }
       .aq-inner { max-width: 1200px; margin: 0 auto; }
       .aq-sub { margin: 0 0 32px; color: var(--ink-soft, #526258); font-size: .95rem; max-width: 40rem; }
-      .aq-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: clamp(24px, 4vw, 56px); padding: clamp(24px, 4vw, 44px); background: var(--paper, #f4f1e7); border: 1px solid var(--line, rgba(24,61,50,.18)); }
+      .aq-card { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: clamp(24px, 4vw, 56px); padding: clamp(24px, 4vw, 44px); background: var(--paper, #f4f1e7); border: 1px solid var(--line, rgba(24,61,50,.18)); border-radius: var(--cr-lg, 20px); corner-shape: var(--corner-shape, round); }
       .aq-status { padding: 28px 0; color: var(--ink-soft, #526258); }
-      .aq-status button { margin-left: 12px; padding: 8px 14px; border: 1px solid var(--pine, #183d32); background: transparent; color: var(--pine, #183d32); font: 600 .78rem var(--sans, sans-serif); cursor: pointer; }
+      .aq-status button { margin-left: 12px; padding: 8px 14px; border: 1px solid var(--pine, #183d32); background: transparent; color: var(--pine, #183d32); font: 600 .78rem var(--sans, sans-serif); cursor: pointer; border-radius: var(--corner-pill, 999px); }
       .aq-place { margin: 0 0 6px; font: 600 .72rem var(--sans, sans-serif); letter-spacing: .16em; text-transform: uppercase; color: var(--copper, #75503d); }
       .aq-value { display: flex; align-items: baseline; gap: 12px; }
       .aq-number { font: 500 clamp(4rem, 9vw, 6.5rem)/1 var(--serif, Georgia, serif); color: var(--pine, #183d32); }
       .aq-unit { font: 600 .8rem var(--sans, sans-serif); letter-spacing: .12em; text-transform: uppercase; color: var(--ink-soft, #526258); }
-      .aq-chip { display: inline-block; margin: 12px 0 14px; padding: 7px 14px; font: 700 .8rem var(--sans, sans-serif); letter-spacing: .04em; }
+      .aq-chip { display: inline-block; margin: 12px 0 14px; padding: 7px 14px; font: 700 .8rem var(--sans, sans-serif); letter-spacing: .04em; border-radius: var(--cr-xs, 8px); corner-shape: var(--corner-shape, round); }
       .aq-advice { margin: 0 0 14px; max-width: 28rem; line-height: 1.65; }
       .aq-meta { margin: 0; color: var(--ink-soft, #526258); font-size: .78rem; }
-      .aq-scale { display: flex; height: 6px; margin: 4px 0 22px; overflow: hidden; }
+      .aq-scale { display: flex; height: 6px; margin: 4px 0 22px; overflow: hidden; border-radius: var(--corner-pill, 999px); }
       .aq-scale i { flex: 1; }
       .aq-h { margin: 0 0 10px; font: 600 .72rem var(--sans, sans-serif); letter-spacing: .16em; text-transform: uppercase; color: var(--copper, #75503d); }
       .aq-pollutants { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin: 0 0 26px; padding: 0; list-style: none; }
-      .aq-pollutants li { padding: 12px; border: 1px solid var(--line, rgba(24,61,50,.18)); }
+      .aq-pollutants li { padding: 12px; border: 1px solid var(--line, rgba(24,61,50,.18)); border-radius: var(--cr-sm, 12px); corner-shape: var(--corner-shape, round); }
       .aq-pollutants b { display: block; font: 500 1.4rem/1.1 var(--serif, Georgia, serif); color: var(--pine, #183d32); }
       .aq-pollutants span { display: block; margin-top: 4px; font-size: .72rem; color: var(--ink-soft, #526258); }
       .aq-chart { display: block; width: 100%; height: auto; }

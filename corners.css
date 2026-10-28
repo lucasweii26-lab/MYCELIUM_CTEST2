@@ -1,0 +1,52 @@
+/* ==========================================================================
+   corners.css — MYCELIUM corner system. Loaded BEFORE style.css (public site).
+   Single source of truth for every rounded corner. See docs/CORNER-SYSTEM.md.
+
+   Geometry
+   - A plain border-radius is a circular arc: curvature jumps 0 -> 1/r where the
+     arc meets the straight edge (G1 only, no G2).
+   - With `corner-shape: superellipse(K)` the corner is the quadrant of
+     |x|^n + |y|^n = 1 with n = 2^K (measured in Chromium; K=1 is a circle).
+     For n > 2 curvature is 0 at both ends of the arc, so it is curvature-
+     continuous (G2) with the straight edges. It is a mathematically defined
+     superellipse, NOT Apple's Bezier-built continuous corner.
+   - K = 1.8 (n ~ 3.5): peak curvature stays moderate (~1.3x a circle of the same
+     visual size) and the transition spreads along the edge like Apple-style corners.
+
+   Sizing
+   - Tokens (--corner-*) are the radius a plain circular corner would have: this
+     is also what browsers without `corner-shape` (Safari, Firefox) render.
+   - A superellipse cuts less of the corner than a circle of the same box, so
+     where supported the box is multiplied by --corner-boost (1.6 = diagonal cut
+     matched to the circular corner). The silhouette weight stays the same.
+   - Use --cr-* (boosted) together with `corner-shape: var(--corner-shape)`.
+   - Circles (50%), pills (--corner-pill) and radii <= 6px stay ordinary round
+     corners: their ends are intentionally semicircular / too small to show a
+     curvature jump. Single-line fields whose radius is half their height too.
+   - CSS clamps radii that exceed half a side, so adjacent corners never overlap.
+   ========================================================================== */
+
+:root {
+  --corner-xs: 8px;    /* list rows, chips, thumbnails */
+  --corner-sm: 12px;   /* inputs, small buttons, small cards, small modals */
+  --corner-md: 16px;   /* panels, dialogs, chat bubbles, bottom sheets */
+  --corner-lg: 20px;   /* cards, media frames, popovers */
+  --corner-xl: 28px;   /* large modals and forms */
+  --corner-pill: 999px;
+
+  --corner-boost: 1;
+  --corner-shape: round;
+
+  --cr-xs: calc(var(--corner-xs) * var(--corner-boost));
+  --cr-sm: calc(var(--corner-sm) * var(--corner-boost));
+  --cr-md: calc(var(--corner-md) * var(--corner-boost));
+  --cr-lg: calc(var(--corner-lg) * var(--corner-boost));
+  --cr-xl: calc(var(--corner-xl) * var(--corner-boost));
+}
+
+@supports (corner-shape: superellipse(1.8)) {
+  :root {
+    --corner-boost: 1.6;
+    --corner-shape: superellipse(1.8);
+  }
+}
