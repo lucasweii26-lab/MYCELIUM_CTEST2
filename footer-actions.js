@@ -60,8 +60,9 @@
     document.querySelector(".report-btn")?.click(); // opens the existing report modal (script.js)
     requestAnimationFrame(() => {
       const message = document.querySelector("#reportForm textarea[name='message']");
-      if (message) { message.value = text; message.focus({ preventScroll: true }); }
+      if (message) { message.value = text; message.dispatchEvent(new Event("input", { bubbles: true })); message.focus({ preventScroll: true }); }
       input.value = "";
+      input.dispatchEvent(new Event("input", { bubbles: true }));
       setMode("email");
     });
   }, true);

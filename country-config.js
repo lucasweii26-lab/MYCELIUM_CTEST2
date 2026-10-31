@@ -2,11 +2,72 @@
 const facilityMapUrl = new URL("./img/Slide/facility_map.webp", import.meta.url).href;
 const portlandFacilityMapUrl = new URL("./img/Slide/PORTLANDfacility.webp", import.meta.url).href;
 
-// 默认定位到槟城 Pulau Tikus
 export const DEFAULT_COUNTRY_CODE = "MY_PP";
 
+// ==========================================================================
+// 1. WORLDWIDE NEWS (Applies to ALL locations globally)
+// 均为公共广播国际新闻，100% 开放嵌入且无版权地域限制
+// ==========================================================================
+const GLOBAL_NEWS = [
+  {
+    id: "dw-news",
+    name: "DW News",
+    description: "24/7 live news from the heart of Europe. Global issues and tech focus.",
+    youtubeChannelId: "UCknLrEdhRCp1aegoMqRaCZg",
+    newsUrl: "https://www.dw.com/",
+  },
+  {
+    id: "al-jazeera",
+    name: "Al Jazeera English",
+    description: "In-depth global news and award-winning journalism.",
+    youtubeChannelId: "UCNye-wNBqNL5ZzHSJj3l8Bg",
+    newsUrl: "https://www.aljazeera.com/",
+  },
+  {
+    id: "france-24",
+    name: "France 24 English",
+    description: "Continuous international news broadcast from Paris.",
+    youtubeChannelId: "UCQfwfsi5VrQ8yKZ-UWmAEFg",
+    newsUrl: "https://www.france24.com/en/",
+  }
+];
+
+// ==========================================================================
+// 2. NATIONAL NEWS (Applies to all cities within the specific country)
+// ==========================================================================
+const NATIONAL_NEWS = {
+  "MY": [
+    {
+      id: "bernama-tv",
+      name: "Bernama TV",
+      description: "Malaysia's official 24-hour national news agency.",
+      youtubeChannelId: "UCcZg5r9hBqK_VPUT2I7eYVw", // 马新社官方频道，无版权嵌入限制
+      newsUrl: "https://www.bernama.com/",
+    }
+  ],
+  "US": [
+    {
+      id: "livenow-fox",
+      name: "LiveNOW from FOX",
+      description: "Raw and unfiltered 24/7 breaking news across the United States.",
+      youtubeChannelId: "UCJg9wBPyKMNA5sRDnvzmkdg", // 专为互联网打造的新闻流，开放嵌入
+      newsUrl: "https://www.livenowfox.com/",
+    },
+    {
+      id: "abc-news",
+      name: "ABC News Live",
+      description: "24/7 coverage of breaking news, politics, and weather.",
+      youtubeChannelId: "UCBi2mrWuNuyYy4gbM6fU18Q", // 全球无限制，100% 支持嵌入
+      newsUrl: "https://abcnews.go.com/Live",
+    }
+  ]
+};
+
+// ==========================================================================
+// 3. COMMUNITY SITES CONFIGURATION
+// ==========================================================================
 export const COUNTRY_SITES = {
-  // 1. 马来西亚 - 槟城 Pulau Tikus
+  // 1. Malaysia - Penang (Pulau Tikus)
   MY_PP: {
     code: "MY_PP",
     countryCode: "MY",
@@ -24,22 +85,9 @@ export const COUNTRY_SITES = {
     languages: ["en", "es", "zh-CN", "ms", "ta"],
     facilityMap: facilityMapUrl,
     contentNamespace: "MY_PP",
-    // 槟城现实高收视新闻台（全马第一 Astro AWANI + 第一收视晚间新闻 TV3 + 槟城州官方 Buletin Mutiara）
-    liveNews: [
-      {
-        id: "astro-awani",
-        name: "Astro AWANI",
-        description: "Malaysia's leading 24-hour news & current affairs channel.",
-        youtubeChannelId: "UC5dYmq91eUe8vVbK2xP_kDQ",
-        newsUrl: "https://www.astroawani.com/",
-      },
-      {
-        id: "buletin-tv3",
-        name: "Buletin TV3",
-        description: "Malaysia's most-watched television prime bulletin.",
-        youtubeChannelId: "UC2p8wkJVS2eT_PstVp_O07A",
-        newsUrl: "https://www.buletintv3.my/",
-      },
+    
+    // Local News (Penang specific)
+    localNews: [
       {
         id: "buletin-mutiara",
         name: "Buletin Mutiara (Penang)",
@@ -48,7 +96,8 @@ export const COUNTRY_SITES = {
         newsUrl: "https://www.buletinmutiara.com/",
       }
     ],
-    liveStatusUrl: "",
+    // TODO: Replace with your actual Cloudflare Worker URL later for the "LIVE" badges
+    liveStatusUrl: "https://live-status.mycelium-community.workers.dev",
     airQuality: {
       latitude: 5.4300,
       longitude: 100.3050,
@@ -63,7 +112,7 @@ export const COUNTRY_SITES = {
     }
   },
 
-  // 2. 马来西亚 - 柔佛新山 Johor Bahru
+  // 2. Malaysia - Johor Bahru
   MY_JB: {
     code: "MY_JB",
     countryCode: "MY",
@@ -81,31 +130,18 @@ export const COUNTRY_SITES = {
     languages: ["en", "es", "zh-CN", "ms", "ta"],
     facilityMap: facilityMapUrl,
     contentNamespace: "MY_JB",
-    // 柔佛新山现实高收视台（Astro AWANI + TV3 柔佛与南部专区 + 国营 Berita RTM）
-    liveNews: [
-      {
-        id: "astro-awani-jb",
-        name: "Astro AWANI",
-        description: "National & southern region live breaking news.",
-        youtubeChannelId: "UC5dYmq91eUe8vVbK2xP_kDQ",
-        newsUrl: "https://www.astroawani.com/",
-      },
-      {
-        id: "buletin-tv3-jb",
-        name: "Buletin TV3",
-        description: "Premier Malaysian news with regular Johor state reports.",
-        youtubeChannelId: "UC2p8wkJVS2eT_PstVp_O07A",
-        newsUrl: "https://www.buletintv3.my/",
-      },
+    
+    // Local News (Johor specific)
+    localNews: [
       {
         id: "berita-rtm",
         name: "Berita RTM",
         description: "Public broadcast news with extensive southern regional bulletins.",
-        youtubeChannelId: "UC-Yn4L4c1S-Vl_K_aT_xWyg",
+        youtubeChannelId: "UCjUxj4cyy_F0tVCT8WfmdZQ",
         newsUrl: "https://berita.rtm.gov.my/",
       }
     ],
-    liveStatusUrl: "",
+    liveStatusUrl: "https://live-status.mycelium-community.workers.dev",
     airQuality: {
       latitude: 1.4927,
       longitude: 103.7414,
@@ -120,7 +156,7 @@ export const COUNTRY_SITES = {
     }
   },
 
-  // 3. 美国 - 俄勒冈州波特兰 Portland
+  // 3. United States - Portland
   US_PL: {
     code: "US_PL",
     countryCode: "US",
@@ -138,8 +174,9 @@ export const COUNTRY_SITES = {
     languages: ["en", "es", "zh-CN", "ms", "ta"],
     facilityMap: portlandFacilityMapUrl,
     contentNamespace: "US_PL",
-    // 波特兰及西北太平洋最高收视主流电视台
-    liveNews: [
+    
+    // Local News (Oregon specific)
+    localNews: [
       {
         id: "kgw",
         name: "KGW News (Portland)",
@@ -162,7 +199,7 @@ export const COUNTRY_SITES = {
         newsUrl: "https://www.kptv.com/",
       }
     ],
-    liveStatusUrl: "",
+    liveStatusUrl: "https://live-status.mycelium-community.workers.dev",
     airQuality: {
       latitude: 45.5152,
       longitude: -122.6784,
@@ -189,19 +226,39 @@ export const COUNTRY_SITES = {
   },
 };
 
-// 智能查询与兼容旧代码解析函数
+// ==========================================================================
+// 4. DYNAMIC MERGER: Assemble Global + National + Local News per site
+// ==========================================================================
+Object.keys(COUNTRY_SITES).forEach(siteCode => {
+  const site = COUNTRY_SITES[siteCode];
+  const countryCode = site.countryCode;
+  
+  // Create the final liveNews array for this specific location
+  site.liveNews = [
+    ...GLOBAL_NEWS,
+    ...(NATIONAL_NEWS[countryCode] || []),
+    ...(site.localNews || [])
+  ];
+  
+  // Clean up the temporary localNews array so it doesn't pollute the object
+  delete site.localNews;
+});
+
+// ==========================================================================
+// 5. HELPER FUNCTION
+// ==========================================================================
 export function getCountrySite(rawCode) {
   if (!rawCode) return undefined;
   const code = String(rawCode).trim().toUpperCase();
 
-  // 1. 精确命中代码
+  // 1. Exact match
   if (COUNTRY_SITES[code]) return COUNTRY_SITES[code];
 
-  // 2. 兼容单一国家旧代码
+  // 2. Legacy fallback for single-country codes
   if (code === "MY") return COUNTRY_SITES.MY_PP;
   if (code === "US") return COUNTRY_SITES.US_PL;
 
-  // 3. 兼容短路径如 /my/pp -> MY_PP
+  // 3. Fallback for URL paths like /my/pp
   const normalized = code.replace(/[-/]/g, "_");
   if (COUNTRY_SITES[normalized]) return COUNTRY_SITES[normalized];
 

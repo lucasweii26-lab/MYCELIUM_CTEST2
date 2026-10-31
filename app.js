@@ -1224,6 +1224,7 @@ function initApp() {
   window.addEventListener("mycelium:languagechange", () => {
     renderServiceCards();
     renderFAQItems();
+    renderVolunteerActivities();
     if (!isDefaultMalaysia(activeCountryCode)) {
       if (regionFacilities.length) applyRegionalMapFacilities(regionFacilities);
       if (regionEvents.length) renderRegionalVolunteerCards();
@@ -1291,7 +1292,23 @@ function initApp() {
     video.load();
   }
 
+  // Venue shown on a regional volunteer card, best source first:
+  // 1) an explicit location field on the event, 2) a "Location: ..." line or "Meet at ..." phrase in the
+  // description, 3) the city name of the active site (never a hard-coded city).
+  function volunteerEventPlace(event) {
+    const explicit = event[`location_${currentLang}`] || event.location_en || event.location || event.venue;
+    if (explicit) return String(explicit).trim();
+    const text = String(event[`description_${currentLang}`] || event.description_en || "");
+    const labelled = text.match(/(?:^|\n)\s*(?:location|venue|assembly point|地点|集合点|lokasi|lugar)\s*[:：]\s*(.+)/i);
+    if (labelled) return labelled[1].trim();
+    const phrase = text.match(/(?:meet(?:ing)? (?:at|point:?)|punto de encuentro\s*:|集合地点\s*[：:])\s*([^.。\n]+)/i);
+    if (phrase) return phrase[1].replace(/^the\s+/i, "").trim().replace(/^./, (c) => c.toUpperCase());
+    const siteLabel = window.MYCELIUM_REGION_PATHS?.SITES?.[activeCountryCode]?.label || "";
+    return siteLabel.split("·").pop().trim();
+  }
+
   function renderRegionalVolunteerCards() {
+    if (volunteerActivities.length) return; // admin-managed cards take over (renderVolunteerActivities)
     if (isDefaultMalaysia(activeCountryCode) || !regionEvents.length) return;
     const locale = ({ en: "en-US", es: "es-US", "zh-CN": "zh-CN" })[currentLang] || "en-US";
     const bringText = {
@@ -1311,7 +1328,7 @@ function initApp() {
         ? new Intl.DateTimeFormat(locale, { dateStyle: "long" }).format(parsedDate)
         : event.date || "";
       card.querySelector(".volunteerCardTitle").textContent = title;
-      card.querySelector(".volunteerCardDate").textContent = `${dateText} · Portland`;
+      card.querySelector(".volunteerCardDate").textContent = [dateText, volunteerEventPlace(event)].filter(Boolean).join(" · ");
       card.querySelector(".volunteerCardDesc").textContent = description;
       card.querySelector(".volunteerCardBring").textContent = bringText;
       const button = card.querySelector(".volunteerRegisterBtn");
@@ -1327,6 +1344,86 @@ function initApp() {
     // 若 strip 已初始化，刷新当前可见卡的播放状态
     if (window.MYCELIUM_VOLUNTEER_STRIP && typeof window.MYCELIUM_VOLUNTEER_STRIP.refreshVideos === "function") {
       window.MYCELIUM_VOLUNTEER_STRIP.refreshVideos();
+    }
+  }
+
+  // ---- Admin-managed volunteer cards: {region}/volunteer_activities -------------------------------
+  // Written from /admin/volunteer-cards. When the collection is empty the built-in cards stay as they are.
+  const VOLUNTEER_MAX_CARDS = 12;
+  const VOLUNTEER_BRING_LABEL = {
+    en: "What to bring:", ms: "Perlu dibawa:", ta: "கொண்டு வர வேண்டியவை:",
+    "zh-CN": "需携带：", es: "Qué llevar:",
+  };
+  let volunteerActivities = [];
+
+  function volunteerText(activity, key) {
+    return String(activity[`${key}_${currentLang}`] || activity[`${key}_en`] || "").trim();
+  }
+
+  function volunteerDateLine(activity) {
+    const [year, month, day] = String(activity.date || "").split("-").map(Number);
+    const parsed = year && month && day ? new Date(year, month - 1, day, 12) : null;
+    let dateText = activity.date || "";
+    if (parsed && !Number.isNaN(parsed.getTime())) {
+      try { dateText = new Intl.DateTimeFormat(currentLang, { dateStyle: "long" }).format(parsed); }
+      catch (error) { dateText = new Intl.DateTimeFormat("en-US", { dateStyle: "long" }).format(parsed); }
+    }
+    return [dateText, String(activity.time || "").trim(), volunteerText(activity, "location")].filter(Boolean).join(" · ");
+  }
+
+  function renderVolunteerActivities() {
+    const track = document.getElementById("volunteerTrack");
+    if (!track || !volunteerActivities.length) return;
+    let cards = Array.from(track.querySelectorAll(".volunteerCard"));
+    if (!cards.length) return;
+    const template = cards[0];
+    while (cards.length < volunteerActivities.length) {
+      const clone = template.cloneNode(true);
+      clone.dataset.real = String(cards.length);
+      track.appendChild(clone);
+      cards.push(clone);
+    }
+    cards.forEach((card, index) => {
+      const activity = volunteerActivities[index];
+      if (!activity) { card.hidden = true; return; }
+      card.hidden = false;
+      // These nodes now come from the database, so the static translation keys must not overwrite them.
+      card.querySelectorAll("[data-i18n]").forEach((node) => node.removeAttribute("data-i18n"));
+      const title = volunteerText(activity, "title") || activity.id;
+      const bring = volunteerText(activity, "bring");
+      card.querySelector(".volunteerCardTitle").textContent = title;
+      card.querySelector(".volunteerCardDate").textContent = volunteerDateLine(activity);
+      card.querySelector(".volunteerCardDesc").textContent = volunteerText(activity, "description");
+      const bringNode = card.querySelector(".volunteerCardBring");
+      bringNode.textContent = "";
+      bringNode.hidden = !bring;
+      if (bring) {
+        const label = document.createElement("strong");
+        label.textContent = VOLUNTEER_BRING_LABEL[currentLang] || VOLUNTEER_BRING_LABEL.en;
+        bringNode.append(label, ` ${bring}`);
+      }
+      const button = card.querySelector(".volunteerRegisterBtn");
+      button.dataset.activity = title;
+      button.textContent = t("volunteer.registerNow");
+      const media = card.querySelector(".volunteerImg");
+      if (media) media.setAttribute("aria-label", title);
+      applyVolunteerVideo(card, resolveVolunteerVideoSrc(activity, index));
+    });
+    if (window.MYCELIUM_VOLUNTEER_STRIP?.refreshVideos) window.MYCELIUM_VOLUNTEER_STRIP.refreshVideos();
+  }
+
+  async function loadVolunteerActivities() {
+    if (!window.db) return;
+    try {
+      const snapshot = await REGION.readCollection(window.db, activeCountryCode, "volunteer_activities");
+      volunteerActivities = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+        .filter((activity) => activity.isPublished !== false)
+        .sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999)
+          || String(a.date || "").localeCompare(String(b.date || "")))
+        .slice(0, VOLUNTEER_MAX_CARDS);
+      renderVolunteerActivities();
+    } catch (error) {
+      console.error(`[${activeCountryCode}] volunteer activities could not load:`, error);
     }
   }
 
@@ -2357,13 +2454,13 @@ const setVolunteerOpen = (isOpen) => {
   const closeVolunteerForm = () => {
     if (!volunteerFormOverlay) return;
     volunteerFormOverlay.classList.remove("active");
-    volunteerFormEl.reset();
+    // Typed answers are kept on close (draft); the form is only reset after a successful submit below.
   };
 
-  volunteerRegisterBtns.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      openVolunteerForm(btn.dataset.activity);
-    });
+  // Delegated so cards added later from the admin-managed list also open the form.
+  document.addEventListener("click", (event) => {
+    const btn = event.target.closest?.(".volunteerRegisterBtn");
+    if (btn) openVolunteerForm(btn.dataset.activity);
   });
 
   if (volunteerFormClose) {
@@ -2412,6 +2509,7 @@ const setVolunteerOpen = (isOpen) => {
         await locationCollection("volunteers").add(volunteerRecord);
 
         showMyceliumNotice(fullName + ", " + t("volunteer.successTip"), "Registration Submitted");
+        volunteerFormEl.reset();
         closeVolunteerForm();
       } catch (err) {
         console.error("Registration submission failed:", err);
@@ -2768,4 +2866,5 @@ const setVolunteerOpen = (isOpen) => {
   } else {
     updateMapPinsLanguage();
   }
+  loadVolunteerActivities();
 }

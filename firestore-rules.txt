@@ -29,6 +29,12 @@ service cloud.firestore {
     }
     function isAdmin() { return isAdminFor("MY", "PP"); }
 
+    // Resident portal: an account is "approved" once an admin sets status on its residents/{uid} document.
+    function approvedResident(countryCode, cityCode) {
+      return signedIn() && exists(/databases/$(database)/documents/countries/$(countryCode)/cities/$(cityCode)/residents/$(request.auth.uid))
+        && get(/databases/$(database)/documents/countries/$(countryCode)/cities/$(cityCode)/residents/$(request.auth.uid)).data.status == 'approved';
+    }
+
     // ====================================================================================
     // NEW LAYOUT  —  countries / {country} / cities / {city} / {collection} / {document}
     //
@@ -36,7 +42,7 @@ service cloud.firestore {
     //   countries/MY/cities/JB/events/…             Malaysia · Johor Bahru
     //   countries/US/cities/PL/facilities/…         United States · Portland
     //
-    // Public (read) : announcements, events, facilities, services, faqs, rules, gallery_events,
+    // Public (read) : announcements, events, facilities, services, faqs, rules, gallery_events, volunteer_activities,
     //                 settings/main
     // Admin only    : edits to the above, settings/* (AI prompts), reading submissions
     // Public create : newsletter_subscribers, volunteers, reports (private to read)
@@ -54,7 +60,7 @@ service cloud.firestore {
       function siteCode() { return countryCode + "_" + cityCode; }
       function regionalAdmin() { return isAdminFor(countryCode, cityCode); }
       function publicContent() {
-        return collection in ["announcements", "events", "facilities", "services", "faqs", "rules", "gallery_events"];
+        return collection in ["announcements", "events", "facilities", "services", "faqs", "rules", "gallery_events", "volunteer_activities"];
       }
       function validNewsletter() {
         return request.resource.data.keys().hasOnly(['countryCode', 'cityCode', 'email', 'fullName', 'subscribedAt', 'language', 'source'])
@@ -99,6 +105,72 @@ service cloud.firestore {
     }
 
     // ====================================================================================
+    // RESIDENT PORTAL (phases 1-3). Collections live under the same city path as everything else.
+    // NOTE: charge payment below is a DEMO rule (the resident marks their own charge paid) because this
+    // project runs a sandbox gateway. A real gateway must mark charges paid from a verified webhook instead.
+    // ====================================================================================
+    match /countries/{countryCode}/cities/{cityCode}/residents/{uid} {
+      function admin() { return isAdminFor(countryCode, cityCode); }
+      allow read: if signedIn() && (request.auth.uid == uid || admin());
+      allow create: if signedIn() && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['uid', 'email', 'name', 'unit', 'status', 'createdAt'])
+        && request.resource.data.uid == uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.name is string && request.resource.data.name.size() <= 120
+        && request.resource.data.unit is string && request.resource.data.unit.size() <= 20;
+      allow update, delete: if admin();
+    }
+
+    match /countries/{countryCode}/cities/{cityCode}/bookable_facilities/{facilityId} {
+      allow read: if true;
+      allow write: if isAdminFor(countryCode, cityCode);
+    }
+
+    match /countries/{countryCode}/cities/{cityCode}/bookings/{bookingId} {
+      allow read: if approvedResident(countryCode, cityCode) || isAdminFor(countryCode, cityCode);
+      // The document id is facility_date_start, so a second booking of the same slot is an overwrite and is refused.
+      allow create: if approvedResident(countryCode, cityCode)
+        && request.resource.data.keys().hasOnly(['uid', 'unit', 'name', 'facilityId', 'facilityName', 'date', 'start', 'end', 'createdAt'])
+        && request.resource.data.uid == request.auth.uid
+        && bookingId == request.resource.data.facilityId + '_' + request.resource.data.date + '_' + request.resource.data.start;
+      allow delete: if isAdminFor(countryCode, cityCode) || (signedIn() && resource.data.uid == request.auth.uid);
+      allow update: if isAdminFor(countryCode, cityCode);
+    }
+
+    match /countries/{countryCode}/cities/{cityCode}/charges/{chargeId} {
+      function admin() { return isAdminFor(countryCode, cityCode); }
+      allow read: if admin() || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, delete: if admin();
+      // A resident may create the fee for their own booking, priced from the facility document, and cancel it while unpaid.
+      allow create: if approvedResident(countryCode, cityCode)
+        && request.resource.data.source == 'booking' && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'unpaid'
+        && request.resource.data.keys().hasOnly(['uid', 'unit', 'title', 'amount', 'currency', 'status', 'source', 'facilityId', 'bookingId', 'due', 'createdAt'])
+        && request.resource.data.amount == get(/databases/$(database)/documents/countries/$(countryCode)/cities/$(cityCode)/bookable_facilities/$(request.resource.data.facilityId)).data.fee;
+      allow delete: if signedIn() && resource.data.uid == request.auth.uid && resource.data.source == 'booking' && resource.data.status == 'unpaid';
+      allow update: if admin() || (signedIn() && resource.data.uid == request.auth.uid
+        && resource.data.status == 'unpaid' && request.resource.data.status == 'paid'
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['status', 'paidAt', 'method', 'receiptNo', 'gateway']));
+    }
+
+    match /countries/{countryCode}/cities/{cityCode}/requests/{requestId} {
+      allow read: if isAdminFor(countryCode, cityCode) || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create: if approvedResident(countryCode, cityCode)
+        && request.resource.data.keys().hasOnly(['uid', 'unit', 'name', 'type', 'ref', 'subject', 'details', 'fields', 'status', 'createdAt', 'updatedAt'])
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.subject.size() <= 140 && request.resource.data.details.size() <= 2000;
+      allow update, delete: if isAdminFor(countryCode, cityCode);
+    }
+
+    match /countries/{countryCode}/cities/{cityCode}/notifications/{noteId} {
+      allow read: if isAdminFor(countryCode, cityCode) || (signedIn() && resource.data.uid == request.auth.uid);
+      allow create, delete: if isAdminFor(countryCode, cityCode);
+      allow update: if isAdminFor(countryCode, cityCode)
+        || (signedIn() && resource.data.uid == request.auth.uid && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']));
+    }
+
+    // ====================================================================================
     // OLD LAYOUT  —  kept ONLY so the website keeps working until scripts/migrate-to-city-structure.mjs
     // has been run and checked. After that, delete everything from here down to the final deny rule.
     // ====================================================================================
@@ -139,6 +211,7 @@ service cloud.firestore {
     match /facilities/{recordId}    { allow read: if true; allow write: if isAdmin(); }
     match /services/{recordId}      { allow read: if true; allow write: if isAdmin(); }
     match /gallery_events/{recordId} { allow read: if true; allow write: if isAdmin(); }
+    match /volunteer_activities/{recordId} { allow read: if true; allow write: if isAdmin(); }
     match /reports/{recordId} {
       allow create: if request.resource.data.keys().hasOnly([
         'countryCode', 'firstName', 'lastName', 'contactNumber', 'email', 'address',
@@ -153,8 +226,8 @@ service cloud.firestore {
 
     match /locations/{site}/{collection}/{recordId} {
       function oldAdmin() { return isAdminForSite(site); }
-      allow read: if collection in ["announcements", "events", "facilities", "services", "faqs", "rules", "gallery_events"];
-      allow create, update, delete: if collection in ["announcements", "events", "facilities", "services", "faqs", "rules", "gallery_events"] && oldAdmin();
+      allow read: if collection in ["announcements", "events", "facilities", "services", "faqs", "rules", "gallery_events", "volunteer_activities"];
+      allow create, update, delete: if collection in ["announcements", "events", "facilities", "services", "faqs", "rules", "gallery_events", "volunteer_activities"] && oldAdmin();
       allow read, update, delete: if oldAdmin() && collection in ["newsletter_subscribers", "volunteers", "reports"];
       allow read: if collection == "settings" && (recordId == "main" || oldAdmin());
       allow create, update, delete: if collection == "settings" && oldAdmin();

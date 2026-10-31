@@ -1119,7 +1119,7 @@ body.show-volunteer .volunteer { display: block; }
   letter-spacing: 0.06em;
   font-variant-numeric: tabular-nums;
   color: var(--ink-soft, #526258);
-  opacity: 0.72;
+  opacity: 1; /* a11y: opacity .72 failed WCAG contrast (Lighthouse) */
   transition: color 0.25s ease, opacity 0.25s ease;
 }
 

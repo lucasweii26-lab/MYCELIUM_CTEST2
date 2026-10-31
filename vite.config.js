@@ -4,7 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = path.dirname(fileURLToPath(import.meta.url));
-const classicScripts = ["region-paths.js", "app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js", "language-picker.js", "volunteer-strip.js", "chat-orb.js"];
+const classicScripts = ["region-paths.js", "app.js", "script.js", "hero-sequence.js", "feature-details.js", "scroll-indicator.js", "scroll-story.js", "gallery.js", "gallery-seed.js", "live-news.js", "air-quality.js", "swipe-nav.js", "footer-actions.js", "loading-reveal.js", "smooth-scroll.js", "text-protection.js", "language-picker.js", "volunteer-strip.js", "chat-orb.js", "draft-autosave.js"];
 
 const copyClassicScripts = {
   name: "copy-classic-scripts-to-publish-directory",
@@ -59,7 +59,8 @@ export default defineConfig({
     rollupOptions: {
       input: {
         main: path.resolve(projectRoot, "index.html"),
-        admin: path.resolve(projectRoot, "admin/index.html")
+        admin: path.resolve(projectRoot, "admin/index.html"),
+        portal: path.resolve(projectRoot, "portal/index.html")
       },
       output: {
         manualChunks(id) {

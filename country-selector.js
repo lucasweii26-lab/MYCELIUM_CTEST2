@@ -42,6 +42,11 @@ document.querySelectorAll("[data-current-country]").forEach((el) => {
   el.textContent = initialCountry.displayName || initialCountry.name; 
 });
 
+// Resident portal entry carries the selected community too
+document.querySelectorAll(".resident-portal-link").forEach((link) => {
+  link.href = `/portal/?region=${encodeURIComponent(initialCountry.code)}`;
+});
+
 // 管理端入口带上城市参数
 document.querySelectorAll(".admin-access").forEach((link) => {
   link.href = `/admin/login?region=${encodeURIComponent(initialCountry.code)}`;
@@ -262,9 +267,9 @@ function markerPosition(latitude, longitude, radius = 1.018) {
   );
 }
 
-function updateSolarLighting() {
-  // 真实太阳方向 → 仅驱动日夜分界 shader；场景灯保持固定（与旧版观感一致）
-  if (!THREE || !earthShader || !sceneState) return;
+// Real-time direction of the sun (unit vector in globe space). Pure function of the clock, so it can be
+// used the moment the shader is created instead of waiting for the next lighting tick.
+function currentSunDirection() {
   const now = new Date();
   const yearStart = Date.UTC(now.getUTCFullYear(), 0, 0);
   const dayOfYear = Math.floor((Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - yearStart) / 86400000);
@@ -277,7 +282,73 @@ function updateSolarLighting() {
     - 0.002697 * Math.cos(3 * gamma) + 0.00148 * Math.sin(3 * gamma);
   const sunLatitude = THREE.MathUtils.radToDeg(declination);
   const sunLongitude = THREE.MathUtils.euclideanModulo((720 - utcHour * 60 - equationOfTime) / 4 + 180, 360) - 180;
-  earthShader.uniforms.uSunDirection.value.copy(markerPosition(sunLatitude, sunLongitude, 1).normalize());
+  return markerPosition(sunLatitude, sunLongitude, 1).normalize();
+}
+
+function updateSolarLighting() {
+  if (!THREE || !earthShader || !sceneState) return;
+
+  const sunDir = currentSunDirection();
+
+  // 地球材质
+  if (earthShader.uniforms?.uSunDirection) {
+    earthShader.uniforms.uSunDirection.value.copy(sunDir);
+  }
+
+  // 大气材质
+  if (sceneState.atmosphereMaterial?.uniforms?.uSunDirection) {
+    sceneState.atmosphereMaterial.uniforms.uSunDirection.value.copy(sunDir);
+  }
+
+  const key = sceneState.keyLight;
+  const ambient = sceneState.ambientLight;
+
+  if (key) {
+    key.position.copy(sunDir.clone().multiplyScalar(6));
+    key.target.position.set(0, 0, 0);
+    key.target.updateMatrixWorld?.();
+  }
+
+  const utcHour = new Date().getUTCHours() + new Date().getUTCMinutes() / 60 + new Date().getUTCSeconds() / 3600;
+  const phase = ((utcHour % 24) + 24) % 24;
+  const elev = sunDir.y;
+
+  let ambientI = 0.42;
+  let keyI = 1.75;
+  let keyColor = 0xdbe9ff;
+  let ambColor = 0xb8c4d4;
+
+  if (phase >= 5 && phase < 8) {          // 清晨
+    ambientI = 0.48; keyI = 1.95;
+    keyColor = 0xffc9a0; ambColor = 0xc9d4e8;
+  } else if (phase >= 8 && phase < 16) {  // 白天
+    ambientI = 0.62; keyI = 2.35;
+    keyColor = 0xf2f6ff; ambColor = 0xffffff;
+  } else if (phase >= 16 && phase < 19) { // 黄昏
+    ambientI = 0.40; keyI = 1.80;
+    keyColor = 0xff8a4a; ambColor = 0x6a7a9a;
+  } else {                                // 夜晚
+    ambientI = 0.18; keyI = 0.65;
+    keyColor = 0x6a8cff; ambColor = 0x1a2438;
+  }
+
+  const elevBoost = THREE.MathUtils.clamp(elev * 0.22, -0.10, 0.18);
+  ambientI = THREE.MathUtils.clamp(ambientI + elevBoost * 0.45, 0.14, 0.72);
+  keyI     = THREE.MathUtils.clamp(keyI + elevBoost, 0.45, 2.55);
+
+  if (ambient) {
+    ambient.intensity = ambientI;
+    ambient.color.setHex(ambColor);
+  }
+  if (key) {
+    key.intensity = keyI;
+    key.color.setHex(keyColor);
+  }
+
+  if (earthShader.uniforms?.uTwilightBoost) {
+    const twilight = (phase >= 5 && phase < 8) || (phase >= 16 && phase < 19) ? 0.95 : 0.55;
+    earthShader.uniforms.uTwilightBoost.value = twilight;
+  }
 }
 
 function normalizeAngle(angle) {
@@ -305,13 +376,147 @@ function countryFocusRotation(country) {
   return { x: e.x, y: e.y, z: e.z };
 }
 
+function createAtmosphereMaterial() {
+  return new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    uniforms: {
+      uSunDirection: { value: new THREE.Vector3(0, 0, 1) },
+      uIntensity: { value: 0.28 },   // 整体强度再降
+    },
+    vertexShader: `
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+      void main() {
+        vNormal = normalize(normalMatrix * normal);
+        vPosition = position;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform vec3 uSunDirection;
+      uniform float uIntensity;
+      varying vec3 vNormal;
+      varying vec3 vPosition;
+
+      void main() {
+        // 物体空间法线（与太阳方向一致）
+        vec3 normal = normalize(vPosition);
+
+        // 更高次幂 → 更薄的边缘，向外快速 fade
+        float fresnel = pow(1.0 - abs(dot(normalize(vNormal), vec3(0.0, 0.0, 1.0))), 4.8);
+
+        float sunDot = dot(normal, normalize(uSunDirection));
+        // 白天一侧稍微亮一点，夜晚几乎消失
+        float dayFactor = smoothstep(-0.25, 0.45, sunDot);
+
+        // 极低饱和度的冷白（接近苹果）
+        vec3 color = mix(
+          vec3(0.70, 0.78, 0.92),   // 夜晚更暗淡
+          vec3(0.88, 0.93, 1.00),   // 白天接近纯白
+          dayFactor
+        );
+
+        // 核心：alpha 用更高次幂再压一次，让边缘真正淡入黑色
+        float alpha = fresnel * uIntensity * (0.25 + dayFactor * 0.45);
+        alpha = pow(alpha, 1.35);           // 额外让边缘更柔
+        alpha = clamp(alpha, 0.0, 0.38);    // 硬上限，防止出现实心环
+
+        gl_FragColor = vec4(color, alpha);
+      }
+    `,
+  });
+}
+
+function createEarthMaterial(dayMap, nightMap, normalMap, specularMap) {
+  return new THREE.ShaderMaterial({
+    uniforms: {
+      uDayMap:       { value: dayMap },
+      uNightMap:     { value: nightMap },
+      uNormalMap:    { value: normalMap },
+      uSpecularMap:  { value: specularMap },
+      uSunDirection: { value: new THREE.Vector3(0, 0, 1) },
+      uTwilightBoost:{ value: 0.65 },
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      varying vec3 vLocalNormal;   // 物体局部空间，与 markerPosition / currentSunDirection 一致
+      varying vec3 vViewPosition;
+      void main() {
+        vUv = uv;
+        vLocalNormal = normalize(position);   // 关键：用 position 作为局部法线
+        vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
+        vViewPosition = -mvPosition.xyz;
+        gl_Position = projectionMatrix * mvPosition;
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D uDayMap;
+      uniform sampler2D uNightMap;
+      uniform sampler2D uNormalMap;
+      uniform sampler2D uSpecularMap;
+      uniform vec3 uSunDirection;
+      uniform float uTwilightBoost;
+
+      varying vec2 vUv;
+      varying vec3 vLocalNormal;
+      varying vec3 vViewPosition;
+
+      void main() {
+        vec3 dayColor   = texture2D(uDayMap, vUv).rgb;
+        vec3 nightColor = texture2D(uNightMap, vUv).rgb;
+        float specularMask = texture2D(uSpecularMap, vUv).r;
+
+        // 轻微法线扰动
+        vec3 normalTex = texture2D(uNormalMap, vUv).xyz * 2.0 - 1.0;
+        vec3 N = normalize(vLocalNormal + normalTex * 0.28);
+
+        float solarDot = dot(N, normalize(uSunDirection));
+
+        // 更柔和的 terminator（接近 Apple）
+        float daylight = smoothstep(-0.25, 0.18, solarDot);
+        float twilight = (1.0 - smoothstep(0.0, 0.40, abs(solarDot))) * (1.0 - daylight * 0.7);
+
+        // 夜景灯光轻微增强，避免发灰
+        nightColor = nightColor * 1.22 + vec3(0.012, 0.018, 0.035);
+
+        vec3 color = mix(nightColor, dayColor, daylight);
+
+        // 极淡的暖色晨昏线
+        vec3 twilightColor = mix(
+          vec3(1.0, 0.45, 0.25),
+          vec3(1.0, 0.70, 0.40),
+          clamp(solarDot * 1.6 + 0.4, 0.0, 1.0)
+        );
+        color = mix(color, twilightColor, twilight * 0.18 * uTwilightBoost);
+
+        // 水面高光
+        vec3 viewDir = normalize(vViewPosition);
+        vec3 halfDir = normalize(normalize(uSunDirection) + viewDir);
+        float spec = pow(max(dot(N, halfDir), 0.0), 52.0) * specularMask * daylight;
+        color += vec3(0.50, 0.62, 0.85) * spec * 0.48;
+
+        gl_FragColor = vec4(color, 1.0);
+      }
+    `,
+  });
+}
 async function createGlobe() {
   if (renderer) return;
   if (globeLoadPromise) return globeLoadPromise;
+
   globeLoadPromise = (async () => {
     THREE = await import("three").catch(() => import("./node_modules/three/build/three.module.js"));
+
     try {
-      renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true, powerPreference: "low-power" });
+      renderer = new THREE.WebGLRenderer({
+        canvas,
+        alpha: true,
+        antialias: true,
+        powerPreference: "low-power",
+      });
     } catch (error) {
       console.warn("[country-selector] WebGL is unavailable.", error);
       fallback.hidden = false;
@@ -322,112 +527,183 @@ async function createGlobe() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(38, 1, 0.1, 40);
     camera.position.set(0, 0, 3.35);
+
     const group = new THREE.Group();
-    group.rotation.order = "YXZ"; // yaw/pitch 语义，聚焦时北极在上
+    group.rotation.order = "YXZ";
     scene.add(group);
-    // 旧版渲染观感：固定 Ambient + Directional；真实太阳方向只驱动日夜/晨昏 shader
-    scene.add(new THREE.AmbientLight(0xffffff, 0.62));
-    const keyLight = new THREE.DirectionalLight(0xdbe9ff, 2.2);
+
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
+    scene.add(ambientLight);
+
+    const keyLight = new THREE.DirectionalLight(0xdbe9ff, 2.0);
     keyLight.position.set(-3, 2, 4);
     scene.add(keyLight);
+    scene.add(keyLight.target);
 
     const textureLoader = new THREE.TextureLoader();
     const textureIndex = isMobileGlobeViewport ? 1 : 0;
     const maxAnisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+
+    // --- Load day texture first (most important) ---
     const earthTexture = await textureLoader.loadAsync(globeTextureUrls.day[textureIndex]);
     earthTexture.colorSpace = THREE.SRGBColorSpace;
     earthTexture.anisotropy = maxAnisotropy;
-    const nightPlaceholder = new THREE.DataTexture(new Uint8Array([10, 16, 26, 255]), 1, 1);
-    nightPlaceholder.colorSpace = THREE.SRGBColorSpace;
-    nightPlaceholder.needsUpdate = true;
-    const nightUniform = { value: nightPlaceholder };
-    const earthMaterial = new THREE.MeshPhongMaterial({
-      map: earthTexture,
-      specular: 0x505050,
-      shininess: 18,
-    });
-    earthMaterial.onBeforeCompile = (shader) => {
-      earthShader = shader;
-      shader.uniforms.uNightMap = nightUniform;
-      shader.uniforms.uSunDirection = { value: new THREE.Vector3(1, 0, 0) };
-      shader.vertexShader = shader.vertexShader
-        .replace("#include <common>", "#include <common>\nvarying vec3 vMyceliumLocalNormal;")
-        .replace("#include <begin_vertex>", "#include <begin_vertex>\nvMyceliumLocalNormal = normalize(position);");
-      shader.fragmentShader = shader.fragmentShader
-        .replace("#include <common>", "#include <common>\nuniform sampler2D uNightMap;\nuniform vec3 uSunDirection;\nvarying vec3 vMyceliumLocalNormal;")
-        .replace("#include <map_fragment>", `#include <map_fragment>
-          float solarDot = dot(normalize(vMyceliumLocalNormal), normalize(uSunDirection));
-          float daylight = smoothstep(-0.12, 0.10, solarDot);
-          float dusk = (1.0 - smoothstep(0.025, 0.30, abs(solarDot))) * (1.0 - daylight * 0.35);
-          vec3 nightColor = texture2D(uNightMap, vMapUv).rgb;
-          diffuseColor.rgb = mix(nightColor, diffuseColor.rgb, daylight);
-          diffuseColor.rgb = mix(diffuseColor.rgb, vec3(1.0, 0.42, 0.20), dusk * 0.24);
-        `);
-    };
-    earthMaterial.customProgramCacheKey = () => "mycelium-solar-earth-v1";
-    const earth = new THREE.Mesh(
-      new THREE.SphereGeometry(1, 56, 56),
-      earthMaterial,
+
+    // Temporary night placeholder so shader can start immediately
+    const nightPlaceholder = new THREE.DataTexture(
+      new Uint8Array([8, 10, 18, 255]),
+      1, 1
     );
-    // content：地球+云+地点钉；固定 24° 轴倾。group：用户拖拽/飞向城市的旋转（北极朝上）
+    nightPlaceholder.needsUpdate = true;
+
+    // Temporary normal / specular placeholders
+    const normalPlaceholder = new THREE.DataTexture(
+      new Uint8Array([128, 128, 255, 255]),
+      1, 1
+    );
+    normalPlaceholder.needsUpdate = true;
+
+    const specularPlaceholder = new THREE.DataTexture(
+      new Uint8Array([0, 0, 0, 255]),
+      1, 1
+    );
+    specularPlaceholder.needsUpdate = true;
+
+    // Create the improved earth material
+    const earthMaterial = createEarthMaterial(
+      earthTexture,
+      nightPlaceholder,
+      normalPlaceholder,
+      specularPlaceholder
+    );
+    earthShader = earthMaterial; // so updateSolarLighting can find the uniforms
+
+    const earth = new THREE.Mesh(
+      new THREE.SphereGeometry(1, 64, 64),
+      earthMaterial
+    );
+
+    // content group holds earth + clouds + markers and carries the axial tilt
     const content = new THREE.Group();
     content.rotation.z = EARTH_AXIAL_TILT;
     group.add(content);
     content.add(earth);
 
+    // --- Clouds ---
     const clouds = new THREE.Mesh(
-      new THREE.SphereGeometry(1.008, 48, 48),
-      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: false }),
+      new THREE.SphereGeometry(1.009, 48, 48),
+      new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        transparent: true,
+        opacity: 0.38,
+        depthWrite: false,
+      })
     );
     clouds.visible = false;
     content.add(clouds);
 
-    const markerMeshes = [];
-    Object.values(COUNTRY_SITES).filter((country) => country.status === "active").forEach((country) => {
-      const point = markerPosition(country.coordinates.latitude, country.coordinates.longitude);
-      const marker = new THREE.Mesh(
-        new THREE.SphereGeometry(0.018, 16, 16),
-        new THREE.MeshBasicMaterial({ color: "#d9b18d" }),
-      );
-      marker.position.copy(point);
-      marker.userData.countryCode = country.code;
-      content.add(marker);
+    // --- Atmosphere (subtle Apple-style limb) ---
+    const atmosphereMaterial = createAtmosphereMaterial();
+    const atmosphere = new THREE.Mesh(
+      new THREE.SphereGeometry(1.048, 48, 48),
+      atmosphereMaterial
+    );
+    content.add(atmosphere);
 
-      const markerRing = new THREE.Mesh(
-        new THREE.RingGeometry(0.03, 0.037, 36),
-        new THREE.MeshBasicMaterial({ color: "#e8c8a8", side: THREE.DoubleSide, transparent: true, opacity: 0.58 }),
-      );
-      markerRing.position.copy(point.clone().multiplyScalar(1.018));
-      markerRing.quaternion.setFromUnitVectors(new THREE.Vector3(0, 0, 1), point.clone().normalize());
-      markerRing.userData.countryCode = country.code;
-      content.add(markerRing);
-      markerMeshes.push(marker, markerRing);
-    });
+    // --- Markers ---
+    const markerMeshes = [];
+    Object.values(COUNTRY_SITES)
+      .filter((country) => country.status === "active")
+      .forEach((country) => {
+        const point = markerPosition(
+          country.coordinates.latitude,
+          country.coordinates.longitude
+        );
+
+        const marker = new THREE.Mesh(
+          new THREE.SphereGeometry(0.018, 16, 16),
+          new THREE.MeshBasicMaterial({ color: "#d9b18d" })
+        );
+        marker.position.copy(point);
+        marker.userData.countryCode = country.code;
+        content.add(marker);
+
+        const markerRing = new THREE.Mesh(
+          new THREE.RingGeometry(0.03, 0.037, 36),
+          new THREE.MeshBasicMaterial({
+            color: "#e8c8a8",
+            side: THREE.DoubleSide,
+            transparent: true,
+            opacity: 0.58,
+          })
+        );
+        markerRing.position.copy(point.clone().multiplyScalar(1.018));
+        markerRing.quaternion.setFromUnitVectors(
+          new THREE.Vector3(0, 0, 1),
+          point.clone().normalize()
+        );
+        markerRing.userData.countryCode = country.code;
+        content.add(markerRing);
+
+        markerMeshes.push(marker, markerRing);
+      });
 
     const initialRotation = countryFocusRotation(initialCountry);
     group.rotation.set(initialRotation.x, initialRotation.y, initialRotation.z);
+
     sceneState = {
-      scene, camera, group, earth, clouds, markerMeshes, drag: null, isDragging: false,
-      zoom: 3.35, focusTarget: null, baseRotation: { ...initialRotation },
+      scene,
+      camera,
+      group,
+      earth,
+      clouds,
+      atmosphere,
+      atmosphereMaterial,
+      markerMeshes,
+      ambientLight,
+      keyLight,
+      drag: null,
+      isDragging: false,
+      zoom: 3.35,
+      focusTarget: null,
+      baseRotation: { ...initialRotation },
       previewing: false,
+      cloudRotationSpeed: 0.00012, // very slow
     };
 
+    // --- Interaction (pointer / keyboard) – kept almost identical ---
     const raycaster = new THREE.Raycaster();
     const pointer = new THREE.Vector2();
+
     canvas.addEventListener("pointerdown", (event) => {
-      sceneState.drag = { x: event.clientX, y: event.clientY, startX: event.clientX, startY: event.clientY };
+      sceneState.drag = {
+        x: event.clientX,
+        y: event.clientY,
+        startX: event.clientX,
+        startY: event.clientY,
+      };
       sceneState.isDragging = false;
       sceneState.focusTarget = null;
       sceneState.previewing = false;
-      sceneState.baseRotation = { x: group.rotation.x, y: group.rotation.y, z: group.rotation.z };
+      sceneState.baseRotation = {
+        x: group.rotation.x,
+        y: group.rotation.y,
+        z: group.rotation.z,
+      };
       canvas.setPointerCapture(event.pointerId);
     });
+
     canvas.addEventListener("pointermove", (event) => {
       if (!sceneState?.drag) return;
       const dx = event.clientX - sceneState.drag.x;
       const dy = event.clientY - sceneState.drag.y;
-      if (Math.abs(event.clientX - sceneState.drag.startX) + Math.abs(event.clientY - sceneState.drag.startY) > 5) sceneState.isDragging = true;
-      // 世界轴轨道球：可同方向连续旋转，无欧拉角万向节/隐形限位
+      if (
+        Math.abs(event.clientX - sceneState.drag.startX) +
+          Math.abs(event.clientY - sceneState.drag.startY) >
+        5
+      ) {
+        sceneState.isDragging = true;
+      }
       if (dx) group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), dx * 0.005);
       if (dy) group.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), dy * 0.0035);
       const e = new THREE.Euler().setFromQuaternion(group.quaternion, "YXZ");
@@ -436,14 +712,21 @@ async function createGlobe() {
       sceneState.drag.y = event.clientY;
       renderer.render(sceneState.scene, sceneState.camera);
     });
+
     canvas.addEventListener("pointerup", (event) => {
       if (sceneState?.drag && !sceneState.isDragging) {
         const rect = canvas.getBoundingClientRect();
-        pointer.set(((event.clientX - rect.left) / rect.width) * 2 - 1, -((event.clientY - rect.top) / rect.height) * 2 + 1);
+        pointer.set(
+          ((event.clientX - rect.left) / rect.width) * 2 - 1,
+          -((event.clientY - rect.top) / rect.height) * 2 + 1
+        );
         raycaster.setFromCamera(pointer, camera);
         const markerHit = raycaster.intersectObjects(sceneState.markerMeshes)[0];
         const globeHit = raycaster.intersectObject(sceneState.earth)[0];
-        if (markerHit && (!globeHit || markerHit.distance < globeHit.distance)) {
+        if (
+          markerHit &&
+          (!globeHit || markerHit.distance < globeHit.distance)
+        ) {
           selectCountry(markerHit.object.userData.countryCode);
         }
       }
@@ -454,12 +737,22 @@ async function createGlobe() {
         startRendering();
       }
     });
-    canvas.addEventListener("wheel", (event) => {
-      event.preventDefault();
-      sceneState.zoom = THREE.MathUtils.clamp(sceneState.zoom + event.deltaY * 0.002, 2.2, 5.2);
-      camera.position.z = sceneState.zoom;
-      renderer.render(sceneState.scene, sceneState.camera);
-    }, { passive: false });
+
+    canvas.addEventListener(
+      "wheel",
+      (event) => {
+        event.preventDefault();
+        sceneState.zoom = THREE.MathUtils.clamp(
+          sceneState.zoom + event.deltaY * 0.002,
+          2.2,
+          5.2
+        );
+        camera.position.z = sceneState.zoom;
+        renderer.render(sceneState.scene, sceneState.camera);
+      },
+      { passive: false }
+    );
+
     canvas.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
@@ -468,9 +761,15 @@ async function createGlobe() {
       if (["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown"].includes(event.key)) {
         event.preventDefault();
         if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
-          group.rotateOnWorldAxis(new THREE.Vector3(0, 1, 0), event.key === "ArrowLeft" ? -0.18 : 0.18);
+          group.rotateOnWorldAxis(
+            new THREE.Vector3(0, 1, 0),
+            event.key === "ArrowLeft" ? -0.18 : 0.18
+          );
         } else {
-          group.rotateOnWorldAxis(new THREE.Vector3(1, 0, 0), event.key === "ArrowUp" ? -0.18 : 0.18);
+          group.rotateOnWorldAxis(
+            new THREE.Vector3(1, 0, 0),
+            event.key === "ArrowUp" ? -0.18 : 0.18
+          );
         }
         const e = new THREE.Euler().setFromQuaternion(group.quaternion, "YXZ");
         sceneState.baseRotation = { x: e.x, y: e.y, z: e.z };
@@ -478,6 +777,7 @@ async function createGlobe() {
       }
     });
 
+    // --- Resize ---
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(picker.querySelector(".country-picker-scene"));
     sceneState.resizeObserver = resizeObserver;
@@ -490,12 +790,12 @@ async function createGlobe() {
 
       renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
       renderer.setSize(rect.width, rect.height, false);
-      
+
       const aspect = rect.width / rect.height;
       camera.aspect = aspect;
-      
+
       const vh = window.innerHeight;
-      const targetDistance = vh < 750 ? 3.7 : (aspect < 1 ? 3.8 : 3.35);
+      const targetDistance = vh < 750 ? 3.7 : aspect < 1 ? 3.8 : 3.35;
       camera.position.z = targetDistance;
       camera.updateProjectionMatrix();
 
@@ -512,40 +812,67 @@ async function createGlobe() {
     } catch (error) {
       console.warn("[country-selector] Pre-compile skipped.", error);
     }
+
     updateSolarLighting();
-    const refreshIfOpen = () => {
-      if (renderer && sceneState && picker.classList.contains("is-open")) renderer.render(sceneState.scene, sceneState.camera);
-    };
+
+    // --- Progressive texture loading ---
     const prepare = (texture, srgb) => {
       texture.anisotropy = maxAnisotropy;
       if (srgb) texture.colorSpace = THREE.SRGBColorSpace;
       renderer.initTexture?.(texture);
       return texture;
     };
-    textureLoader.loadAsync(globeTextureUrls.night[textureIndex]).then((texture) => {
-      nightUniform.value = prepare(texture, true);
-      refreshIfOpen();
-    }).catch((error) => console.warn("[country-selector] Night map unavailable.", error));
-    textureLoader.loadAsync(globeTextureUrls.clouds[textureIndex]).then((texture) => {
-      clouds.material.alphaMap = prepare(texture, false);
-      clouds.material.needsUpdate = true;
-      clouds.visible = true;
-      refreshIfOpen();
-    }).catch((error) => console.warn("[country-selector] Cloud map unavailable.", error));
+
+    textureLoader
+      .loadAsync(globeTextureUrls.night[textureIndex])
+      .then((texture) => {
+        earthMaterial.uniforms.uNightMap.value = prepare(texture, true);
+        updateSolarLighting();
+        if (picker.classList.contains("is-open")) {
+          renderer.render(sceneState.scene, sceneState.camera);
+        }
+      })
+      .catch((error) =>
+        console.warn("[country-selector] Night map unavailable.", error)
+      );
+
+    textureLoader
+      .loadAsync(globeTextureUrls.clouds[textureIndex])
+      .then((texture) => {
+        clouds.material.alphaMap = prepare(texture, false);
+        clouds.material.needsUpdate = true;
+        clouds.visible = true;
+        if (picker.classList.contains("is-open")) {
+          renderer.render(sceneState.scene, sceneState.camera);
+        }
+      })
+      .catch((error) =>
+        console.warn("[country-selector] Cloud map unavailable.", error)
+      );
+
     Promise.all([
       textureLoader.loadAsync(globeTextureUrls.normal[textureIndex]),
       textureLoader.loadAsync(globeTextureUrls.specular[textureIndex]),
-    ]).then(([normalTexture, specularTexture]) => {
-      earthMaterial.normalMap = prepare(normalTexture, false);
-      earthMaterial.specularMap = prepare(specularTexture, false);
-      earthMaterial.needsUpdate = true;
-      refreshIfOpen();
-    }).catch((error) => console.warn("[country-selector] Relief maps unavailable.", error));
+    ])
+      .then(([normalTexture, specularTexture]) => {
+        earthMaterial.uniforms.uNormalMap.value = prepare(normalTexture, false);
+        earthMaterial.uniforms.uSpecularMap.value = prepare(
+          specularTexture,
+          false
+        );
+        if (picker.classList.contains("is-open")) {
+          renderer.render(sceneState.scene, sceneState.camera);
+        }
+      })
+      .catch((error) =>
+        console.warn("[country-selector] Relief maps unavailable.", error)
+      );
   })().catch((error) => {
     console.error("[country-selector] Globe could not be loaded.", error);
     fallback.hidden = false;
     canvas.hidden = true;
   });
+
   return globeLoadPromise;
 }
 
@@ -565,27 +892,41 @@ function startRendering() {
   }
   if (animationFrame) return;
   const render = () => {
-    if (!picker.classList.contains("is-open")) { animationFrame = 0; return; }
-    if (sceneState.focusTarget) {
-      const g = sceneState.group;
-      const t = sceneState.focusTarget;
-      // 最短角插值飞向目标（含 roll，保证地点居中且北极朝上）
-      g.rotation.y += normalizeAngle(t.y - g.rotation.y) * 0.06;
-      g.rotation.x += normalizeAngle(t.x - g.rotation.x) * 0.06;
-      g.rotation.z += normalizeAngle(t.z - g.rotation.z) * 0.06;
-      const settled = Math.abs(normalizeAngle(t.y - g.rotation.y)) < 0.002
-        && Math.abs(normalizeAngle(t.x - g.rotation.x)) < 0.002
-        && Math.abs(normalizeAngle(t.z - g.rotation.z)) < 0.002;
-      if (settled) {
-        const target = { ...t };
-        if (!sceneState.previewing) sceneState.baseRotation = target;
-        g.rotation.set(target.x, target.y, target.z, "YXZ");
-        sceneState.focusTarget = null;
-      }
+  if (!picker.classList.contains("is-open")) {
+    animationFrame = 0;
+    return;
+  }
+
+  // 云层极慢旋转
+  if (sceneState.clouds?.visible) {
+    sceneState.clouds.rotation.y += sceneState.cloudRotationSpeed || 0.00012;
+  }
+
+  if (sceneState.focusTarget) {
+    const g = sceneState.group;
+    const t = sceneState.focusTarget;
+    g.rotation.y += normalizeAngle(t.y - g.rotation.y) * 0.06;
+    g.rotation.x += normalizeAngle(t.x - g.rotation.x) * 0.06;
+    g.rotation.z += normalizeAngle(t.z - g.rotation.z) * 0.06;
+
+    const settled =
+      Math.abs(normalizeAngle(t.y - g.rotation.y)) < 0.002 &&
+      Math.abs(normalizeAngle(t.x - g.rotation.x)) < 0.002 &&
+      Math.abs(normalizeAngle(t.z - g.rotation.z)) < 0.002;
+
+    if (settled) {
+      const target = { ...t };
+      if (!sceneState.previewing) sceneState.baseRotation = target;
+      g.rotation.set(target.x, target.y, target.z, "YXZ");
+      sceneState.focusTarget = null;
     }
-    renderer.render(sceneState.scene, sceneState.camera);
-    animationFrame = sceneState.focusTarget ? requestAnimationFrame(render) : 0;
-  };
+  }
+
+  renderer.render(sceneState.scene, sceneState.camera);
+
+  // 只要选择器开着就继续渲染（云层 + 太阳方向都能实时）
+  animationFrame = requestAnimationFrame(render);
+};
   animationFrame = requestAnimationFrame(render);
 }
 
@@ -645,11 +986,10 @@ async function openPicker(event) {
   window.clearInterval(solarClockTimer);
   solarClockTimer = window.setInterval(() => {
     updateSolarLighting();
-    if (renderer && sceneState && picker.classList.contains("is-open")) {
-      renderer.render(sceneState.scene, sceneState.camera);
-    }
+    if (renderer && sceneState && picker.classList.contains("is-open")) renderer.render(sceneState.scene, sceneState.camera);
   }, 30000);
   startRendering();
+  updateSolarLighting(); // earthShader exists after the first compile; do not wait for the 30 s tick
 }
 
 function closePicker() {

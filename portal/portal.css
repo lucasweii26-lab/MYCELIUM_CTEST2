@@ -1,0 +1,57 @@
+/* Resident portal. Reuses the admin component styles (panels, buttons, forms, tables) and the shared corner tokens. */
+@import url("../admin/admin.css");
+
+body { background: var(--paper); }
+.portal-app { min-height: 100vh; }
+.portal-top { position: sticky; top: 0; z-index: 20; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 18px; padding: 14px clamp(16px, 4vw, 40px); background: var(--pine); color: var(--paper); }
+.portal-brand { margin-right: auto; }
+.portal-brand .eyebrow { color: #91a98a; display: block; }
+.portal-brand strong { font: 600 1.35rem "Playfair Display", Georgia, serif; }
+.portal-top a, .portal-top button.link { color: var(--paper); text-decoration: none; font-size: .84rem; background: none; border: 0; cursor: pointer; font-family: inherit; }
+.portal-top .who { font-size: .78rem; color: #dce4d5; overflow-wrap: anywhere; }
+.bell { position: relative; padding: 6px 10px !important; border: 1px solid rgba(244, 241, 231, .3) !important; border-radius: var(--corner-pill); }
+.bell b { margin-left: 6px; padding: 1px 7px; border-radius: var(--corner-pill); background: #d9b18d; color: var(--pine); font-size: .72rem; }
+.portal-tabs { display: flex; gap: 6px; overflow-x: auto; padding: 12px clamp(16px, 4vw, 40px) 0; }
+.portal-tabs a { flex: none; padding: 10px 16px; border: 1px solid var(--line); border-radius: var(--cr-xs); corner-shape: var(--corner-shape); background: var(--panel); color: var(--ink); font-size: .85rem; text-decoration: none; }
+.portal-tabs a[aria-current="page"] { background: var(--pine); border-color: var(--pine); color: var(--paper); font-weight: 600; }
+.portal-main { max-width: 1040px; margin: 0 auto; padding: 8px clamp(16px, 4vw, 40px) 90px; }
+.portal-main h1 { margin: 22px 0 4px; font: 600 clamp(1.8rem, 4vw, 2.5rem) "Playfair Display", Georgia, serif; }
+.portal-main .lead { margin: 0 0 6px; color: var(--soft); max-width: 62ch; }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-top: 20px; }
+.card-stat { padding: 20px; border: 1px solid var(--line); border-radius: var(--cr-lg); corner-shape: var(--corner-shape); background: var(--panel); }
+.card-stat span { display: block; color: var(--soft); font-size: .78rem; letter-spacing: .08em; text-transform: uppercase; }
+.card-stat strong { display: block; margin-top: 6px; font: 600 1.7rem "Playfair Display", Georgia, serif; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: var(--corner-pill); background: #e5e9dc; color: var(--pine); font-size: .74rem; font-weight: 600; white-space: nowrap; }
+.pill.warn { background: #f1dfcc; color: var(--copper); }
+.pill.ok { background: #cfe3d4; }
+.pill.bad { background: #f2d4cf; color: #8a2a1f; }
+.auth-wrap { min-height: 100vh; display: grid; place-items: center; padding: 24px; }
+.auth-card { width: min(100%, 460px); padding: clamp(26px, 5vw, 44px); border: 1px solid var(--line); border-radius: var(--cr-xl); corner-shape: var(--corner-shape); background: var(--panel); box-shadow: var(--shadow); }
+.auth-card h1 { margin: 6px 0 4px; font: 600 2rem "Playfair Display", Georgia, serif; }
+.auth-card .switch { margin-top: 14px; font-size: .86rem; color: var(--soft); }
+.auth-card .switch button { border: 0; background: none; color: var(--copper); font: inherit; font-weight: 600; text-decoration: underline; cursor: pointer; }
+.sandbox-banner { margin: 0 0 14px; padding: 10px 14px; border: 1px dashed var(--copper); border-radius: var(--cr-xs); corner-shape: var(--corner-shape); background: #f6ecdf; color: var(--copper); font-size: .82rem; font-weight: 600; }
+.slot-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); gap: 8px; margin-top: 12px; }
+.slot { padding: 10px 6px; border: 1px solid var(--line); border-radius: var(--cr-xs); corner-shape: var(--corner-shape); background: var(--panel); font: 600 .82rem "DM Sans", sans-serif; cursor: pointer; }
+.slot:hover:not(:disabled) { border-color: var(--moss); background: #e5e9dc; }
+.slot[aria-pressed="true"] { background: var(--pine); border-color: var(--pine); color: var(--paper); }
+.slot:disabled { opacity: .45; text-decoration: line-through; cursor: not-allowed; }
+.facility-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 12px; margin-top: 16px; }
+.facility-card { padding: 16px; text-align: left; border: 1px solid var(--line); border-radius: var(--cr-md); corner-shape: var(--corner-shape); background: var(--panel); cursor: pointer; font: inherit; color: inherit; }
+.facility-card[aria-pressed="true"] { border-color: var(--pine); box-shadow: inset 0 0 0 2px var(--pine); }
+.facility-card strong { display: block; font: 600 1.15rem "Playfair Display", Georgia, serif; }
+.facility-card small { color: var(--soft); }
+.timeline { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0 0; padding: 0; list-style: none; }
+.timeline li { padding: 3px 9px; border-radius: var(--corner-pill); background: #e5e9dc; color: var(--soft); font-size: .72rem; }
+.timeline li.done { background: var(--pine); color: var(--paper); }
+.note-box { margin-top: 10px; padding: 10px 12px; border-left: 3px solid var(--moss); background: #eef2e6; font-size: .86rem; }
+.notif { display: grid; gap: 2px; padding: 12px 14px; border-bottom: 1px solid var(--line); }
+.notif.unread { background: #f1efe3; }
+.notif small { color: var(--soft); }
+.checkout-dialog { width: min(94vw, 520px); }
+.method-row { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+.method-row button { padding: 9px 14px; border: 1px solid var(--line); border-radius: var(--corner-pill); background: var(--panel); font: 600 .8rem "DM Sans", sans-serif; cursor: pointer; }
+.method-row button[aria-pressed="true"] { background: var(--pine); color: var(--paper); border-color: var(--pine); }
+.fake-qr { width: 168px; height: 168px; margin: 8px auto; image-rendering: pixelated; border: 6px solid #fff; box-shadow: 0 0 0 1px var(--line); }
+.form-grid { display: grid; gap: 14px; margin-top: 14px; }
+@media (max-width: 720px) { .portal-top { position: static; } }

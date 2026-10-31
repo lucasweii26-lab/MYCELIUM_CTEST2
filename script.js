@@ -78,6 +78,7 @@ const handleChat = async () => {
 
   isChatHandling = true;
   chatInput.value = "";
+  chatInput.dispatchEvent(new Event("input", { bubbles: true })); // lets draft-autosave.js drop the sent draft
   chatInput.style.height = `${inputInitHeight}px`;
 
   // 发送后立即复原快捷图标显示
@@ -142,6 +143,7 @@ const setChatbotOpen = (isOpen) => {
   chatbotToggler.classList.toggle("active", isOpen);
   chatbotToggler.setAttribute("aria-expanded", String(isOpen));
   chatbotPanel.setAttribute("aria-hidden", String(!isOpen));
+  chatbotPanel.inert = !isOpen;
   if (isOpen) {
     layoutChatbot();
     chatInput.focus();
@@ -459,7 +461,7 @@ function closeReportForm() {
   if (!reportModal || !reportForm) return;
   reportModal.classList.remove("active");
   reportModal.setAttribute("aria-hidden", "true");
-  reportForm.reset();
+  // Typed answers are kept on close (draft); the form is only reset after a successful submit.
 }
 
 if (reportBtn) reportBtn.addEventListener("click", openReportForm);
@@ -507,6 +509,7 @@ if (reportForm && chatbox) {
         await reports.add(docData);
       }
 
+      reportForm.reset();
       closeReportForm();
       const successMsg = t("report.successAlert");
       

@@ -65,6 +65,7 @@
           duration: 0.9,
           delay: delay / 1000,
           ease: "power3.out",
+          clearProps: "filter",
           scrollTrigger: { trigger: element, start: "top 88%", once: true },
         },
       );

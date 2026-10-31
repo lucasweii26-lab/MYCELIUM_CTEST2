@@ -1,18 +1,9 @@
 // Live news v2 — plays the selected region's news channels from YouTube.
 // Classic script. Channels come from `liveNews` in country-config.js (window.MYCELIUM_COUNTRY_CONFIG).
-//
-// What it does
-//  - Tabs are ordered: channels that are LIVE first, then the ones this visitor watches most
-//    (remembered in localStorage on this device only), then the order in country-config.js.
-//  - "Is it live?" needs a tiny status endpoint (workers/live-status.js). Without `liveStatusUrl` in
-//    country-config.js no channel shows a badge and each one is simply attempted on Play.
-//  - Pressing Play on a channel known to be offline asks whether to open its latest-news page instead.
-//  - The player loads only on Play and is removed when hidden / off-screen / idle (saves data).
-//  - The section and the player fade in and out so nothing pops in or vanishes abruptly.
 (() => {
   const SECTION_ID = "liveNews";
   const UNLOAD_AFTER_HIDDEN_MS = 60 * 1000;
-  const UNLOAD_AFTER_OFFSCREEN_MS = 60 * 1000;
+  const UNLOAD_AFTER_OFFSCREEN_MS = 120 * 1000; // 离屏 2 分钟后再彻底卸载节省带宽
   const UNLOAD_AFTER_IDLE_MS = 5 * 60 * 1000;
   const STATUS_REFRESH_MS = 5 * 60 * 1000;
   const FADE_MS = 380;
@@ -62,9 +53,9 @@
   const wait = (ms) => new Promise((resolve) => setTimeout(resolve, calm() ? 0 : ms));
 
   let section = null;
-  let all = [];              // validated channels in config order
-  let order = [];            // channel ids in display order
-  let status = {};           // id -> { live: boolean, videoId?: string }
+  let all = [];              
+  let order = [];            
+  let status = {};           
   let activeId = "";
   let userPicked = false;
   let playing = false;
@@ -76,10 +67,91 @@
   let lastActivity = Date.now();
   let frameToken = 0;
 
-  // ---------- preference memory (this device only) ----------
+  // =========================================================================
+  // 核心智能音频调度状态（跟踪视口与播放器内部状态）
+  // =========================================================================
+  let isNewsIframeMounted = false;
+  let isNewsVideoPlaying = false; 
+  let isNewsInView = false;       
+  let bgAudioFadeInterval = null;
+
+  function syncBackgroundMusic() {
+    const audio = document.getElementById("bgWhiteNoise");
+    if (!audio) return;
+
+    // 只有同时满足以下三个条件才静音白噪音：
+    // 1. 播放器已经挂载（用户按了 Play live）
+    // 2. 视频正在播放（没有在 YouTube 里面按暂停）
+    // 3. 当前屏幕正好看着新闻模块（在视口内）
+    const shouldMute = isNewsIframeMounted && isNewsVideoPlaying && isNewsInView;
+    const targetVol = shouldMute ? 0 : 0.3; // 恢复目标为默认音量 0.3
+
+    if (bgAudioFadeInterval) clearInterval(bgAudioFadeInterval);
+
+    // 如果需要恢复声音且原本被 pause 了，先唤醒播放
+    if (!shouldMute && audio.paused) {
+      if (localStorage.getItem('bgNoiseAutoplayAllowed') === 'true') {
+        audio.muted = false;
+        const p = audio.play();
+        if (p) p.catch(() => {});
+      }
+    }
+
+    const steps = 18;
+    const duration = shouldMute ? 400 : 600;
+    const stepTime = duration / steps;
+    const startVol = audio.volume;
+    const volStep = (targetVol - startVol) / steps;
+    let stepCount = 0;
+
+    bgAudioFadeInterval = setInterval(() => {
+      stepCount++;
+      let nextVol = startVol + volStep * stepCount;
+      if (nextVol > 0.3) nextVol = 0.3;
+      if (nextVol < 0) nextVol = 0;
+
+      try { audio.volume = nextVol; } catch (e) {}
+
+      if (stepCount >= steps) {
+        clearInterval(bgAudioFadeInterval);
+        bgAudioFadeInterval = null;
+        try { audio.volume = targetVol; } catch (e) {}
+        if (targetVol === 0) audio.pause();
+      }
+    }, stepTime);
+  }
+
+  // 监听 YouTube 内部通过 postMessage 发出的事件广播
+  window.addEventListener("message", (event) => {
+    if (!event.data) return;
+    let data = event.data;
+    if (typeof data === "string") {
+      try { data = JSON.parse(data); } catch (e) { return; }
+    }
+    
+    // YouTube Iframe 状态变化: 1 = Playing, 2 = Paused, 0 = Ended
+    if (data && data.event === "onStateChange") {
+      if (data.info === 1) {
+        isNewsVideoPlaying = true;
+      } else if (data.info === 2 || data.info === 0) {
+        isNewsVideoPlaying = false;
+      }
+      syncBackgroundMusic();
+    } else if (data && data.event === "infoDelivery" && data.info) {
+      if (typeof data.info.playerState !== "undefined") {
+        if (data.info.playerState === 1) {
+          isNewsVideoPlaying = true;
+        } else if (data.info.playerState === 2 || data.info.playerState === 0) {
+          isNewsVideoPlaying = false;
+        }
+        syncBackgroundMusic();
+      }
+    }
+  });
+
   const readPlays = () => { try { return JSON.parse(localStorage.getItem(PREF_KEY) || "{}") || {}; } catch { return {}; } };
   const bumpPlays = (id) => {
-    try { const plays = readPlays(); plays[id] = (plays[id] || 0) + 1; localStorage.setItem(PREF_KEY, JSON.stringify(plays)); } catch { /* storage unavailable */ }
+    try { const plays = readPlays(); plays[id] = (plays[id] || 0) + 1; localStorage.setItem(PREF_KEY, JSON.stringify(plays)); } catch { }
   };
 
   function injectStyle() {
@@ -143,32 +215,32 @@
     document.head.append(style);
   }
 
-  // ---------- config ----------
   const activeConfig = () => window.MYCELIUM_COUNTRY_CONFIG || {};
   const byId = (id) => all.find((c) => c.id === id);
   const current = () => byId(activeId);
 
   function readChannels(config = activeConfig()) {
     const list = Array.isArray(config.liveNews) ? config.liveNews : [];
-    // Only well-formed IDs are accepted, so a typo in config can never produce an odd URL.
     return list.filter((c) => c && c.id && c.name && (CHANNEL_ID.test(c.youtubeChannelId || "") || VIDEO_ID.test(c.youtubeVideoId || "")));
   }
 
+  // 关键：加入 enablejsapi=1 以开启与 YouTube 播放器的通信协议
   function embedSrc(channel) {
     const base = "https://www.youtube-nocookie.com/embed/";
-    const params = "autoplay=1&mute=1&playsinline=1&rel=0&modestbranding=1";
+    const origin = (window.location.origin && window.location.origin !== "null") ? `&origin=${encodeURIComponent(window.location.origin)}` : "";
+    const params = `autoplay=1&mute=0&playsinline=1&rel=0&modestbranding=1&enablejsapi=1${origin}`;
     const liveVideo = status[channel.id]?.videoId;
     if (liveVideo && VIDEO_ID.test(liveVideo)) return `${base}${encodeURIComponent(liveVideo)}?${params}`;
     return CHANNEL_ID.test(channel.youtubeChannelId || "")
       ? `${base}live_stream?channel=${encodeURIComponent(channel.youtubeChannelId)}&${params}`
       : `${base}${encodeURIComponent(channel.youtubeVideoId)}?${params}`;
   }
+
   const watchUrl = (channel) => CHANNEL_ID.test(channel.youtubeChannelId || "")
     ? `https://www.youtube.com/channel/${encodeURIComponent(channel.youtubeChannelId)}/live`
     : `https://www.youtube.com/watch?v=${encodeURIComponent(channel.youtubeVideoId)}`;
   const newsUrl = (channel) => (/^https:\/\//.test(channel.newsUrl || "") ? channel.newsUrl : watchUrl(channel));
 
-  // ---------- ordering: live first, then most-watched, then config order ----------
   function computeOrder() {
     const plays = readPlays();
     order = all
@@ -178,7 +250,6 @@
     if (!activeId || !byId(activeId)) activeId = order[0] || "";
   }
 
-  // ---------- DOM ----------
   function build() {
     section = document.createElement("section");
     section.id = SECTION_ID;
@@ -252,7 +323,6 @@
     section.querySelector("#lnNews").href = newsUrl(channel);
   }
 
-  // Cross-fade the frame contents so nothing pops in or out
   async function swapFrame(node) {
     const token = ++frameToken;
     const frame = section.querySelector("#lnFrame");
@@ -319,30 +389,45 @@
 
   const showPoster = () => swapFrame(posterNode());
 
-  // ---------- playing ----------
   function onPlayClicked() {
     const known = status[activeId];
-    if (known && known.live === false) { swapFrame(dialogNode()); return; } // known offline: ask first
+    if (known && known.live === false) { swapFrame(dialogNode()); return; } 
     play();
   }
 
   function play() {
     const channel = current();
     if (!channel) return;
+
+    // 状态标记：播放器已挂载并开始播放
+    isNewsIframeMounted = true;
+    isNewsVideoPlaying = true;
+    syncBackgroundMusic();
+
     const iframe = document.createElement("iframe");
     iframe.src = embedSrc(channel);
     iframe.title = `${channel.name} — ${L().kicker}`;
     iframe.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
     iframe.referrerPolicy = "strict-origin-when-cross-origin";
     iframe.allowFullscreen = true;
-    const reveal = () => iframe.classList.add("is-ready");
+    
+    const reveal = () => {
+      iframe.classList.add("is-ready");
+      // 发送监听握手协议，激活 YouTube 的 postMessage 广播
+      try {
+        iframe.contentWindow.postMessage(JSON.stringify({ event: "listening" }), "*");
+      } catch (e) {}
+    };
+
     iframe.addEventListener("load", reveal, { once: true });
-    setTimeout(reveal, 4000); // never leave the frame blank if load never fires
+    setTimeout(reveal, 4000); 
+
     playing = true;
     suspended = false;
     lastActivity = Date.now();
     bumpPlays(channel.id);
     startIdleWatch();
+
     swapFrame(iframe);
   }
 
@@ -353,6 +438,12 @@
     clearTimeout(hiddenTimer);
     clearTimeout(offscreenTimer);
     clearInterval(idleTimer);
+
+    // 状态清理：新闻播放器卸载
+    isNewsIframeMounted = false;
+    isNewsVideoPlaying = false;
+    syncBackgroundMusic();
+
     showPoster();
   }
 
@@ -368,10 +459,14 @@
     if (wasPlaying) {
       const known = status[id];
       if (known && known.live === false) swapFrame(dialogNode()); else play();
-    } else showPoster();
+    } else {
+      isNewsIframeMounted = false;
+      isNewsVideoPlaying = false;
+      syncBackgroundMusic();
+      showPoster();
+    }
   }
 
-  // ---------- save bandwidth: hidden tab, scrolled away, idle ----------
   function startIdleWatch() {
     clearInterval(idleTimer);
     idleTimer = setInterval(() => { if (playing && Date.now() - lastActivity > UNLOAD_AFTER_IDLE_MS) unload(true); }, 30 * 1000);
@@ -384,53 +479,95 @@
     if (document.hidden && playing) hiddenTimer = setTimeout(() => unload(true), UNLOAD_AFTER_HIDDEN_MS);
   });
 
-  // Scroll-linked fade: the whole section fades IN as it rises into view and fades OUT as it leaves,
-  // tied to the scroll position (so it is clearly visible and reverses when you scroll back).
-  // Uses the site's GSAP + ScrollTrigger (shared with Lenis); falls back to class-based fades without them.
-  // Opacity and a small lift only: no blur/filter, which would force the video layer to re-composite.
-function watchVisibility() {
-    if (!("IntersectionObserver" in window) || calm()) { section.classList.add("is-visible"); return; }
+  // =========================================================================
+  // 核心视口滑动侦测（滑走立即恢复背景音，滑回且在播放时立即静音）
+  // =========================================================================
+  function watchVisibility() {
+    if (!("IntersectionObserver" in window)) { 
+      section.classList.add("is-visible"); 
+      isNewsInView = true;
+      return; 
+    }
+
     new IntersectionObserver(([entry]) => {
-      section.classList.toggle("is-visible", entry.isIntersecting && entry.intersectionRatio > 0.12);
+      // 只要新闻模块在屏幕中的可见面积超过 15%，算作在视口内
+      const inView = entry.isIntersecting && entry.intersectionRatio > 0.15;
+      section.classList.toggle("is-visible", inView);
+
+      // 实时更新视口状态并调度音乐
+      isNewsInView = inView;
+      syncBackgroundMusic();
+
       if (!entry.isIntersecting) {
         clearTimeout(offscreenTimer);
         if (playing) offscreenTimer = setTimeout(() => unload(true), UNLOAD_AFTER_OFFSCREEN_MS);
       } else {
         clearTimeout(offscreenTimer);
       }
-    }, { threshold: [0, 0.12, 0.3] }).observe(section);
+    }, { threshold: [0, 0.15, 0.5] }).observe(section);
     
-    // Safety fallback: if it's already in viewport but hasn't triggered
     setTimeout(() => {
-      if (!section.classList.contains("is-visible") && section.getBoundingClientRect().top < innerHeight) section.classList.add("is-visible");
+      if (!section.classList.contains("is-visible") && section.getBoundingClientRect().top < innerHeight) {
+        section.classList.add("is-visible");
+        isNewsInView = true;
+      }
     }, 1000);
   }
-  // ---------- live status (optional endpoint) ----------
+
   async function refreshStatus() {
+    if (!all.length) return;
+
     const url = activeConfig().liveStatusUrl;
-    if (!/^https:\/\//.test(url || "") || !all.length) return;
-    const ids = all.map((c) => c.youtubeChannelId).filter(Boolean).join(",");
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), 8000);
+    const isDummyUrl = !url || url.includes("mycelium-community.workers.dev");
+
     try {
-      const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}ids=${encodeURIComponent(ids)}`, { signal: controller.signal });
-      if (!response.ok) throw new Error(`status ${response.status}`);
-      const data = await response.json();
       status = {};
-      all.forEach((c) => {
-        const entry = data?.[c.youtubeChannelId];
-        if (entry && typeof entry.live === "boolean") status[c.id] = { live: entry.live, videoId: VIDEO_ID.test(entry.videoId || "") ? entry.videoId : "" };
-      });
+      
+      if (!isDummyUrl) {
+        const ids = all.map((c) => c.youtubeChannelId).filter(Boolean).join(",");
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), 8000);
+        const response = await fetch(`${url}${url.includes("?") ? "&" : "?"}ids=${encodeURIComponent(ids)}`, { signal: controller.signal });
+        clearTimeout(timer);
+        if (!response.ok) throw new Error(`status ${response.status}`);
+        const data = await response.json();
+        
+        all.forEach((c) => {
+          const entry = data?.[c.youtubeChannelId];
+          if (entry && typeof entry.live === "boolean") {
+            status[c.id] = { live: entry.live, videoId: VIDEO_ID.test(entry.videoId || "") ? entry.videoId : "" };
+          }
+        });
+      } else {
+        for (const c of all) {
+          if (!c.youtubeChannelId) continue;
+          try {
+            const targetUrl = encodeURIComponent(`https://www.youtube.com/channel/${c.youtubeChannelId}/live`);
+            const res = await fetch(`https://api.allorigins.win/get?url=${targetUrl}`);
+            const data = await res.json();
+            const html = data.contents || "";
+            
+            if (html.includes('"isLiveNow":true')) {
+              const match = html.match(/<link rel="canonical" href="https:\/\/www\.youtube\.com\/watch\?v=([\w-]{11})"/);
+              status[c.id] = { live: true, videoId: match ? match[1] : "" };
+            } else {
+              status[c.id] = { live: false, videoId: "" };
+            }
+          } catch (e) {
+          }
+        }
+      }
+
       if (!playing) {
         computeOrder();
-        if (!userPicked) activeId = order[0] || activeId; // follow the live channel until the visitor chooses
+        if (!userPicked) activeId = order[0] || activeId; 
         renderTabs();
         showPoster();
-      } else renderTabs();
+      } else {
+        renderTabs();
+      }
     } catch (error) {
-      console.warn("[live-news] status endpoint unavailable; badges hidden", error);
-    } finally {
-      clearTimeout(timer);
+      console.warn("[live-news] live status check failed", error);
     }
   }
 
@@ -443,17 +580,21 @@ function watchVisibility() {
     activeId = "";
     clearInterval(idleTimer);
     clearInterval(statusTimer);
-    section.hidden = all.length === 0; // a region with no channels simply has no news section
+    section.hidden = all.length === 0; 
     if (!all.length) return;
+    
     computeOrder();
     applyLabels();
     renderTabs();
     section.querySelector("#lnFrame").replaceChildren(posterNode());
     refreshLinks();
+    
     refreshStatus();
-    if (/^https:\/\//.test(activeConfig().liveStatusUrl || "")) {
-      statusTimer = setInterval(() => { if (!document.hidden) refreshStatus(); }, STATUS_REFRESH_MS);
-    }
+    
+    statusTimer = setInterval(() => { 
+      if (!document.hidden) refreshStatus(); 
+    }, STATUS_REFRESH_MS);
+    
     window.MYCELIUM_SCROLL_TRIGGER?.refresh();
   }
 
@@ -474,9 +615,7 @@ function watchVisibility() {
     requestAnimationFrame(() => window.MYCELIUM_SCROLL_TRIGGER?.refresh());
   }
 
-  // Run after the module scripts (country-selector.js) have set window.MYCELIUM_COUNTRY_CONFIG.
   if (document.readyState === "complete") init();
   else document.addEventListener("DOMContentLoaded", init, { once: true });
-  // Safety net: if the region config was not ready at DOMContentLoaded, try once more after load.
   window.addEventListener("load", () => { if (section && section.hidden) refresh(); }, { once: true });
 })();

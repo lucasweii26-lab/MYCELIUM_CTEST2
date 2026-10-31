@@ -170,7 +170,7 @@
                 </div>
             </div>
          </div>
-         <div class="hero-dots" role="tablist" aria-label="Community sections">
+          <div class="hero-dots" role="group" aria-label="Community sections">
             <button class="hero-dot active" type="button" data-index="0" aria-label="Announcements"></button>
             <button class="hero-dot" type="button" data-index="1" aria-label="Facilities"></button>
             <button class="hero-dot" type="button" data-index="2" aria-label="Services"></button>
@@ -524,7 +524,7 @@
         <span class="chatbot-close-icon" aria-hidden="true">×</span>
     </button>
 
-    <aside class="chatbot" aria-label="Smart Community chatbot" aria-hidden="true" data-lenis-prevent>
+    <aside class="chatbot" aria-label="Smart Community chatbot" aria-hidden="true" inert data-lenis-prevent>
         <header class="chatbot-header">
             <button class="report-btn" type="button" aria-label="Submit feedback" data-i18n="chatbot.report">Report</button>
             <h2 data-i18n="chatbot.title">Community Assistant</h2>
@@ -869,6 +869,7 @@
         <a href="#" data-doc="privacy" data-i18n="footer.privacy">Privacy Policy</a>
         <a href="#" data-doc="terms" data-i18n="footer.terms">Terms of Service</a>
         <a href="#" data-doc="rules" data-i18n="footer.rules">Community Rules</a>
+        <a href="/portal/" class="resident-portal-link" id="residentPortalLink">Resident Portal</a>
     </div>
 </div>
     </footer>
@@ -876,9 +877,8 @@
 <audio
   id="bgWhiteNoise"
   src="./audio/howdoyoudance.mp3"
-  preload="auto"
+  preload="none"
   loop
-  autoplay
   style="display: none; pointer-events: none;"
   aria-hidden="true"
 ></audio>
@@ -901,8 +901,8 @@
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-app-compat.js" defer></script>
+<script src="https://www.gstatic.com/firebasejs/12.16.0/firebase-firestore-compat.js" defer></script>
 <script src="./region-paths.js"></script>
     <script src="https://unpkg.com/lenis@1.3.26/dist/lenis.min.js" defer></script>
     <script src="https://cdn.jsdelivr.net/npm/gsap@3.15.0/dist/gsap.min.js" defer></script>
@@ -912,6 +912,7 @@
     <script src ="./app.js" defer></script>
     <script src ="./script.js" defer></script>
     <script src="./chat-orb.js" defer></script>
+    <script src="./draft-autosave.js" defer></script>
     <script src ="./hero-sequence.js" defer></script>
     <script src="./scroll-story.js" defer></script>
     <script src="./gallery.js" defer></script>

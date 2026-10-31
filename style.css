@@ -396,17 +396,18 @@ nav#nav {
   left: 12px;
   right: 12px;
   bottom: 0px;
-  height: 1.5px;
+  height: 2px;
   background: var(--copper, #75503d);
   transform: scaleX(0);
-  transform-origin: left;
-  transition: transform 0.28s var(--ease);
+  transform-origin: bottom right; /* leaving: the line retracts toward the right */
+  transition: transform 0.25s ease-out;
 }
 .menuItem:hover, .menuItem.active {
   color: var(--pine, #183d32);
 }
 .menuItem:hover::after, .menuItem.active::after {
   transform: scaleX(1);
+  transform-origin: bottom left; /* entering: the line draws from the left */
 }
 
 /* Apple 风格平滑展开搜索栏 */
@@ -583,6 +584,8 @@ nav#nav.is-shrunk .menuItem.active {
   text-shadow: 0 0 10px rgba(255, 255, 255, 0.45);
 }
 nav#nav.is-shrunk .menuItem::after {
+  left: 8px;
+  right: 8px;
   background: var(--copper-soft, #91a98a);
 }
 
@@ -1635,7 +1638,7 @@ nav#nav.is-shrunk .menuItem::after {
   /* 站点墨绿 glossy：上浅下深 + 顶边内高光（同 btn-glossy 原理） */
   border: 1px solid #123228;
   border-radius: 50%;
-  background: transparent;
+  background: linear-gradient(to bottom, #1f4d40 0%, var(--pine, #183d32) 48%, #123228 100%);
   color: var(--paper, #f4f1e7);
   cursor: pointer;
   box-shadow:
@@ -2260,20 +2263,20 @@ body.chrome-ready .chatbot-toggler:active {
   left: 0;
   right: 0;
   top: 50%;
-  padding: 0 12px;
+  padding: 0 8px;
   text-align: center;
   white-space: nowrap;
-  font: 600 0.7rem var(--sans, sans-serif);
-  letter-spacing: 0.1em;
+  font: 600 0.62rem var(--sans, sans-serif);
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   opacity: 0;
-  transform: translateY(calc(-50% + 22px));
+  transform: translateY(calc(-50% + 18px));
   transition: transform 0.3s var(--ease), opacity 0.3s var(--ease);
   pointer-events: none;
 }
 .back-to-top-btn:hover,
 .back-to-top-btn:focus-visible {
-  width: 156px;
+  width: 124px;
   background: var(--moss);
 }
 .back-to-top-btn:hover .back-to-top-icon,
@@ -3478,3 +3481,7 @@ html.ga-lock { overflow: hidden; }
   .vi-register { right: 14px; bottom: 14px; }
   .vi-meta { padding: 18px 16px; }
 }
+
+/* Feature modal: items that are planned but not live yet */
+.feature-soon-chip { display: inline-block; margin-top: 8px; padding: 2px 10px; border: 1px solid var(--line); border-radius: var(--corner-pill); background: rgba(244, 241, 231, .6); color: var(--copper); font-size: .62rem; font-style: normal; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+.feature-soon-note { margin: 16px 0 0; color: var(--copper); font-size: .86rem; font-weight: 600; }

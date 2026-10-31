@@ -1,4 +1,6 @@
 import { getGallerySeed } from "../gallery-seed.js";
+import { VOLUNTEER_STARTERS } from "../volunteer-seed.js";
+import { createPortalAdmin, PORTAL_ROUTE_TITLES, PORTAL_NAV } from "./portal-admin.js";
 
 // Admin-only browser UI. Firestore Rules, not this client check, enforce access.
 // Firebase's web config is public project metadata; no service-account secret belongs here.
@@ -23,10 +25,12 @@ const routeTitles = {
   "/admin/dashboard": "Dashboard",
   "/admin/newsletter": "Newsletter subscribers",
   "/admin/volunteer": "Volunteer applications",
+  "/admin/volunteer-cards": "Volunteer cards",
   "/admin/announcements": "Announcements",
   "/admin/events": "Events calendar",
   "/admin/gallery": "Gallery"
 };
+Object.assign(routeTitles, PORTAL_ROUTE_TITLES);
 const REGION_PATHS = window.MYCELIUM_REGION_PATHS;
 const SITES = REGION_PATHS.SITES;                       // MY_PP, MY_JB, US_PL
 const initialRegion = new URLSearchParams(location.search).get("region");
@@ -174,12 +178,14 @@ function shell(content, active, user) {
     ["/admin/events", "Events", "▣"],
     ["/admin/gallery", "Gallery", "▧"],
     ["/admin/newsletter", "Newsletter", "✉"],
-    ["/admin/volunteer", "Volunteers", "♧"]
+    ["/admin/volunteer-cards", "Volunteer cards", "❋"],
+    ["/admin/volunteer", "Volunteer sign-ups", "♧"],
+    ...PORTAL_NAV
   ];
   app.innerHTML = `<div class="shell">
     <aside class="sidebar"><div class="sidebar-top"><div><span class="eyebrow">MYCELIUM RESIDENCES</span><p class="side-brand">Admin desk</p><label class="region-switch">Data region (country · city)<select id="adminRegionSelect" aria-label="Choose admin data region">${adminCountryScopes.map((code) => `<option value="${code}" ${code === adminCountryCode ? "selected" : ""}>${SITES[code].label}</option>`).join("")}</select></label></div></div>
       <nav class="nav" aria-label="Admin navigation">${links.map(([href, text, icon]) => `<a href="${href}" data-route="${href}" ${active === href ? 'aria-current="page"' : ""}><span class="nav-icon" aria-hidden="true">${icon}</span><span>${text}</span></a>`).join("")}</nav>
-      <div class="sidebar-bottom"><a class="site-return" href="${SITES[adminCountryCode]?.home || "/"}">← Return to ${SITES[adminCountryCode]?.label || "community"} site</a><span class="user-email">${escapeHtml(user.email)}</span><button class="button secondary" id="signOut">Sign out</button></div>
+      <div class="sidebar-bottom"><span class="user-email">${escapeHtml(user.email)}</span><div class="sidebar-actions"><a class="admin-action admin-action-back site-return" href="${SITES[adminCountryCode]?.home || "/"}" data-tip="Back to ${escapeHtml(SITES[adminCountryCode]?.label || "community")} site" aria-label="Back to ${escapeHtml(SITES[adminCountryCode]?.label || "community")} site"><span class="admin-action-pill"><span class="admin-action-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M12 19l-7-7 7-7"/></svg></span><span class="admin-action-text">Back</span></span></a><button class="admin-action admin-action-logout" id="signOut" type="button" aria-label="Log out"><span class="admin-action-pill"><span class="admin-action-icon"><svg viewBox="0 0 512 512" fill="currentColor" aria-hidden="true"><path d="M377.9 105.9L500.7 228.7c7.2 7.2 11.3 17.1 11.3 27.3s-4.1 20.1-11.3 27.3L377.9 406.1c-6.4 6.4-15 9.9-24 9.9c-18.7 0-33.9-15.2-33.9-33.9l0-62.1-128 0c-17.7 0-32-14.3-32-32l0-64c0-17.7 14.3-32 32-32l128 0 0-62.1c0-18.7 15.2-33.9 33.9-33.9c9 0 17.6 3.6 24 9.9zM160 96L96 96c-17.7 0-32 14.3-32 32l0 256c0 17.7 14.3 32 32 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32l-64 0c-53 0-96-43-96-96L0 128C0 75 43 32 96 32l64 0c17.7 0 32 14.3 32 32s-14.3 32-32 32z"/></svg></span><span class="admin-action-text">Logout</span></span></button></div></div>
     </aside><section class="main"><header class="topbar"><div><span class="eyebrow">COMMUNITY MANAGEMENT</span><h1>${escapeHtml(routeTitles[active])}</h1></div><span class="user-email">Signed in as administrator</span></header>${content}</section>
   </div>`;
   app.querySelectorAll("[data-route]").forEach((link) => link.addEventListener("click", (event) => {
@@ -192,8 +198,24 @@ function shell(content, active, user) {
     renderRoute();
   });
   document.getElementById("signOut").addEventListener("click", async () => {
+    const sure = await confirmAction({
+      eyebrow: "LOG OUT", title: "Log out of the admin desk?",
+      message: "You will be signed out and returned to the login screen. Any form you have not saved will be lost.",
+      okLabel: "Log out", cancelLabel: "Stay",
+    });
+    if (!sure) return;
     await auth.signOut();
     navigate("/admin/login");
+  });
+  const backLink = document.querySelector(".admin-action-back");
+  if (backLink) backLink.addEventListener("click", async (event) => {
+    event.preventDefault();
+    const sure = await confirmAction({
+      eyebrow: "LEAVE ADMIN", title: "Go back to the website?",
+      message: `You will leave the admin desk and open the ${SITES[adminCountryCode]?.label || "community"} site. You stay signed in, but forms you have not saved will be lost.`,
+      okLabel: "Go back", cancelLabel: "Stay here",
+    });
+    if (sure) window.location.href = backLink.href;
   });
 }
 
@@ -343,6 +365,237 @@ function resetEventEditor() {
   form.querySelector("button[type=submit]").textContent = "Add event to calendar";
   document.getElementById("cancelEventEdit").hidden = true;
   document.getElementById("eventFeedback").textContent = "";
+}
+
+/* ------------------------------------------------------------------ */
+/* Volunteer cards: the activities shown in the public Volunteer strip */
+/* Collection: {region}/volunteer_activities (read by the public site) */
+/* Sign-ups submitted by residents stay in "volunteers" (read-only).   */
+/* ------------------------------------------------------------------ */
+
+const VOLUNTEER_TEXT_FIELDS = [
+  ["title", "Activity title", "input"],
+  ["description", "Description", "textarea"],
+  ["bring", "What to bring (optional)", "textarea"],
+  ["location", "Venue / meeting point (optional)", "input"],
+];
+const VOLUNTEER_REQUIRED_EN = new Set(["title", "description"]);
+
+function volunteerLangTabs() {
+  const tabs = LOCALES.map(([code, name], index) => `<button type="button" role="tab" class="lang-tab" id="gtab-${code}" data-lang-tab="${code}" aria-selected="${index === 0}" aria-controls="gpanel-${code}" tabindex="${index === 0 ? 0 : -1}">${escapeHtml(name)}${code === "en" ? " *" : ""}</button>`).join("");
+  const panels = LOCALES.map(([code], index) => `<div class="lang-panel" role="tabpanel" id="gpanel-${code}" data-lang-panel="${code}" aria-labelledby="gtab-${code}" ${index ? "hidden" : ""}>
+    ${VOLUNTEER_TEXT_FIELDS.map(([key, label, kind]) => {
+      const required = code === "en" && VOLUNTEER_REQUIRED_EN.has(key) ? "required" : "";
+      const control = kind === "input"
+        ? `<input name="${key}_${code}" type="text" ${required}>`
+        : `<textarea name="${key}_${code}" rows="3" ${required}></textarea>`;
+      return `<label class="field"><span>${escapeHtml(label)}${required ? " *" : ""}</span>${control}</label>`;
+    }).join("")}</div>`).join("");
+  return `<div class="lang-tabs" role="tablist" aria-label="Text language">${tabs}</div>${panels}<p class="muted">* English is required. Other languages fall back to English when left empty.</p>`;
+}
+
+function refreshVolunteerVideoPreview(form) {
+  const preview = document.getElementById("volunteerVideoPreview");
+  if (!preview) return;
+  const value = String(form.elements.videoUrl.value || "").trim();
+  preview.hidden = !value;
+  const video = preview.querySelector("video");
+  if (value) { if (video.getAttribute("src") !== value) video.setAttribute("src", value); }
+  else video.removeAttribute("src");
+}
+
+function loadVolunteerCardEditor(user) {
+  const content = `
+    <section class="panel update-panel"><h2 id="volunteerCardHeading">Add a volunteer card</h2>
+      <p class="muted">These are the cards residents see in the public Volunteer section. Saved to <code>${escapeHtml(collectionPath("volunteer_activities"))}</code>. Until you add at least one card here, the website keeps showing its built-in cards. Resident sign-ups are in “Volunteer sign-ups”.</p>
+      <form id="volunteerCardForm" class="admin-form">
+        <input name="recordId" type="hidden">
+        <div class="form-row">
+          <label class="field"><span>Activity date</span><input name="date" type="date" required></label>
+          <label class="field"><span>Time (optional)</span><input name="time" type="text" maxlength="40" placeholder="e.g. 8:00 AM"></label>
+        </div>
+        <div class="form-row">
+          <label class="field"><span>Display order (optional)</span><input name="order" type="number" min="1" max="99" step="1" placeholder="1 = first card"><small class="muted">Cards without a number are shown last, by date.</small></label>
+          <label class="field"><span>Publication status</span><select name="isPublished"><option value="true" selected>Published — visible to residents</option><option value="false">Unpublished — hidden from residents</option></select></label>
+        </div>
+        <h3>Video</h3>
+        <div class="field image-field"><label for="vol-videoUrl">Card video</label>
+          <div class="image-row"><input id="vol-videoUrl" name="videoUrl" type="text" inputmode="url" list="volunteerVideoChoices" placeholder="./img/volunteer/tree.mp4 or https://…" autocomplete="off"></div>
+          <datalist id="volunteerVideoChoices">${["tree", "clean", "run", "garden", "food", "book", "wellness"].map((name) => `<option value="./img/volunteer/${name}.mp4"></option>`).join("")}</datalist>
+          <div class="image-preview" id="volunteerVideoPreview" hidden><video muted playsinline controls preload="metadata" style="max-width:320px;width:100%"></video><button class="table-action" type="button" id="volunteerVideoClear">Remove</button></div>
+          <small class="muted">To use a new video, add the MP4 file to the project folder <code>img/volunteer/</code>, deploy, then type its path here (for example <code>./img/volunteer/beach.mp4</code>). A full https:// link to a video hosted elsewhere also works. Short, silent loops (under about 8 MB) work best. Leave empty to use the website’s built-in video that best matches the title.</small></div>
+        <h3>Text by language</h3>${volunteerLangTabs()}
+        <div class="form-actions"><p class="form-feedback" id="volunteerCardFeedback" role="status"></p><button class="button" type="submit">Save volunteer card</button><button class="button secondary" id="cancelVolunteerCardEdit" type="button" hidden>Cancel edit</button></div>
+      </form>
+    </section>
+    <section class="panel update-panel"><h2>Current volunteer cards</h2><p class="muted">The public site shows up to 12 published cards, in this order.</p><div id="currentVolunteerCards" class="status" aria-busy="true">Loading volunteer cards…</div></section>`;
+  shell(content, "/admin/volunteer-cards", user);
+
+  const form = document.getElementById("volunteerCardForm");
+  form.addEventListener("submit", saveVolunteerCard);
+  document.getElementById("cancelVolunteerCardEdit").addEventListener("click", resetVolunteerCardEditor);
+  form.elements.videoUrl.addEventListener("input", () => refreshVolunteerVideoPreview(form));
+  document.getElementById("volunteerVideoClear").addEventListener("click", () => { form.elements.videoUrl.value = ""; refreshVolunteerVideoPreview(form); });
+
+  const tabs = [...form.querySelectorAll("[data-lang-tab]")];
+  tabs.forEach((tab, index) => {
+    tab.addEventListener("click", () => activateGalleryLang(tab.dataset.langTab));
+    tab.addEventListener("keydown", (event) => {
+      if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+      event.preventDefault();
+      const next = tabs[(index + (event.key === "ArrowRight" ? 1 : tabs.length - 1)) % tabs.length];
+      activateGalleryLang(next.dataset.langTab);
+      next.focus();
+    });
+  });
+  form.addEventListener("invalid", (event) => {
+    const panel = event.target.closest?.("[data-lang-panel]");
+    if (panel) activateGalleryLang(panel.dataset.langPanel);
+  }, true);
+
+  loadCurrentVolunteerCards();
+}
+
+function resetVolunteerCardEditor() {
+  const form = document.getElementById("volunteerCardForm");
+  if (!form) return;
+  form.reset();
+  form.elements.recordId.value = "";
+  refreshVolunteerVideoPreview(form);
+  activateGalleryLang("en");
+  document.getElementById("volunteerCardHeading").textContent = "Add a volunteer card";
+  form.querySelector("button[type=submit]").textContent = "Save volunteer card";
+  document.getElementById("cancelVolunteerCardEdit").hidden = true;
+  document.getElementById("volunteerCardFeedback").textContent = "";
+}
+
+function editVolunteerCard(record) {
+  if (!record) return;
+  const form = document.getElementById("volunteerCardForm");
+  form.reset();
+  form.elements.recordId.value = record.id;
+  form.elements.date.value = toIsoDate(record.date);
+  form.elements.time.value = record.time || "";
+  form.elements.order.value = record.order || "";
+  form.elements.isPublished.value = record.isPublished === false ? "false" : "true";
+  form.elements.videoUrl.value = record.videoUrl || "";
+  refreshVolunteerVideoPreview(form);
+  for (const [code] of LOCALES) {
+    for (const [key] of VOLUNTEER_TEXT_FIELDS) form.elements.namedItem(`${key}_${code}`).value = record[`${key}_${code}`] || "";
+  }
+  activateGalleryLang("en");
+  document.getElementById("volunteerCardHeading").textContent = "Edit volunteer card";
+  form.querySelector("button[type=submit]").textContent = "Save changes";
+  document.getElementById("cancelVolunteerCardEdit").hidden = false;
+  document.getElementById("volunteerCardFeedback").textContent = "";
+  form.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+async function saveVolunteerCard(event) {
+  event.preventDefault();
+  const form = event.currentTarget;
+  const feedback = document.getElementById("volunteerCardFeedback");
+  const button = form.querySelector("button[type=submit]");
+  const values = new FormData(form);
+  const read = (key) => String(values.get(key) || "").trim();
+  const recordId = read("recordId");
+  const videoUrl = read("videoUrl");
+  if (videoUrl && !/^(https:\/\/|\.\/|\/)/i.test(videoUrl)) { feedback.textContent = "The video link must start with https:// or ./ (a file already on the website)."; return; }
+  const order = Number(read("order"));
+
+  const FieldValue = firebase.firestore.FieldValue;
+  const ref = recordId ? adminCollection("volunteer_activities").doc(recordId) : adminCollection("volunteer_activities").doc();
+  const record = {
+    countryCode: adminCountryCode,
+    date: read("date"),
+    time: read("time") || FieldValue.delete(),
+    order: Number.isInteger(order) && order > 0 ? order : FieldValue.delete(),
+    isPublished: read("isPublished") !== "false",
+    videoUrl: videoUrl || FieldValue.delete(),
+    updatedAt: FieldValue.serverTimestamp(),
+  };
+  if (!recordId) record.createdAt = FieldValue.serverTimestamp();
+  for (const [code] of LOCALES) {
+    for (const [key] of VOLUNTEER_TEXT_FIELDS) record[`${key}_${code}`] = read(`${key}_${code}`) || FieldValue.delete();
+  }
+
+  button.disabled = true;
+  feedback.textContent = "Saving…";
+  try {
+    await ref.set(record, { merge: true });
+    resetVolunteerCardEditor();
+    feedback.textContent = `Saved ${collectionPath("volunteer_activities")}/${ref.id}. It is live on the public site now.`;
+    await loadCurrentVolunteerCards();
+  } catch (error) {
+    console.error("Could not save volunteer card:", error);
+    feedback.textContent = "Could not save. Check that this account has admin access for this region and that Firestore Rules allow writes to volunteer_activities.";
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function loadCurrentVolunteerCards() {
+  const mount = document.getElementById("currentVolunteerCards");
+  if (!mount) return;
+  try {
+    const snapshot = await adminCollection("volunteer_activities").get();
+    mount.setAttribute("aria-busy", "false");
+    const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
+      .sort((a, b) => (Number(a.order) || 999) - (Number(b.order) || 999) || sortableDate(a.date) - sortableDate(b.date));
+    if (!records.length) {
+      mount.innerHTML = `<div class="empty"><p>No volunteer cards are saved in ${escapeHtml(collectionPath("volunteer_activities"))} yet, so the public site is showing the three built-in cards below. Import them to edit their text, date, venue and video here.</p>
+        <div class="table-wrap"><table><thead><tr><th>Order</th><th>Date</th><th>Activity</th><th>Venue</th><th>Video</th></tr></thead><tbody>${VOLUNTEER_STARTERS.map((card) => `
+          <tr><td>${card.order}</td><td>${escapeHtml(card.date)}<br><small class="muted">${escapeHtml(card.time)}</small></td><td>${escapeHtml(card.title_en)}</td><td>${escapeHtml(card.location_en)}</td><td>${escapeHtml(card.videoUrl)}</td></tr>`).join("")}</tbody></table></div>
+        <p><button class="button" type="button" id="importVolunteerStarters">Import the 3 built-in cards</button></p></div>`;
+      document.getElementById("importVolunteerStarters").addEventListener("click", async (event) => {
+        const importButton = event.currentTarget;
+        importButton.disabled = true;
+        try {
+          const batch = db.batch();
+          for (const { slug, ...rest } of VOLUNTEER_STARTERS) {
+            batch.set(adminCollection("volunteer_activities").doc(slug), {
+              ...rest, countryCode: adminCountryCode, isPublished: true,
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+            });
+          }
+          await batch.commit();
+          await loadCurrentVolunteerCards();
+        } catch (error) {
+          console.error("Could not import built-in volunteer cards:", error);
+          importButton.disabled = false;
+          mount.insertAdjacentHTML("beforeend", `<p class="error">Import failed. Check that the Firestore Rules include volunteer_activities and that this account is an admin for this region.</p>`);
+        }
+      });
+      return;
+    }
+    mount.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Order</th><th>Date</th><th>Activity</th><th>Venue</th><th>Video</th><th>Status</th><th>Manage</th></tr></thead><tbody>${records.map((record) => `
+      <tr><td>${escapeHtml(record.order || "—")}</td><td>${escapeHtml(toIsoDate(record.date) || record.date || "—")}${record.time ? `<br><small class="muted">${escapeHtml(record.time)}</small>` : ""}</td><td>${escapeHtml(record.title_en || "Untitled")}</td><td>${escapeHtml(record.location_en || "—")}</td><td>${record.videoUrl ? "Custom" : "Built-in"}</td><td>${record.isPublished === false ? "Hidden" : "Published"}</td>
+      <td class="content-actions"><button class="table-action" type="button" data-edit-vcard="${escapeHtml(record.id)}">Edit</button><button class="table-action danger" type="button" data-delete-vcard="${escapeHtml(record.id)}">Delete</button></td></tr>`).join("")}</tbody></table></div>`;
+    mount.querySelectorAll("[data-edit-vcard]").forEach((button) => button.addEventListener("click", () => editVolunteerCard(records.find((record) => record.id === button.dataset.editVcard))));
+    mount.querySelectorAll("[data-delete-vcard]").forEach((button) => button.addEventListener("click", async () => {
+      const record = records.find((row) => row.id === button.dataset.deleteVcard);
+      const sure = await confirmAction({
+        eyebrow: "DELETE CARD", title: `Delete “${record?.title_en || "this card"}”?`,
+        message: "The card disappears from the public Volunteer section. An uploaded video file stays in Firebase Storage. This cannot be undone.",
+        okLabel: "Delete", cancelLabel: "Keep it",
+      });
+      if (!sure) return;
+      button.disabled = true;
+      try {
+        await adminCollection("volunteer_activities").doc(button.dataset.deleteVcard).delete();
+        if (document.getElementById("volunteerCardForm")?.elements.recordId.value === button.dataset.deleteVcard) resetVolunteerCardEditor();
+        await loadCurrentVolunteerCards();
+      } catch (error) {
+        console.error("Could not delete volunteer card:", error);
+        button.disabled = false;
+        document.getElementById("volunteerCardFeedback").textContent = "Could not delete this card. Check the Firestore Rules and admin claim.";
+      }
+    }));
+  } catch (error) {
+    console.error("Could not load volunteer cards for admin:", error);
+    mount.setAttribute("aria-busy", "false");
+    mount.innerHTML = `<div class="empty">Could not load ${escapeHtml(collectionPath("volunteer_activities"))}. Check the admin claim and Firestore Rules.</div>`;
+  }
 }
 
 /* ------------------------------------------------------------------ */
@@ -715,10 +968,10 @@ async function loadCurrentAnnouncements() {
   const mount = document.getElementById("currentAnnouncements");
   if (!mount) return;
   try {
-    const snapshot = await adminCollection("announcements").get();
+    const snapshot = await readAdminList("announcements");
     mount.setAttribute("aria-busy", "false");
     const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter(inAdminRegion)
+      .filter((record) => !snapshot.legacyPath || adminCountryCode !== "MY_PP" || inAdminRegion(record))
       .sort((a, b) => sortableDate(b.date) - sortableDate(a.date));
     if (!records.length) {
       mount.innerHTML = `<div class="empty">There are no announcements in ${escapeHtml(collectionPath("announcements"))} yet.</div>`;
@@ -727,6 +980,7 @@ async function loadCurrentAnnouncements() {
     mount.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Date</th><th>Announcement</th><th>Status</th><th>Manage</th></tr></thead><tbody>${records.map((record) => `
       <tr><td>${escapeHtml(record.displayDate || record.date || "—")}</td><td>${escapeHtml(record.title_en || record.shortText_en || "Untitled announcement")}</td>
       <td>${record.isPublished === false ? "Unpublished" : "Published"}</td><td class="content-actions"><button class="table-action" type="button" data-edit-announcement="${escapeHtml(record.id)}">Edit</button><button class="table-action" type="button" data-publish-announcement="${escapeHtml(record.id)}" data-published="${record.isPublished !== false}">${record.isPublished === false ? "Publish" : "Unpublish"}</button></td></tr>`).join("")}</tbody></table></div>`;
+    if (snapshot.legacyPath) mount.prepend(legacyNotice("announcements", "announcements", snapshot.legacyPath, records, loadCurrentAnnouncements));
     mount.querySelectorAll("[data-edit-announcement]").forEach((button) => button.addEventListener("click", () => editAnnouncement(records.find((record) => record.id === button.dataset.editAnnouncement))));
     mount.querySelectorAll("[data-publish-announcement]").forEach((button) => button.addEventListener("click", async () => {
       button.disabled = true;
@@ -747,6 +1001,50 @@ async function loadCurrentAnnouncements() {
     mount.setAttribute("aria-busy", "false");
     mount.innerHTML = `<div class="empty">Could not load ${escapeHtml(collectionPath("announcements"))}. Check the admin claim and Firestore Rules.</div>`;
   }
+}
+
+// Same lookup the public site uses: the city's own collection first, then the pre-migration location.
+// Without this, a region whose content still lives at the old path looks empty here while residents see it.
+async function readAdminList(name) {
+  const fresh = await adminCollection(name).get();
+  if (!fresh.empty) return { docs: fresh.docs, legacyPath: "" };
+  for (const legacyRef of REGION_PATHS.legacyRefs(db, adminCountryCode, name)) {
+    try {
+      const old = await legacyRef.get();
+      if (!old.empty) return { docs: old.docs, legacyPath: legacyRef.path };
+    } catch (error) { /* old location may be unreadable under the new rules */ }
+  }
+  return { docs: [], legacyPath: "" };
+}
+
+// Banner + one-click additive copy (nothing is deleted from the old location).
+function legacyNotice(name, noun, legacyPath, records, reload) {
+  const wrap = document.createElement("div");
+  wrap.className = "empty";
+  wrap.style.marginBottom = "16px";
+  wrap.innerHTML = `<p><strong>These ${escapeHtml(noun)} are stored at the old location <code>${escapeHtml(legacyPath)}</code>.</strong> Residents currently see them because <code>${escapeHtml(collectionPath(name))}</code> is still empty. Copy them to this region's own location so you can edit them here safely; the old records are kept untouched.</p>
+    <button class="button secondary" type="button">Copy ${records.length} ${escapeHtml(noun)} to ${escapeHtml(SITES[adminCountryCode]?.label || adminCountryCode)}</button><p class="form-feedback" role="status"></p>`;
+  const button = wrap.querySelector("button");
+  const note = wrap.querySelector(".form-feedback");
+  button.addEventListener("click", async () => {
+    button.disabled = true;
+    note.textContent = "Copying…";
+    try {
+      for (let i = 0; i < records.length; i += 400) {
+        const batch = db.batch();
+        records.slice(i, i + 400).forEach(({ id, ...data }) => {
+          batch.set(adminCollection(name).doc(id), { ...data, countryCode: adminCountryCode });
+        });
+        await batch.commit();
+      }
+      await reload();
+    } catch (error) {
+      console.error(`Could not copy ${name}:`, error);
+      button.disabled = false;
+      note.textContent = "Copy failed. Check the Firestore Rules and admin claim.";
+    }
+  });
+  return wrap;
 }
 
 // Normalise legacy date strings ("17 MAY 2026") to the YYYY-MM-DD value a date input needs.
@@ -770,10 +1068,11 @@ async function loadCurrentEvents() {
   const mount = document.getElementById("currentEvents");
   if (!mount) return;
   try {
-    const snapshot = await adminCollection("events").get();
+    const snapshot = await readAdminList("events");
     mount.setAttribute("aria-busy", "false");
+    // Same rule as the public calendar: only the old shared Malaysia location is filtered by countryCode.
     const records = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter(inAdminRegion)
+      .filter((record) => !snapshot.legacyPath || adminCountryCode !== "MY_PP" || inAdminRegion(record))
       .sort((a, b) => sortableDate(a.date) - sortableDate(b.date));
     if (!records.length) {
       mount.innerHTML = `<div class="empty">There are no calendar events in ${escapeHtml(collectionPath("events"))} yet.</div>`;
@@ -782,6 +1081,7 @@ async function loadCurrentEvents() {
     mount.innerHTML = `<div class="table-wrap"><table><thead><tr><th>Event date</th><th>Calendar entry</th><th>Details</th><th>Manage</th></tr></thead><tbody>${records.map((record) => `
       <tr><td>${escapeHtml(record.displayDate || record.date || "—")}</td><td>${escapeHtml(record.title_en || "Untitled event")}</td><td>${escapeHtml(record.description_en || "—")}</td>
       <td class="content-actions"><button class="table-action" type="button" data-edit-event="${escapeHtml(record.id)}">Edit</button><button class="table-action danger" type="button" data-delete-event="${escapeHtml(record.id)}">Delete</button></td></tr>`).join("")}</tbody></table></div>`;
+    if (snapshot.legacyPath) mount.prepend(legacyNotice("events", "calendar events", snapshot.legacyPath, records, loadCurrentEvents));
     mount.querySelectorAll("[data-edit-event]").forEach((button) => button.addEventListener("click", () => editEvent(records.find((record) => record.id === button.dataset.editEvent))));
     mount.querySelectorAll("[data-delete-event]").forEach((button) => button.addEventListener("click", async () => {
       const record = records.find((row) => row.id === button.dataset.deleteEvent);
@@ -936,12 +1236,41 @@ async function renderRoute() {
   if (route === "/admin/announcements") return loadAnnouncementEditor(user);
   if (route === "/admin/events") return loadEventEditor(user);
   if (route === "/admin/gallery") return loadGalleryEditor(user);
+  if (route === "/admin/volunteer-cards") return loadVolunteerCardEditor(user);
+  if (portalAdmin[route]) return portalAdmin[route](user);
   if (route === "/admin/newsletter" || route === "/admin/volunteer") return loadRows(route, user);
   history.replaceState({}, "", "/admin/dashboard");
   return loadDashboard(user);
 }
 
 document.querySelector("[data-close-dialog]").addEventListener("click", () => dialog.close());
+
+// Reusable confirmation modal. Resolves true only when the admin presses the confirm button;
+// Esc, Cancel and a click outside the card all resolve false.
+const confirmDialog = document.getElementById("confirmDialog");
+function confirmAction({ eyebrow = "PLEASE CONFIRM", title, message, okLabel = "Confirm", cancelLabel = "Cancel" }) {
+  return new Promise((resolve) => {
+    let confirmed = false;
+    document.getElementById("confirmEyebrow").textContent = eyebrow;
+    document.getElementById("confirmTitle").textContent = title;
+    document.getElementById("confirmMessage").textContent = message;
+    const ok = document.getElementById("confirmOk");
+    const cancel = document.getElementById("confirmCancel");
+    ok.textContent = okLabel;
+    cancel.textContent = cancelLabel;
+    ok.onclick = () => { confirmed = true; confirmDialog.close(); };
+    cancel.onclick = () => confirmDialog.close();
+    confirmDialog.onclick = (event) => { if (event.target === confirmDialog) confirmDialog.close(); };
+    confirmDialog.addEventListener("close", () => resolve(confirmed), { once: true });
+    confirmDialog.showModal();
+    cancel.focus();
+  });
+}
 dialog.addEventListener("click", (event) => { if (event.target === dialog) dialog.close(); });
 window.addEventListener("popstate", renderRoute);
+// Resident-portal admin screens (residents, requests, charges, bookings) live in portal-admin.js.
+const portalAdmin = createPortalAdmin({
+  shell, adminCollection, collectionPath, escapeHtml, confirmAction, db, firebase, getSite: () => adminCountryCode,
+});
+
 auth.onAuthStateChanged(renderRoute);

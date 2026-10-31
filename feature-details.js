@@ -3,7 +3,7 @@
 (() => {
   const details = {
     smartFacilitiesModal: [
-      "Pay community charges and facility fees through a clear, convenient digital flow. Residents can review what they owe and keep a record of completed payments.",
+      "Pay community charges and facility fees through a clear, convenient digital flow. Residents can review what they owe and keep a record of completed payments. This exhibition version uses a sandbox checkout, so no real money is charged.",
       "Check availability and reserve shared spaces such as the gym, pool or community hall. A booking calendar helps residents plan ahead and avoid double bookings.",
       "Submit requests for shared supplies or maintenance work and follow each request from submission to completion, helping management keep decisions transparent.",
       "Send forms such as maintenance requests and resident applications online, then receive a clear confirmation so there is less paperwork and fewer follow-up calls.",
@@ -28,6 +28,13 @@
     ],
   };
 
+    // Which items are live today (order matches the modal). Everything else is shown as "Coming soon".
+  // The live ones are served by the resident portal at /portal/ (login, sandbox payments, booking, requests).
+  const liveItems = { smartFacilitiesModal: [true, true, true, true] };
+  const portalTabs = { smartFacilitiesModal: ["pay", "book", "procurement", "requests"] };
+  const comingSoonOverlays = new Set(["smartFacilitiesModal", "communitySafetyModal", "greenLivingModal"]);
+  const portalHref = (tab) => `/portal/?region=${encodeURIComponent(window.MYCELIUM_COUNTRY || "")}#${tab}`;
+
   const connectDestinations = {
     "Community updates": "#",
     "Events calendar": "#",
@@ -46,6 +53,13 @@
     itemGrid.after(detailPanel);
 
     itemGrid.querySelectorAll(".feature-modal-item").forEach((item, index) => {
+      item.dataset.label = (item.querySelector("[data-i18n]") || item.querySelector("span:last-child"))?.textContent.trim() || "";
+      if (comingSoonOverlays.has(overlay.id) && !liveItems[overlay.id]?.[index]) {
+        const chip = document.createElement("em");
+        chip.className = "feature-soon-chip";
+        chip.textContent = "Coming soon";
+        item.append(chip);
+      }
       item.tabIndex = 0;
       item.setAttribute("role", "button");
       item.setAttribute("aria-expanded", "false");
@@ -57,9 +71,7 @@
           entry.classList.toggle("is-detail-selected", selected);
           entry.setAttribute("aria-expanded", String(selected));
         });
-        const label = item.querySelector("[data-i18n]")?.textContent.trim()
-          || item.querySelector("span:last-child")?.textContent.trim()
-          || "Community feature";
+        const label = item.dataset.label || "Community feature";
         const icon = item.querySelector("svg")?.cloneNode(true);
         detailPanel.replaceChildren();
         const image = document.createElement("div");
@@ -107,6 +119,25 @@
             if (label === "Volunteer activities") document.querySelector("#openVolunteerBtn")?.click();
           });
           text.append(link);
+        }
+        if (liveItems[overlay.id]?.[index]) {
+          const open = document.createElement("a");
+          open.className = "feature-detail-link";
+          open.href = portalHref(portalTabs[overlay.id][index]);
+          open.textContent = "Open in the resident portal →";
+          text.append(open);
+        } else if (comingSoonOverlays.has(overlay.id)) {
+          const soon = document.createElement("p");
+          soon.className = "feature-soon-note";
+          soon.textContent = "Coming soon — this service is planned and not available yet.";
+          text.append(soon);
+        } else if (label === "Contact management") {
+          const message = document.createElement("a");
+          message.className = "feature-detail-link";
+          message.style.marginLeft = "18px";
+          message.href = portalHref("contact");
+          message.textContent = "Send a message →";
+          text.append(message);
         }
         detailPanel.append(text);
         detailPanel.hidden = false;
